@@ -1,74 +1,54 @@
-import 'package:caritalent_mobile/features/dashboard/presentation/pages/dashboard_scaffold.dart';
+import 'package:caritalent_mobile/app/theme/app_theme.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/talent_bookings_tab.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/talent_events_tab.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/talent_home_tab.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/talent_invitations_tab.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/talent_profile_tab.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class TalentDashboardPage extends StatelessWidget {
+import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
+
+class TalentDashboardPage extends ConsumerWidget {
   const TalentDashboardPage({super.key});
 
   static const routePath = '/talent';
 
   @override
-  Widget build(BuildContext context) {
-    return const DashboardScaffold(
-      title: 'Talent',
-      subtitle: 'Kelola event, lamaran, undangan, booking, dan review kamu.',
-      stats: [
-        DashboardStat(
-          title: 'Applications',
-          value: '-',
-          hint: 'Lamaran terkirim',
-          icon: Icons.assignment,
-        ),
-        DashboardStat(
-          title: 'Invitations',
-          value: '-',
-          hint: 'Undangan EO',
-          icon: Icons.mail,
-        ),
-        DashboardStat(
-          title: 'Bookings',
-          value: '-',
-          hint: 'Jadwal tampil',
-          icon: Icons.calendar_month,
-        ),
-        DashboardStat(
-          title: 'Rating',
-          value: '- / 5',
-          hint: 'Rata-rata review',
-          icon: Icons.star,
-        ),
-      ],
-      items: [
-        DashboardItem(
-          title: 'Cari Event',
-          caption: 'Lihat event publik',
-          icon: Icons.event_available,
-        ),
-        DashboardItem(
-          title: 'Lamaran',
-          caption: 'Status application',
-          icon: Icons.assignment,
-        ),
-        DashboardItem(
-          title: 'Undangan',
-          caption: 'Invitation dari EO',
-          icon: Icons.mail,
-        ),
-        DashboardItem(
-          title: 'Booking',
-          caption: 'Jadwal tampil',
-          icon: Icons.calendar_month,
-        ),
-        DashboardItem(
-          title: 'Review',
-          caption: 'Rating dan ulasan',
-          icon: Icons.star,
-        ),
-        DashboardItem(
-          title: 'Profil',
-          caption: 'Portofolio talent',
-          icon: Icons.person,
-        ),
-      ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentIndex = ref.watch(talentNavIndexProvider);
+
+    return Scaffold(
+      backgroundColor: AppTheme.neutralDark,
+      body: IndexedStack(
+        index: currentIndex,
+        children: const [
+          TalentHomeTab(),
+          TalentEventsTab(),
+          TalentBookingsTab(),
+          TalentInvitationsTab(),
+          TalentProfileTab(),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (index) => ref.read(talentNavIndexProvider.notifier).state = index,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: AppTheme.uiDark,
+        selectedItemColor: AppTheme.highlight,
+        unselectedItemColor: AppTheme.neutralMedium,
+        showUnselectedLabels: true,
+        selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontSize: 10),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), activeIcon: Icon(Icons.calendar_today), label: 'Events'),
+          BottomNavigationBarItem(icon: Icon(Icons.book_online_outlined), activeIcon: Icon(Icons.book_online), label: 'Bookings'),
+          BottomNavigationBarItem(icon: Icon(Icons.mail_outline), activeIcon: Icon(Icons.mail), label: 'Invitations'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
     );
   }
 }
+

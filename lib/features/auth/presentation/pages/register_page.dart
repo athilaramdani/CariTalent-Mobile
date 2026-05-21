@@ -6,7 +6,7 @@ import 'package:caritalent_mobile/core/widgets/app_shell.dart';
 import 'package:caritalent_mobile/core/widgets/app_text_field.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/auth/presentation/pages/login_page.dart';
-import 'package:caritalent_mobile/features/auth/presentation/providers/auth_controller.dart';
+import 'package:caritalent_mobile/features/auth/application/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,6 +24,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _stageNameController = TextEditingController();
 
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -34,6 +35,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _stageNameController.dispose();
 
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -104,6 +106,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       label: 'Nomor HP',
                       keyboardType: TextInputType.phone,
                     ),
+                    if (_role == UserRoles.talent) ...[
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        controller: _stageNameController,
+                        label: 'Nama Panggung',
+                      ),
+                    ],
 
                     const SizedBox(height: 12),
                     AppTextField(
@@ -177,6 +186,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             passwordConfirmation: _confirmPasswordController.text,
             phone: _phoneController.text.trim(),
             role: _role,
+            stageName: _role == UserRoles.talent ? _stageNameController.text.trim() : null,
           );
       final user = ref.read(authControllerProvider).user;
       if (mounted) context.go(dashboardRouteForRole(user?.role));
