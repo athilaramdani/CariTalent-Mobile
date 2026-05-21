@@ -5,14 +5,7 @@ import 'package:caritalent_mobile/core/network/api_exception.dart';
 import 'package:caritalent_mobile/core/storage/secure_storage_service.dart';
 import 'package:caritalent_mobile/features/auth/domain/app_user.dart';
 import 'package:caritalent_mobile/features/auth/domain/auth_session.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepository(
-    ref.watch(apiClientProvider),
-    ref.watch(secureStorageProvider),
-  );
-});
 
 class AuthRepository {
   const AuthRepository(this._api, this._storage);
@@ -41,6 +34,7 @@ class AuthRepository {
     required String passwordConfirmation,
     required String phone,
     required String role,
+    String? stageName,
   }) async {
     final payload = <String, dynamic>{
       'name': name,
@@ -50,6 +44,9 @@ class AuthRepository {
       'phone': phone,
       'role': role,
     };
+    if (stageName != null && stageName.isNotEmpty) {
+      payload['stage_name'] = stageName;
+    }
 
     final session = await _api.post<AuthSession>(
       ApiEndpoints.authRegister,

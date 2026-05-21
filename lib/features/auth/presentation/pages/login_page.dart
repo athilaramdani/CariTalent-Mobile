@@ -5,7 +5,7 @@ import 'package:caritalent_mobile/core/widgets/app_shell.dart';
 import 'package:caritalent_mobile/core/widgets/app_text_field.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/auth/presentation/pages/register_page.dart';
-import 'package:caritalent_mobile/features/auth/presentation/providers/auth_controller.dart';
+import 'package:caritalent_mobile/features/auth/application/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
