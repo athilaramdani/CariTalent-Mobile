@@ -1,13 +1,64 @@
 import 'package:caritalent_mobile/app/theme/app_theme.dart';
+import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TalentBookingsTab extends ConsumerWidget {
   const TalentBookingsTab({super.key});
 
+  static const List<_BookingItem> _allBookings = [
+    _BookingItem(
+      title: 'Punk Night Vol. 3',
+      agreedPrice: 'Rp 1.500.000',
+      date: '15 Apr 2026',
+      venue: 'Kafe Kota Bandung',
+      status: 'Confirmed',
+      statusColor: Colors.blue,
+      source: 'Apply',
+    ),
+    _BookingItem(
+      title: 'Gathering Kantor Tech',
+      agreedPrice: 'Rp 5.000.000',
+      date: '10 Jun 2025',
+      venue: 'Hotel Transylvania',
+      status: 'Confirmed',
+      statusColor: Colors.blue,
+      source: 'Invitation',
+    ),
+    _BookingItem(
+      title: 'Pernikahan Budi & Ani',
+      agreedPrice: 'Rp 3.500.000',
+      date: '20 May 2025',
+      venue: 'Gedung Sate Bandung',
+      status: 'Completed',
+      statusColor: Colors.green,
+      source: 'Invitation',
+    ),
+    _BookingItem(
+      title: 'Festival Musik Kemerdekaan',
+      agreedPrice: 'Rp 2.000.000',
+      date: '17 Aug 2025',
+      venue: 'Lapangan Gasibu',
+      status: 'Cancelled',
+      statusColor: Colors.red,
+      source: 'Apply',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
+    final searchQuery = ref.watch(bookingSearchQueryProvider);
+
+    // Filter bookings based on search query
+    final filteredBookings = _allBookings.where((booking) {
+      if (searchQuery.isEmpty) return true;
+      final query = searchQuery.toLowerCase();
+      return booking.title.toLowerCase().contains(query) ||
+          booking.venue.toLowerCase().contains(query) ||
+          booking.status.toLowerCase().contains(query) ||
+          booking.source.toLowerCase().contains(query);
+    }).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.neutralDark,
@@ -23,102 +74,82 @@ class TalentBookingsTab extends ConsumerWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header descriptive text
+
+
+          // Search Bar
           Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Text(
-              'Kelola semua jadwal panggung dan konfirmasi harga yang telah disepakati bersama Event Organizer.',
-              style: textTheme.bodySmall?.copyWith(color: AppTheme.neutralMedium, height: 1.5),
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              onChanged: (value) {
+                ref.read(bookingSearchQueryProvider.notifier).state = value;
+              },
+              decoration: InputDecoration(
+                hintText: 'Cari nama acara, tempat, dll...',
+                hintStyle: textTheme.bodyMedium?.copyWith(color: AppTheme.neutralMedium),
+                prefixIcon: const Icon(Icons.search, color: AppTheme.neutralMedium),
+                suffixIcon: searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: AppTheme.neutralMedium),
+                        onPressed: () {
+                          ref.read(bookingSearchQueryProvider.notifier).state = '';
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: AppTheme.uiDark,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: AppTheme.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: AppTheme.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: AppTheme.highlight),
+                ),
+              ),
+              style: textTheme.bodyMedium,
             ),
           ),
-          
-          // Filter chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _buildFilterChip('Semua', true, textTheme),
-                _buildFilterChip('Confirmed', false, textTheme),
-                _buildFilterChip('Completed', false, textTheme),
-                _buildFilterChip('Cancelled', false, textTheme),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
           
           // Bookings List
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildBookingCard(
-                  context: context,
-                  title: 'Punk Night Vol. 3',
-                  agreedPrice: 'Rp 1.500.000',
-                  date: '15 Apr 2026',
-                  venue: 'Kafe Kota Bandung',
-                  status: 'Confirmed',
-                  statusColor: Colors.blue,
-                  source: 'Apply',
-                  textTheme: textTheme,
-                ),
-                _buildBookingCard(
-                  context: context,
-                  title: 'Gathering Kantor Tech',
-                  agreedPrice: 'Rp 5.000.000',
-                  date: '10 Jun 2025',
-                  venue: 'Hotel Transylvania',
-                  status: 'Confirmed',
-                  statusColor: Colors.blue,
-                  source: 'Invitation',
-                  textTheme: textTheme,
-                ),
-                _buildBookingCard(
-                  context: context,
-                  title: 'Pernikahan Budi & Ani',
-                  agreedPrice: 'Rp 3.500.000',
-                  date: '20 May 2025',
-                  venue: 'Gedung Sate Bandung',
-                  status: 'Completed',
-                  statusColor: Colors.green,
-                  source: 'Invitation',
-                  textTheme: textTheme,
-                ),
-                _buildBookingCard(
-                  context: context,
-                  title: 'Festival Musik Kemerdekaan',
-                  agreedPrice: 'Rp 2.000.000',
-                  date: '17 Aug 2025',
-                  venue: 'Lapangan Gasibu',
-                  status: 'Cancelled',
-                  statusColor: Colors.red,
-                  source: 'Apply',
-                  textTheme: textTheme,
-                ),
-              ],
-            ),
+            child: filteredBookings.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.search_off_rounded, size: 64, color: AppTheme.neutralMedium),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Booking tidak ditemukan',
+                          style: textTheme.titleMedium?.copyWith(color: AppTheme.neutralMedium),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: filteredBookings.length,
+                    itemBuilder: (context, index) {
+                      final booking = filteredBookings[index];
+                      return _buildBookingCard(
+                        context: context,
+                        title: booking.title,
+                        agreedPrice: booking.agreedPrice,
+                        date: booking.date,
+                        venue: booking.venue,
+                        status: booking.status,
+                        statusColor: booking.statusColor,
+                        source: booking.source,
+                        textTheme: textTheme,
+                      );
+                    },
+                  ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, bool isSelected, TextTheme textTheme) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? AppTheme.highlight : AppTheme.uiDark,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isSelected ? AppTheme.highlight : AppTheme.border),
-      ),
-      child: Text(
-        label,
-        style: textTheme.labelSmall?.copyWith(
-          color: isSelected ? Colors.white : AppTheme.neutralMedium,
-          fontWeight: FontWeight.bold,
-        ),
       ),
     );
   }
@@ -228,4 +259,24 @@ class TalentBookingsTab extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _BookingItem {
+  final String title;
+  final String agreedPrice;
+  final String date;
+  final String venue;
+  final String status;
+  final Color statusColor;
+  final String source;
+
+  const _BookingItem({
+    required this.title,
+    required this.agreedPrice,
+    required this.date,
+    required this.venue,
+    required this.status,
+    required this.statusColor,
+    required this.source,
+  });
 }

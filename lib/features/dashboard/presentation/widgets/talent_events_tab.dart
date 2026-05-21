@@ -1,13 +1,61 @@
 import 'package:caritalent_mobile/app/theme/app_theme.dart';
+import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TalentEventsTab extends ConsumerWidget {
   const TalentEventsTab({super.key});
 
+  static const List<_EventItem> _allEvents = [
+    _EventItem(
+      title: 'Punk Night Vol. 3',
+      description: 'Malam punk rock terbaik di Bandung. Membutuhkan band pembuka beraliran punk/rock.',
+      budget: 'Rp 3.000.000',
+      date: '15 Apr 2026',
+      venue: 'Kafe Kota Bandung',
+      city: 'Bandung',
+      status: 'Dibuka',
+      statusColor: Colors.green,
+      totalApplicants: 12,
+    ),
+    _EventItem(
+      title: 'Braga Jazz Evening',
+      description: 'Acara musik jazz mingguan di jalan Braga. Mencari band akustik atau penyanyi solo untuk menemani malam minggu.',
+      budget: 'Rp 1.500.000',
+      date: '12 Mar 2025',
+      venue: 'Braga Art Square',
+      city: 'Bandung',
+      status: 'Dibuka',
+      statusColor: Colors.green,
+      totalApplicants: 5,
+    ),
+    _EventItem(
+      title: 'Konser Amal Tahunan',
+      description: 'Konser penggalangan dana untuk panti asuhan. Kuota talent sudah penuh.',
+      budget: 'Rp 5.000.000',
+      date: '01 Jun 2025',
+      venue: 'Gedung Sate',
+      city: 'Bandung',
+      status: 'Ditutup',
+      statusColor: Colors.red,
+      totalApplicants: 24,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
+    final searchQuery = ref.watch(eventSearchQueryProvider);
+
+    // Filter events based on search query
+    final filteredEvents = _allEvents.where((event) {
+      if (searchQuery.isEmpty) return true;
+      final query = searchQuery.toLowerCase();
+      return event.title.toLowerCase().contains(query) ||
+          event.description.toLowerCase().contains(query) ||
+          event.venue.toLowerCase().contains(query) ||
+          event.city.toLowerCase().contains(query);
+    }).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.neutralDark,
@@ -26,10 +74,21 @@ class TalentEventsTab extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
+              onChanged: (value) {
+                ref.read(eventSearchQueryProvider.notifier).state = value;
+              },
               decoration: InputDecoration(
                 hintText: 'Cari event musik, festival, dll...',
                 hintStyle: textTheme.bodyMedium?.copyWith(color: AppTheme.neutralMedium),
                 prefixIcon: const Icon(Icons.search, color: AppTheme.neutralMedium),
+                suffixIcon: searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: AppTheme.neutralMedium),
+                        onPressed: () {
+                          ref.read(eventSearchQueryProvider.notifier).state = '';
+                        },
+                      )
+                    : null,
                 filled: true,
                 fillColor: AppTheme.uiDark,
                 border: OutlineInputBorder(
@@ -49,89 +108,44 @@ class TalentEventsTab extends ConsumerWidget {
             ),
           ),
           
-          // Filter chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _buildFilterChip('Semua', true, textTheme),
-                _buildFilterChip('Bandung', false, textTheme),
-                _buildFilterChip('Jakarta', false, textTheme),
-                _buildFilterChip('Pop', false, textTheme),
-                _buildFilterChip('Jazz', false, textTheme),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          
           // Event List
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildEventCard(
-                  context: context,
-                  title: 'Punk Night Vol. 3',
-                  description: 'Malam punk rock terbaik di Bandung. Membutuhkan band pembuka beraliran punk/rock.',
-                  budget: 'Rp 3.000.000',
-                  date: '15 Apr 2026',
-                  venue: 'Kafe Kota Bandung',
-                  city: 'Bandung',
-                  status: 'Dibuka',
-                  statusColor: Colors.green,
-                  totalApplicants: 12,
-                  textTheme: textTheme,
-                ),
-                _buildEventCard(
-                  context: context,
-                  title: 'Braga Jazz Evening',
-                  description: 'Acara musik jazz mingguan di jalan Braga. Mencari band akustik atau penyanyi solo untuk menemani malam minggu.',
-                  budget: 'Rp 1.500.000',
-                  date: '12 Mar 2025',
-                  venue: 'Braga Art Square',
-                  city: 'Bandung',
-                  status: 'Dibuka',
-                  statusColor: Colors.green,
-                  totalApplicants: 5,
-                  textTheme: textTheme,
-                ),
-                _buildEventCard(
-                  context: context,
-                  title: 'Konser Amal Tahunan',
-                  description: 'Konser penggalangan dana untuk panti asuhan. Kuota talent sudah penuh.',
-                  budget: 'Rp 5.000.000',
-                  date: '01 Jun 2025',
-                  venue: 'Gedung Sate',
-                  city: 'Bandung',
-                  status: 'Ditutup',
-                  statusColor: Colors.red,
-                  totalApplicants: 24,
-                  textTheme: textTheme,
-                ),
-              ],
-            ),
+            child: filteredEvents.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.search_off_rounded, size: 64, color: AppTheme.neutralMedium),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Event tidak ditemukan',
+                          style: textTheme.titleMedium?.copyWith(color: AppTheme.neutralMedium),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: filteredEvents.length,
+                    itemBuilder: (context, index) {
+                      final event = filteredEvents[index];
+                      return _buildEventCard(
+                        context: context,
+                        title: event.title,
+                        description: event.description,
+                        budget: event.budget,
+                        date: event.date,
+                        venue: event.venue,
+                        city: event.city,
+                        status: event.status,
+                        statusColor: event.statusColor,
+                        totalApplicants: event.totalApplicants,
+                        textTheme: textTheme,
+                      );
+                    },
+                  ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, bool isSelected, TextTheme textTheme) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? AppTheme.highlight : AppTheme.uiDark,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isSelected ? AppTheme.highlight : AppTheme.border),
-      ),
-      child: Text(
-        label,
-        style: textTheme.labelSmall?.copyWith(
-          color: isSelected ? Colors.white : AppTheme.neutralMedium,
-          fontWeight: FontWeight.bold,
-        ),
       ),
     );
   }
@@ -225,4 +239,28 @@ class TalentEventsTab extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _EventItem {
+  final String title;
+  final String description;
+  final String budget;
+  final String date;
+  final String venue;
+  final String city;
+  final String status;
+  final Color statusColor;
+  final int totalApplicants;
+
+  const _EventItem({
+    required this.title,
+    required this.description,
+    required this.budget,
+    required this.date,
+    required this.venue,
+    required this.city,
+    required this.status,
+    required this.statusColor,
+    required this.totalApplicants,
+  });
 }
