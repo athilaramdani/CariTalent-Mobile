@@ -79,7 +79,6 @@ class AuthController extends StateNotifier<AuthState> {
     required String passwordConfirmation,
     required String phone,
     required String role,
-    String? stageName,
   }) async {
     await _run(() async {
       final session = await _repository.register(
@@ -89,7 +88,6 @@ class AuthController extends StateNotifier<AuthState> {
         passwordConfirmation: passwordConfirmation,
         phone: phone,
         role: role,
-        stageName: stageName,
       );
       state = state.copyWith(
         user: session.user,

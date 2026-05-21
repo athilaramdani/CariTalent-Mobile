@@ -41,7 +41,6 @@ class AuthRepository {
     required String passwordConfirmation,
     required String phone,
     required String role,
-    String? stageName,
   }) async {
     final payload = <String, dynamic>{
       'name': name,
@@ -51,9 +50,6 @@ class AuthRepository {
       'phone': phone,
       'role': role,
     };
-    if (stageName != null && stageName.isNotEmpty) {
-      payload['stage_name'] = stageName;
-    }
 
     final session = await _api.post<AuthSession>(
       ApiEndpoints.authRegister,
