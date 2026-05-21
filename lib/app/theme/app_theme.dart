@@ -19,7 +19,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: uiDark,
-      fontFamily: 'DM Sans',
+      fontFamily: 'Poppins',
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         elevation: 0,
@@ -72,13 +72,33 @@ class AppTheme {
         ),
       ),
       textTheme: const TextTheme(
-        displaySmall: TextStyle(color: Colors.white),
+        displaySmall: TextStyle(
+          color: Colors.white,
+          fontSize: 42,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -1,
+          height: 1.2,
+        ),
         headlineSmall: TextStyle(color: Colors.white),
         titleLarge: TextStyle(color: Colors.white),
         titleMedium: TextStyle(color: Colors.white),
-        bodyLarge: TextStyle(color: Color(0xD9FFFFFF)),
-        bodyMedium: TextStyle(color: Color(0xB3FFFFFF)),
+        bodyLarge: TextStyle(
+          color: Color(0xD9FFFFFF),
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          height: 1.5,
+        ),
+        bodyMedium: TextStyle(
+          color: Color(0xB3FFFFFF),
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
         bodySmall: TextStyle(color: Color(0xA6FFFFFF)),
+        labelLarge: TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
