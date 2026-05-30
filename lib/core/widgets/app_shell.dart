@@ -6,11 +6,13 @@ class AppShell extends StatelessWidget {
     super.key,
     required this.child,
     this.appBar,
+    this.bottomNavigationBar,
     this.safeArea = true,
   });
 
   final Widget child;
   final PreferredSizeWidget? appBar;
+  final Widget? bottomNavigationBar;
   final bool safeArea;
 
   @override
@@ -26,6 +28,10 @@ class AppShell extends StatelessWidget {
       child: safeArea ? SafeArea(child: child) : child,
     );
 
-    return Scaffold(appBar: appBar, body: content);
+    return Scaffold(
+      appBar: appBar,
+      body: content,
+      bottomNavigationBar: bottomNavigationBar,
+    );
   }
 }

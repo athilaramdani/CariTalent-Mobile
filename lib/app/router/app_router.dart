@@ -2,7 +2,9 @@ import 'package:caritalent_mobile/core/constants/user_roles.dart';
 import 'package:caritalent_mobile/features/auth/presentation/pages/login_page.dart';
 import 'package:caritalent_mobile/features/auth/presentation/pages/register_page.dart';
 import 'package:caritalent_mobile/features/auth/presentation/pages/splash_page.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_applicants_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_dashboard_page.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_recommendations_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_dashboard_page.dart';
 import 'package:caritalent_mobile/features/public/presentation/pages/public_home_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +37,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: EoDashboardPage.routePath,
         builder: (context, state) => const EoDashboardPage(),
+      ),
+      GoRoute(
+        path: EoApplicantsPage.routePath,
+        builder: (context, state) => const EoApplicantsPage(),
+      ),
+      GoRoute(
+        path: EoRecommendationsPage.routePath,
+        builder: (context, state) => const EoRecommendationsPage(),
       ),
     ],
   );

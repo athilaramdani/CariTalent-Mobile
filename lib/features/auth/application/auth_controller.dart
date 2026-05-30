@@ -73,6 +73,24 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> login(String email, String password) async {
     await _run(() async {
+      // Dummy Login Implementation
+      if (email == 'eo@dummy.com') {
+        state = state.copyWith(
+          user: const AppUser(id: 1, name: 'Bill Stephen', email: 'eo@dummy.com', role: 'eo', phone: '081234560002'),
+          isLoading: false,
+          clearError: true,
+        );
+        return;
+      }
+      if (email == 'talent@dummy.com') {
+        state = state.copyWith(
+          user: const AppUser(id: 2, name: 'Rizky Maulana', email: 'talent@dummy.com', role: 'talent', phone: '081234560001'),
+          isLoading: false,
+          clearError: true,
+        );
+        return;
+      }
+      
       final session = await _repository.login(email: email, password: password);
       state = state.copyWith(
         user: session.user,
