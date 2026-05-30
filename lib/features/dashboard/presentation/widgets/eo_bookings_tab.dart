@@ -14,40 +14,7 @@ class EoBookingsTab extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              GradientText(
-                'CariTalent',
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                ) ?? const TextStyle(),
-              ),
-              Row(
-                children: [
-                   IconButton(
-                    icon: const Icon(Icons.notifications_none, color: Colors.white),
-                    onPressed: () {},
-                  ),
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [AppTheme.highlight, AppTheme.accent],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: const Icon(Icons.person_outline, color: Colors.white, size: 20),
-                  ),
-                ],
-              )
-            ],
-          ),
-          const SizedBox(height: 32),
+// Removed redundant local header
 
           GradientText(
             'My Bookings',
@@ -107,8 +74,6 @@ class EoBookingsTab extends StatelessWidget {
   }
 
   Widget _buildFilterChip(BuildContext context, String label, String count, bool isActive) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Container(
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -116,30 +81,38 @@ class EoBookingsTab extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         gradient: isActive
             ? const LinearGradient(
-                colors: [AppTheme.highlight, AppTheme.accent],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                colors: [Color(0xFFB500FF), Color(0xFFE94057)], // Pink-Purple gradient
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
               )
             : null,
         color: isActive ? null : Colors.transparent,
-        border: isActive ? null : Border.all(color: AppTheme.border),
+        border: isActive ? null : Border.all(color: Colors.white24),
       ),
       child: Row(
         children: [
           Text(
             label,
-            style: textTheme.labelLarge,
+            style: TextStyle(
+              color: isActive ? Colors.white : Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: const BoxDecoration(
-              color: Colors.black38,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             child: Text(
               count,
-              style: textTheme.labelSmall?.copyWith(fontSize: 10, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: isActive ? Colors.white : Colors.white54,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           )
         ],
@@ -157,10 +130,13 @@ class EoBookingsTab extends StatelessWidget {
     required String source,
     required String createdAt,
   }) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return AppCard(
+    return Container(
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.uiDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -171,23 +147,25 @@ class EoBookingsTab extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white, height: 1.3),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.highlight.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: AppTheme.highlight.withValues(alpha: 0.3)),
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.highlight.withValues(alpha: 0.5)),
                 ),
                 child: Text(
                   status,
-                  style: textTheme.labelSmall?.copyWith(
+                  style: const TextStyle(
                     color: AppTheme.highlight,
+                    fontSize: 9,
+                    letterSpacing: 1.0,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -202,16 +180,16 @@ class EoBookingsTab extends StatelessWidget {
               Expanded(
                 child: Text(
                   dateLocation,
-                  style: textTheme.bodySmall,
+                  style: const TextStyle(fontSize: 11, color: Colors.white70),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Divider(color: AppTheme.border, height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -221,21 +199,21 @@ class EoBookingsTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                     Text('TALENT', style: textTheme.labelSmall?.copyWith(color: AppTheme.neutralMedium, letterSpacing: 1.0)),
+                     const Text('TALENT', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.w700)),
                      const SizedBox(height: 6),
                      Row(
                        children: [
-                         const Icon(Icons.person_outline, color: AppTheme.highlight, size: 14),
+                         const Icon(Icons.person_outline, color: AppTheme.highlight, size: 16),
                          const SizedBox(width: 6),
                          Expanded(
-                           child: Text(talent, style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
+                           child: Text(talent, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
                          ),
                        ],
                      ),
                      const SizedBox(height: 16),
-                     Text('SUMBER', style: textTheme.labelSmall?.copyWith(color: AppTheme.neutralMedium, letterSpacing: 1.0)),
+                     const Text('SUMBER', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.w700)),
                      const SizedBox(height: 6),
-                     Text(source, style: textTheme.labelLarge),
+                     Text(source, style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -243,13 +221,13 @@ class EoBookingsTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                     Text('HARGA DEAL', style: textTheme.labelSmall?.copyWith(color: AppTheme.neutralMedium, letterSpacing: 1.0)),
+                     const Text('HARGA DEAL', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.w700)),
                      const SizedBox(height: 6),
-                     Text(price, style: textTheme.titleMedium?.copyWith(color: AppTheme.highlight, fontWeight: FontWeight.bold)),
+                     Text(price, style: const TextStyle(fontSize: 15, color: Color(0xFFE879F9), fontWeight: FontWeight.w900)), // Bright magenta/pink
                      const SizedBox(height: 20),
-                     Text('DIBUAT', style: textTheme.labelSmall?.copyWith(color: AppTheme.neutralMedium, letterSpacing: 1.0)),
+                     const Text('DIBUAT', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.w700)),
                      const SizedBox(height: 6),
-                     Text(createdAt, style: textTheme.labelLarge),
+                     Text(createdAt, style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),

@@ -3,7 +3,7 @@ import 'package:caritalent_mobile/features/dashboard/presentation/widgets/talent
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/talent_events_tab.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/talent_home_tab.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/talent_invitations_tab.dart';
-import 'package:caritalent_mobile/features/dashboard/presentation/widgets/talent_profile_tab.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/talent_applications_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,9 +25,9 @@ class TalentDashboardPage extends ConsumerWidget {
         children: const [
           TalentHomeTab(),
           TalentEventsTab(),
-          TalentBookingsTab(),
+          TalentApplicationsTab(),
           TalentInvitationsTab(),
-          TalentProfileTab(),
+          TalentBookingsTab(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -41,11 +41,11 @@ class TalentDashboardPage extends ConsumerWidget {
         selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
         unselectedLabelStyle: const TextStyle(fontSize: 10),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), activeIcon: Icon(Icons.calendar_today), label: 'Events'),
-          BottomNavigationBarItem(icon: Icon(Icons.book_online_outlined), activeIcon: Icon(Icons.book_online), label: 'Bookings'),
+          BottomNavigationBarItem(icon: Icon(Icons.description_outlined), activeIcon: Icon(Icons.description), label: 'Applications'),
           BottomNavigationBarItem(icon: Icon(Icons.mail_outline), activeIcon: Icon(Icons.mail), label: 'Invitations'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(Icons.bookmark_outline), activeIcon: Icon(Icons.bookmark), label: 'Bookings'),
         ],
       ),
     );
