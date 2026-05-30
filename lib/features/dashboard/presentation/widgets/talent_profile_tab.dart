@@ -2,7 +2,9 @@ import 'package:caritalent_mobile/app/theme/app_theme.dart';
 import 'package:caritalent_mobile/features/auth/application/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
+import 'package:caritalent_mobile/core/widgets/app_header.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_reviews_page.dart';
 
 class TalentProfileTab extends ConsumerWidget {
   const TalentProfileTab({super.key});
@@ -26,26 +28,18 @@ class TalentProfileTab extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.neutralDark,
-      appBar: AppBar(
-        title: Text('Profil Talent', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: AppTheme.uiDark,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: AppTheme.border, height: 1.0),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header Profile
-            Container(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // ── App Header ──
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                child: AppHeader(),
+              ),
+
+              // Header Profile
+              Container(
               color: AppTheme.uiDark,
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -92,9 +86,22 @@ class TalentProfileTab extends ConsumerWidget {
                       const SizedBox(width: 4),
                       Text(city, style: textTheme.bodyMedium?.copyWith(color: AppTheme.neutralMedium)),
                       const SizedBox(width: 16),
-                      const Icon(Icons.star, size: 14, color: Colors.amber),
-                      const SizedBox(width: 4),
-                      Text('$rating ($reviews ulasan)', style: textTheme.bodyMedium?.copyWith(color: AppTheme.neutralMedium)),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const TalentReviewsPage()));
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.star, size: 14, color: Colors.amber),
+                              const SizedBox(width: 4),
+                              Text('$rating ($reviews ulasan)', style: textTheme.bodyMedium?.copyWith(color: AppTheme.neutralMedium, decoration: TextDecoration.underline)),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -170,7 +177,74 @@ class TalentProfileTab extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
+            // ── Talent Reviews Card (Entry Point) ──
+            GestureDetector(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const TalentReviewsPage()));
+              },
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 0),
+                color: AppTheme.uiDark,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                child: Row(
+                  children: [
+                    // Icon gradient box
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFB500FF), Color(0xFFDE33A2)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.star_rate_outlined, color: Colors.white, size: 22),
+                    ),
+                    const SizedBox(width: 16),
+                    // Text info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Talent Reviews',
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              ...List.generate(
+                                5,
+                                (i) => Icon(
+                                  i < rating.floor() ? Icons.star : Icons.star_border,
+                                  color: Colors.amber,
+                                  size: 12,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '$rating · $reviews ulasan',
+                                style: textTheme.bodySmall?.copyWith(color: AppTheme.neutralMedium),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Arrow
+                    const Icon(Icons.arrow_forward_ios, color: AppTheme.neutralMedium, size: 16),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // Action Buttons
             Container(
               padding: const EdgeInsets.all(24.0),

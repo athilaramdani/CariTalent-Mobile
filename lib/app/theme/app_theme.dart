@@ -18,7 +18,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: uiDark,
+      scaffoldBackgroundColor: const Color(0xFF080714),
       fontFamily: 'Poppins',
       appBarTheme: const AppBarTheme(
         centerTitle: false,

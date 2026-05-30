@@ -20,26 +20,36 @@ class EoDashboardPage extends ConsumerWidget {
     final currentIndex = ref.watch(eoNavIndexProvider);
 
     return AppShell(
-      appBar: AppBar(
-        title: const GradientText(
-          'CariTalent',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.white),
-            onPressed: () {},
-          ),
-          const CircleAvatar(
-            radius: 16,
-            backgroundColor: AppTheme.uiDark,
-            child: Icon(Icons.person, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
+      appBar: currentIndex == 4
+          ? null // No header on Profile Tab
+          : AppBar(
+              title: const GradientText(
+                'CariTalent',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+              ),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_none, color: Colors.white),
+                  onPressed: () {},
+                ),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFB500FF), Color(0xFFE94057)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: const Icon(Icons.person_outline, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 20),
+              ],
+            ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (index) => ref.read(eoNavIndexProvider.notifier).state = index,

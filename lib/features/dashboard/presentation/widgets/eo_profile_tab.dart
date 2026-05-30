@@ -2,8 +2,12 @@ import 'package:caritalent_mobile/app/theme/app_theme.dart';
 import 'package:caritalent_mobile/core/widgets/app_card.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/auth/application/auth_controller.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_change_password_page.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_edit_profile_page.dart';
+import 'package:caritalent_mobile/features/public/presentation/pages/public_home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class EoProfileTab extends ConsumerWidget {
   const EoProfileTab({super.key});
@@ -12,10 +16,12 @@ class EoProfileTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     final user = ref.watch(authControllerProvider).user;
-    final name = user?.name ?? 'Event Organizer';
+    final name = user?.name ?? 'Alex Rodriguez'; // Fallback matching design
+    final email = user?.email ?? '@alexrodriguez';
+    final phone = user?.phone ?? '0821678909090';
 
-    String initial = 'EO';
-    if (name.isNotEmpty) {
+    String initial = 'AR';
+    if (name.isNotEmpty && name != 'Alex Rodriguez') {
       final parts = name.split(' ');
       if (parts.length > 1) {
         initial = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
@@ -28,44 +34,11 @@ class EoProfileTab extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              GradientText(
-                'CariTalent',
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                ) ?? const TextStyle(),
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_none, color: Colors.white),
-                    onPressed: () {},
-                  ),
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [AppTheme.highlight, AppTheme.accent],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: const Icon(Icons.person_outline, color: Colors.white, size: 20),
-                  ),
-                ],
-              )
-            ],
-          ),
-          const SizedBox(height: 32),
+// Removed redundant local header
 
-          Text(
+          const Text(
             'Account Settings',
-            style: textTheme.labelSmall?.copyWith(color: AppTheme.highlight, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           GradientText(
@@ -75,18 +48,18 @@ class EoProfileTab extends ConsumerWidget {
             ) ?? const TextStyle(),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Kelola informasi akun dan keamanan kamu',
-            style: textTheme.bodyMedium,
+            style: TextStyle(color: Colors.white70, fontSize: 13),
           ),
           const SizedBox(height: 24),
 
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppTheme.panel,
+              color: AppTheme.uiDark,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.highlight.withValues(alpha: 0.15)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
             ),
             child: Column(
               children: [
@@ -99,59 +72,67 @@ class EoProfileTab extends ConsumerWidget {
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
-                          colors: [AppTheme.highlight, AppTheme.accent],
+                           colors: [Color(0xFFB500FF), Color(0xFFE94057)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                       ),
                       alignment: Alignment.center,
-                      child: Text(initial, style: textTheme.headlineMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w900)),
+                      child: Text(initial, style: const TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.w900)),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(name, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                          Text(name, style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
-                          Text(user?.email ?? 'email@example.com', style: textTheme.bodySmall),
+                          Text(email, style: const TextStyle(color: Colors.white54, fontSize: 13)),
                           const SizedBox(height: 2),
-                          Text(user?.phone ?? '-', style: textTheme.bodySmall?.copyWith(color: AppTheme.highlight)),
+                          Text(phone, style: const TextStyle(color: Color(0xFFC026D3), fontSize: 13, fontWeight: FontWeight.w500)), // Subtle purple
                         ],
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.highlight.withValues(alpha: 0.3)),
+                GestureDetector(
+                  onTap: () => context.push(EoEditProfilePage.routePath),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text('Edit Profil', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 14)),
                   ),
-                  alignment: Alignment.center,
-                  child: Text('Edit Profil', style: textTheme.labelLarge),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
 
-          AppCard(
+          Container(
             padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppTheme.uiDark,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Keamanan Akun', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const Text('Keamanan Akun', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
-                Text('Ubah password untuk menjaga\nkeamanan akun kamu', style: textTheme.bodyMedium),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Divider(color: AppTheme.border, height: 1),
+                const Text('Ubah password untuk menjaga\nkeamanan akun kamu', style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
                 ),
-                Text('PASSWORD SAAT INI', style: textTheme.labelSmall?.copyWith(color: AppTheme.neutralMedium, letterSpacing: 1.0)),
+                const Text('PASSWORD SAAT INI', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 2.0, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 Row(
                   children: List.generate(8, (index) => Container(
@@ -159,30 +140,33 @@ class EoProfileTab extends ConsumerWidget {
                     width: 7,
                     height: 7,
                     decoration: const BoxDecoration(
-                      color: AppTheme.neutralMedium,
+                      color: Colors.white, // Bright solid circles
                       shape: BoxShape.circle,
                     ),
                   )),
                 ),
-                const SizedBox(height: 20),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppTheme.highlight, AppTheme.accent],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
+                const SizedBox(height: 24),
+                GestureDetector(
+                  onTap: () => context.push(EoChangePasswordPage.routePath),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFB500FF), Color(0xFFE94057)], // Pink to magenta
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(30), // Highly rounded pill
                     ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.sync, color: Colors.white, size: 18),
-                      const SizedBox(width: 8),
-                      Text('Ubah Password', style: textTheme.labelLarge),
-                    ],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.sync, color: Colors.white, size: 18),
+                        SizedBox(width: 8),
+                        Text('Ubah Password', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -190,10 +174,13 @@ class EoProfileTab extends ConsumerWidget {
           ),
           const SizedBox(height: 32),
 
-          Text('Info Platform', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          const Text('Info Platform', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text('Detail akun dan statistik EO kamu', style: textTheme.bodyMedium),
-          const SizedBox(height: 16),
+          const Text('Detail akun dan statistik EO kamu', style: TextStyle(color: Colors.white70, fontSize: 13)),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+          ),
           
           Row(
             children: [
@@ -213,22 +200,23 @@ class EoProfileTab extends ConsumerWidget {
           
           const SizedBox(height: 32),
           
-          Text('Additional Settings', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
+          const Text('Additional Settings', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
           
           GestureDetector(
             onTap: () {
               ref.read(authControllerProvider.notifier).logout();
+              context.go(PublicHomePage.routePath);
             },
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withValues(alpha: 0.1),
+                color: Colors.redAccent.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.2)),
+                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.15)),
               ),
-              child: Text('Logout', style: textTheme.labelLarge?.copyWith(color: Colors.redAccent)),
+              child: const Text('Logout', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 14)),
             ),
           ),
           const SizedBox(height: 48),
@@ -238,10 +226,14 @@ class EoProfileTab extends ConsumerWidget {
   }
 
   Widget _buildStatSquare(BuildContext context, IconData icon, String label, String value) {
-    final textTheme = Theme.of(context).textTheme;
     return Expanded(
-      child: AppCard(
+      child: Container(
         padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.uiDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -250,7 +242,7 @@ class EoProfileTab extends ConsumerWidget {
                  Container(
                    padding: const EdgeInsets.all(4),
                    decoration: BoxDecoration(
-                     color: AppTheme.highlight.withValues(alpha: 0.15),
+                     color: AppTheme.highlight.withValues(alpha: 0.1),
                      borderRadius: BorderRadius.circular(6)
                    ),
                    child: Icon(icon, color: AppTheme.highlight, size: 14),
@@ -259,7 +251,7 @@ class EoProfileTab extends ConsumerWidget {
                  Expanded(
                    child: Text(
                      label,
-                     style: textTheme.labelSmall?.copyWith(color: AppTheme.neutralMedium, letterSpacing: 0.5),
+                     style: const TextStyle(color: Colors.white38, fontSize: 9, letterSpacing: 1.5, fontWeight: FontWeight.w700),
                      maxLines: 1,
                      overflow: TextOverflow.ellipsis,
                    ),
@@ -267,7 +259,7 @@ class EoProfileTab extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Text(value, style: textTheme.titleMedium),
+            Text(value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
       ),

@@ -14,40 +14,7 @@ class EoInvitationsTab extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              GradientText(
-                'CariTalent',
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                ) ?? const TextStyle(),
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_none, color: Colors.white),
-                    onPressed: () {},
-                  ),
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [AppTheme.highlight, AppTheme.accent],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: const Icon(Icons.person_outline, color: Colors.white, size: 20),
-                  ),
-                ],
-              )
-            ],
-          ),
-          const SizedBox(height: 32),
+// Removed redundant local header
 
           GradientText(
             'Invitations Terkirim',
@@ -127,30 +94,32 @@ class EoInvitationsTab extends StatelessWidget {
   }
 
   Widget _buildMetricCard(BuildContext context, String value, String label, Color valueColor) {
-    final textTheme = Theme.of(context).textTheme;
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 24),
         decoration: BoxDecoration(
-          color: AppTheme.panel,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.border),
+          color: AppTheme.uiDark,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Column(
           children: [
             Text(
               value,
-              style: textTheme.headlineMedium?.copyWith(
+              style: TextStyle(
+                fontSize: 28,
                 fontWeight: FontWeight.w400,
                 color: valueColor,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               label,
-              style: textTheme.labelSmall?.copyWith(
-                color: AppTheme.neutralMedium,
-                letterSpacing: 1.0,
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.white54,
+                letterSpacing: 1.5,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
@@ -160,8 +129,6 @@ class EoInvitationsTab extends StatelessWidget {
   }
 
   Widget _buildFilterChip(BuildContext context, String label, String count, bool isActive) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Container(
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -169,30 +136,38 @@ class EoInvitationsTab extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         gradient: isActive
             ? const LinearGradient(
-                colors: [AppTheme.highlight, AppTheme.accent],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                colors: [Color(0xFFB500FF), Color(0xFFE94057)], // Pink-Purple gradient
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
               )
             : null,
         color: isActive ? null : Colors.transparent,
-        border: isActive ? null : Border.all(color: AppTheme.border),
+        border: isActive ? null : Border.all(color: Colors.white24),
       ),
       child: Row(
         children: [
           Text(
             label,
-            style: textTheme.labelLarge,
+            style: TextStyle(
+              color: isActive ? Colors.white : Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: const BoxDecoration(
-              color: Colors.black38,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             child: Text(
               count,
-              style: textTheme.labelSmall?.copyWith(fontSize: 10, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: isActive ? Colors.white : Colors.white54,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           )
         ],
@@ -211,10 +186,13 @@ class EoInvitationsTab extends StatelessWidget {
     required String price,
     required String dateSubmitted,
   }) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return AppCard(
+    return Container(
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.uiDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -224,7 +202,7 @@ class EoInvitationsTab extends StatelessWidget {
               Expanded(
                 child: Text(
                   name,
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -233,14 +211,15 @@ class EoInvitationsTab extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.orangeAccent.withValues(alpha: 0.15),
+                  color: Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.3)),
+                  border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)), // Amber
                 ),
                 child: Text(
                   status,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: Colors.orangeAccent,
+                  style: const TextStyle(
+                    color: Color(0xFFF59E0B),
+                    fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -250,49 +229,51 @@ class EoInvitationsTab extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              Text(location, style: textTheme.bodySmall),
+              Text(location, style: const TextStyle(fontSize: 13, color: Colors.white70)),
               const SizedBox(width: 8),
-              const Icon(Icons.star, color: Colors.orangeAccent, size: 16),
-              const SizedBox(width: 2),
+              const Icon(Icons.star, color: Color(0xFFF59E0B), size: 14),
+              const SizedBox(width: 4),
               Text(
                 rating,
-                style: textTheme.labelLarge?.copyWith(color: Colors.orangeAccent, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: Color(0xFFF59E0B), fontSize: 13, fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 12),
               if (isVerified)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.green),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.verified, color: Colors.green, size: 12),
+                      const Icon(Icons.verified, color: Colors.green, size: 10),
                       const SizedBox(width: 4),
-                      Text('VERIFIED', style: textTheme.labelSmall?.copyWith(color: Colors.green, fontSize: 9, fontWeight: FontWeight.bold)),
+                      const Text('VERIFIED', style: TextStyle(color: Colors.green, fontSize: 8, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: genres.map((genre) {
                 return Container(
-                  margin: const EdgeInsets.only(right: 6),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppTheme.panel,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.border),
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                   ),
                   child: Text(
                     genre,
-                    style: textTheme.labelSmall?.copyWith(
-                      color: AppTheme.highlight,
+                    style: TextStyle(
+                      color: const Color(0xFFC026D3).withValues(alpha: 0.9), // Subtle Purple
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -300,35 +281,38 @@ class EoInvitationsTab extends StatelessWidget {
               }).toList(),
             ),
           ),
-          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'HARGA DITAWARKAN',
-                    style: textTheme.labelSmall?.copyWith(color: AppTheme.neutralMedium, letterSpacing: 1.2),
+                    style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     price,
-                    style: textTheme.titleMedium,
+                    style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
+                  const Text(
                     'DIKIRIM',
-                    style: textTheme.labelSmall?.copyWith(color: AppTheme.neutralMedium, letterSpacing: 1.2),
+                    style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     dateSubmitted,
-                    style: textTheme.titleMedium,
+                    style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),

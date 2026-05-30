@@ -4,9 +4,11 @@ import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_applicants_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_recommendations_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/create_event_modal.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/view_location_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 
 class EoEventsTab extends ConsumerWidget {
   const EoEventsTab({super.key});
@@ -96,10 +98,9 @@ class EoEventsTab extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-          _buildEventCardDetail(
-            context: context,
+          _EventCard(
             title: 'HALO',
-            status: 'DRAFT',
+            initialStatus: 'DRAFT',
             date: '17 Des 2000',
             location: 'Jalan Kaca Kaca Wetan',
             price: 'Rp 50.000',
@@ -109,10 +110,9 @@ class EoEventsTab extends ConsumerWidget {
             isCancelled: false,
           ),
           const SizedBox(height: 16),
-          _buildEventCardDetail(
-            context: context,
+          _EventCard(
             title: 'Naon',
-            status: 'OPEN',
+            initialStatus: 'OPEN',
             date: '17 Des 2004',
             location: 'Asasa',
             price: 'Rp 300',
@@ -122,10 +122,9 @@ class EoEventsTab extends ConsumerWidget {
             isCancelled: false,
           ),
           const SizedBox(height: 16),
-          _buildEventCardDetail(
-            context: context,
+          _EventCard(
             title: 'tesdt',
-            status: 'CANCELLED',
+            initialStatus: 'CANCELLED',
             date: '16 Jul 1000',
             location: 'Asa',
             price: 'Rp 10.000',
@@ -180,26 +179,57 @@ class EoEventsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildEventCardDetail({
-    required BuildContext context,
-    required String title,
-    required String status,
-    required String date,
-    required String location,
-    required String price,
-    required String applicants,
-    required String genre,
-    required bool isDraft,
-    required bool isCancelled,
-  }) {
+}
+
+class _EventCard extends StatefulWidget {
+  final String title;
+  final String initialStatus;
+  final String date;
+  final String location;
+  final String price;
+  final String applicants;
+  final String genre;
+  final bool isDraft;
+  final bool isCancelled;
+
+  const _EventCard({
+    required this.title,
+    required this.initialStatus,
+    required this.date,
+    required this.location,
+    required this.price,
+    required this.applicants,
+    required this.genre,
+    required this.isDraft,
+    required this.isCancelled,
+  });
+
+  @override
+  State<_EventCard> createState() => _EventCardState();
+}
+
+class _EventCardState extends State<_EventCard> {
+  late String currentStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    currentStatus = widget.initialStatus;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     Color statusBgColor;
     Color statusTextColor;
-    if (status == 'OPEN') {
+    if (currentStatus == 'OPEN') {
       statusBgColor = Colors.green.withValues(alpha: 0.15);
       statusTextColor = Colors.green;
-    } else if (status == 'CANCELLED') {
+    } else if (currentStatus == 'CANCELLED') {
+      statusBgColor = Colors.orangeAccent.withValues(alpha: 0.15);
+      statusTextColor = Colors.orangeAccent;
+    } else if (currentStatus == 'DELETED') {
       statusBgColor = Colors.redAccent.withValues(alpha: 0.15);
       statusTextColor = Colors.redAccent;
     } else {
@@ -217,8 +247,8 @@ class EoEventsTab extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  title,
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+                  widget.title,
+                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white, decoration: currentStatus == 'DELETED' ? TextDecoration.lineThrough : null),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -233,7 +263,7 @@ class EoEventsTab extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      status,
+                      currentStatus,
                       style: textTheme.labelSmall?.copyWith(
                         color: statusTextColor,
                         fontWeight: FontWeight.bold,
@@ -250,7 +280,7 @@ class EoEventsTab extends ConsumerWidget {
                       border: Border.all(color: AppTheme.highlight.withValues(alpha: 0.5)),
                     ),
                     child: Text(
-                      price,
+                      widget.price,
                       style: textTheme.labelSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -263,7 +293,7 @@ class EoEventsTab extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '$date • $location',
+            '${widget.date} • ${widget.location}',
             style: textTheme.bodySmall?.copyWith(color: AppTheme.neutralMedium),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -273,13 +303,29 @@ class EoEventsTab extends ConsumerWidget {
             children: [
               const Icon(Icons.people_outline, size: 16, color: Colors.white70),
               const SizedBox(width: 6),
-              Text(applicants, style: textTheme.bodySmall?.copyWith(color: Colors.white70)),
+              Text(widget.applicants, style: textTheme.bodySmall?.copyWith(color: Colors.white70)),
               const SizedBox(width: 20),
-              Icon(isCancelled ? Icons.block : Icons.location_on_outlined, size: 16, color: Colors.white70),
-              const SizedBox(width: 6),
-              Text(
-                isCancelled ? 'Event Dibatalkan' : 'Lihat Lokasi',
-                style: textTheme.bodySmall?.copyWith(color: Colors.white70),
+              GestureDetector(
+                onTap: () {
+                   if (currentStatus != 'DELETED' && !widget.isCancelled) {
+                     ViewLocationModal.show(
+                       context,
+                       eventName: widget.title,
+                       displayAddress: widget.location,
+                       location: const LatLng(-6.914744, 107.609810), // Bandung Mock
+                     );
+                   }
+                },
+                child: Row(
+                  children: [
+                    Icon(widget.isCancelled || currentStatus == 'DELETED' ? Icons.block : Icons.location_on_outlined, size: 16, color: Colors.white70),
+                    const SizedBox(width: 6),
+                    Text(
+                      currentStatus == 'DELETED' ? 'Dihapus' : (widget.isCancelled ? 'Event Dibatalkan' : 'Lihat Lokasi'),
+                      style: textTheme.bodySmall?.copyWith(color: Colors.white70),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -292,7 +338,7 @@ class EoEventsTab extends ConsumerWidget {
               border: Border.all(color: Colors.white12),
             ),
             child: Text(
-              genre,
+              widget.genre,
               style: textTheme.labelSmall?.copyWith(
                 color: AppTheme.highlight,
                 fontWeight: FontWeight.w600,
@@ -318,7 +364,7 @@ class EoEventsTab extends ConsumerWidget {
                         const Icon(Icons.person_search_outlined, size: 16, color: Color(0xFF3B0764)),
                         const SizedBox(width: 6),
                         Text(
-                          'Pelamar (${applicants.replaceAll(RegExp(r'[^0-9]'), '')})',
+                          'Pelamar (${widget.applicants.replaceAll(RegExp(r'[^0-9]'), '')})',
                           style: textTheme.labelMedium?.copyWith(
                             color: const Color(0xFF3B0764),
                             fontWeight: FontWeight.bold,
@@ -358,15 +404,37 @@ class EoEventsTab extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.border),
+              GestureDetector(
+                onTap: () => CreateEventModal.show(context),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.border),
+                  ),
+                  child: const Icon(Icons.edit_outlined, size: 16, color: Colors.white70),
                 ),
-                child: const Icon(Icons.edit_outlined, size: 16, color: Colors.white70),
-              )
+              ),
+              if (currentStatus != 'DELETED') ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      currentStatus = 'DELETED';
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.redAccent.withValues(alpha: 0.2)),
+                    ),
+                    child: const Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
+                  ),
+                ),
+              ]
             ],
           )
         ],
