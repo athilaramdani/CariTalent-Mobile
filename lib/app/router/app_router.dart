@@ -45,13 +45,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: EoDashboardPage.routePath,
         builder: (context, state) => const EoDashboardPage(),
       ),
+      // EO Applicants — receives eventId as path param
       GoRoute(
-        path: EoApplicantsPage.routePath,
-        builder: (context, state) => const EoApplicantsPage(),
+        path: '${EoApplicantsPage.routePath}/:eventId',
+        builder: (context, state) {
+          final eventId =
+              int.tryParse(state.pathParameters['eventId'] ?? '0') ?? 0;
+          return EoApplicantsPage(eventId: eventId);
+        },
       ),
+      // EO Recommendations — receives eventId as path param
       GoRoute(
-        path: EoRecommendationsPage.routePath,
-        builder: (context, state) => const EoRecommendationsPage(),
+        path: '${EoRecommendationsPage.routePath}/:eventId',
+        builder: (context, state) {
+          final eventId =
+              int.tryParse(state.pathParameters['eventId'] ?? '0') ?? 0;
+          return EoRecommendationsPage(eventId: eventId);
+        },
       ),
       GoRoute(
         path: EoEditProfilePage.routePath,

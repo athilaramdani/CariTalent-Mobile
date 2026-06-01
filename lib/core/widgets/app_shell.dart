@@ -1,4 +1,3 @@
-import 'package:caritalent_mobile/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class AppShell extends StatelessWidget {

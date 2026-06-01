@@ -1,135 +1,194 @@
 import 'package:caritalent_mobile/app/theme/app_theme.dart';
-import 'package:caritalent_mobile/core/widgets/app_card.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
+import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class EoBookingsTab extends StatelessWidget {
+class EoBookingsTab extends ConsumerStatefulWidget {
   const EoBookingsTab({super.key});
+
+  @override
+  ConsumerState<EoBookingsTab> createState() => _EoBookingsTabState();
+}
+
+class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
+  String _selectedFilter = 'Semua';
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final bookingsAsync = ref.watch(myBookingsProvider);
 
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        children: [
-// Removed redundant local header
+      child: bookingsAsync.when(
+        data: (bookings) {
+          final confirmed =
+              bookings.where((b) => b.status == 'confirmed').length;
+          final completed =
+              bookings.where((b) => b.status == 'completed').length;
 
-          GradientText(
-            'My Bookings',
-            style: textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-            ) ?? const TextStyle(),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Detail booking event beserta talent, harga deal,\ndan status',
-            style: textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '2 booking · 0 confirmed · 2 completed',
-            style: textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 24),
+          final filtered = _selectedFilter == 'Semua'
+              ? bookings
+              : bookings.where((b) {
+                  switch (_selectedFilter) {
+                    case 'Confirmed':
+                      return b.status == 'confirmed';
+                    case 'Completed':
+                      return b.status == 'completed';
+                    default:
+                      return true;
+                  }
+                }).toList();
 
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip(context, 'Semua', '2', true),
-                _buildFilterChip(context, 'Confirmed', '0', false),
-                _buildFilterChip(context, 'Completed', '2', false),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
+          return ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            children: [
+              GradientText(
+                'My Bookings',
+                style: textTheme.headlineMedium
+                        ?.copyWith(fontWeight: FontWeight.w900) ??
+                    const TextStyle(),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Detail booking event beserta talent, harga deal,\ndan status',
+                style: textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${bookings.length} booking · $confirmed confirmed · $completed completed',
+                style: textTheme.bodyMedium
+                    ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 24),
 
-          _buildBookingCard(
-            context: context,
-            title: 'Pasar Bandoeng Weekend Vibes',
-            status: 'COMPLETED',
-            dateLocation: '17 Mei 2026 · Pasar Bandoeng - Parahyangan',
-            talent: 'DJ Arfz Bdg',
-            price: 'Rp 2.500.000',
-            source: 'Apply Langsung',
-            createdAt: '3 Apr 2026',
+              // Filter Chips
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildFilterChip(context, 'Semua', '${bookings.length}'),
+                    _buildFilterChip(context, 'Confirmed', '$confirmed'),
+                    _buildFilterChip(context, 'Completed', '$completed'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              if (filtered.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.event_busy_outlined,
+                            size: 52, color: Colors.white24),
+                        const SizedBox(height: 16),
+                        Text('Tidak ada booking',
+                            style: textTheme.bodyMedium
+                                ?.copyWith(color: Colors.white38)),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                for (final booking in filtered) ...[
+                  _buildBookingCard(context: context, booking: booking),
+                  const SizedBox(height: 16),
+                ],
+
+              const SizedBox(height: 48),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+              const SizedBox(height: 16),
+              Text('Gagal memuat bookings: $e',
+                  style: const TextStyle(color: Colors.white54),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(myBookingsProvider),
+                child: const Text('Coba Lagi'),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          _buildBookingCard(
-            context: context,
-            title: 'Pasar Bandoeng DJ Night Februari',
-            status: 'COMPLETED',
-            dateLocation: '22 Feb 2026 · Pasar Bandoeng',
-            talent: 'DJ Arfz Bdg',
-            price: 'Rp 2.500.000',
-            source: 'Apply Langsung',
-            createdAt: '27 Jan 2026',
-          ),
-          const SizedBox(height: 48),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildFilterChip(BuildContext context, String label, String count, bool isActive) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: isActive
-            ? const LinearGradient(
-                colors: [Color(0xFFB500FF), Color(0xFFE94057)], // Pink-Purple gradient
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              )
-            : null,
-        color: isActive ? null : Colors.transparent,
-        border: isActive ? null : Border.all(color: Colors.white24),
-      ),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: isActive ? Colors.white : Colors.white70,
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              count,
+  Widget _buildFilterChip(BuildContext context, String label, String count) {
+    final isActive = _selectedFilter == label;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedFilter = label),
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: isActive
+              ? const LinearGradient(
+                  colors: [Color(0xFFB500FF), Color(0xFFE94057)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                )
+              : null,
+          color: isActive ? null : Colors.transparent,
+          border: isActive ? null : Border.all(color: Colors.white24),
+        ),
+        child: Row(
+          children: [
+            Text(
+              label,
               style: TextStyle(
-                color: isActive ? Colors.white : Colors.white54,
-                fontSize: 10,
+                color: isActive ? Colors.white : Colors.white70,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
               ),
             ),
-          )
-        ],
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                count,
+                style: TextStyle(
+                  color: isActive ? Colors.white : Colors.white54,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildBookingCard({
     required BuildContext context,
-    required String title,
-    required String status,
-    required String dateLocation,
-    required String talent,
-    required String price,
-    required String source,
-    required String createdAt,
+    required BookingModel booking,
   }) {
+    final s = booking.status.toLowerCase();
+    Color statusColor;
+    if (s == 'confirmed') {
+      statusColor = AppTheme.highlight;
+    } else if (s == 'completed') {
+      statusColor = Colors.green;
+    } else {
+      statusColor = Colors.white70;
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -146,40 +205,47 @@ class EoBookingsTab extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  title,
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white, height: 1.3),
+                  booking.eventTitle,
+                  style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      height: 1.3),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.highlight.withValues(alpha: 0.5)),
+                  border:
+                      Border.all(color: statusColor.withValues(alpha: 0.5)),
                 ),
                 child: Text(
-                  status,
-                  style: const TextStyle(
-                    color: AppTheme.highlight,
+                  booking.statusCapitalized,
+                  style: TextStyle(
+                    color: statusColor,
                     fontSize: 9,
                     letterSpacing: 1.0,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.location_on_outlined, color: AppTheme.highlight, size: 16),
+              Icon(Icons.location_on_outlined,
+                  color: statusColor, size: 16),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  dateLocation,
+                  booking.eventDateVenueFormatted,
                   style: const TextStyle(fontSize: 11, color: Colors.white70),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -189,7 +255,8 @@ class EoBookingsTab extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+            child:
+                Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -199,21 +266,40 @@ class EoBookingsTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                     const Text('TALENT', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.w700)),
-                     const SizedBox(height: 6),
-                     Row(
-                       children: [
-                         const Icon(Icons.person_outline, color: AppTheme.highlight, size: 16),
-                         const SizedBox(width: 6),
-                         Expanded(
-                           child: Text(talent, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-                         ),
-                       ],
-                     ),
-                     const SizedBox(height: 16),
-                     const Text('SUMBER', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.w700)),
-                     const SizedBox(height: 6),
-                     Text(source, style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
+                    const Text('TALENT',
+                        style: TextStyle(
+                            color: Colors.white38,
+                            fontSize: 10,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.person_outline,
+                            color: statusColor, size: 16),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(booking.talentName,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('SUMBER',
+                        style: TextStyle(
+                            color: Colors.white38,
+                            fontSize: 10,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 6),
+                    Text(booking.sourceLabel,
+                        style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -221,18 +307,36 @@ class EoBookingsTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                     const Text('HARGA DEAL', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.w700)),
-                     const SizedBox(height: 6),
-                     Text(price, style: const TextStyle(fontSize: 15, color: Color(0xFFE879F9), fontWeight: FontWeight.w900)), // Bright magenta/pink
-                     const SizedBox(height: 20),
-                     const Text('DIBUAT', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.w700)),
-                     const SizedBox(height: 6),
-                     Text(createdAt, style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
+                    const Text('HARGA DEAL',
+                        style: TextStyle(
+                            color: Colors.white38,
+                            fontSize: 10,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 6),
+                    Text(booking.agreedPriceFormatted,
+                        style: const TextStyle(
+                            fontSize: 15,
+                            color: Color(0xFFE879F9),
+                            fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 20),
+                    const Text('DIBUAT',
+                        style: TextStyle(
+                            color: Colors.white38,
+                            fontSize: 10,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 6),
+                    Text(booking.dateFormatted,
+                        style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
