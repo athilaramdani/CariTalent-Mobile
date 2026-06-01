@@ -1,5 +1,4 @@
 import 'package:caritalent_mobile/app/theme/app_theme.dart';
-import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,7 +9,6 @@ class EoEditProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     
     return Scaffold(
       backgroundColor: AppTheme.uiDark,

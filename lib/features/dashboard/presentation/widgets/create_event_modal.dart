@@ -1,10 +1,12 @@
 import 'package:caritalent_mobile/app/theme/app_theme.dart';
-import 'package:caritalent_mobile/core/widgets/app_button.dart';
+import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
-class CreateEventModal extends StatefulWidget {
+class CreateEventModal extends ConsumerStatefulWidget {
   const CreateEventModal({super.key});
 
   static Future<void> show(BuildContext context) {
@@ -17,19 +19,43 @@ class CreateEventModal extends StatefulWidget {
   }
 
   @override
-  State<CreateEventModal> createState() => _CreateEventModalState();
+  ConsumerState<CreateEventModal> createState() => _CreateEventModalState();
 }
 
-class _CreateEventModalState extends State<CreateEventModal> {
+class _CreateEventModalState extends ConsumerState<CreateEventModal> {
   final _formKey = GlobalKey<FormState>();
-  LatLng? _selectedLocation;
-  final _mapController = MapController();
 
+  // Text controllers
+  final _titleCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
+  final _budgetCtrl = TextEditingController();
+  final _dateCtrl = TextEditingController();
+  final _venueCtrl = TextEditingController();
+  final _cityCtrl = TextEditingController();
   final _latController = TextEditingController(text: 'Belum ada pin');
   final _lngController = TextEditingController(text: 'Belum ada pin');
 
+  // Dropdown states
+  String? _selectedGenre;
+  String? _selectedStatus;
+  LatLng? _selectedLocation;
+  final _mapController = MapController();
+  bool _isLoading = false;
+
+  static const _genres = [
+    'Rock', 'Jazz', 'Pop', 'Electronic', 'Indie',
+    'Folk', 'Classical', 'Acoustic', 'Hip-Hop', 'R&B',
+  ];
+  static const _statuses = ['open', 'closed'];
+
   @override
   void dispose() {
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
+    _budgetCtrl.dispose();
+    _dateCtrl.dispose();
+    _venueCtrl.dispose();
+    _cityCtrl.dispose();
     _latController.dispose();
     _lngController.dispose();
     super.dispose();
@@ -41,6 +67,49 @@ class _CreateEventModalState extends State<CreateEventModal> {
       _latController.text = point.latitude.toStringAsFixed(6);
       _lngController.text = point.longitude.toStringAsFixed(6);
     });
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(eventRepositoryProvider).createEvent(
+            title: _titleCtrl.text.trim(),
+            description: _descCtrl.text.trim(),
+            budget: int.parse(_budgetCtrl.text.replaceAll('.', '')),
+            eventDate: _dateCtrl.text.trim(),
+            venueName: _venueCtrl.text.trim(),
+            city: _cityCtrl.text.trim(),
+            status: _selectedStatus ?? 'open',
+            genre: _selectedGenre != null ? [_selectedGenre!] : [],
+            latitude: _selectedLocation?.latitude,
+            longitude: _selectedLocation?.longitude,
+          );
+
+      ref.invalidate(myEventsProvider);
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Event berhasil dibuat! 🎉'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal membuat event: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -62,78 +131,159 @@ class _CreateEventModalState extends State<CreateEventModal> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                    icon: const Icon(Icons.close,
+                        color: Colors.white, size: 20),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Text(
                     'Buat Event',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white),
                   ),
-                  const SizedBox(width: 48), // Balance for centering
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
             const Divider(height: 1, color: AppTheme.border),
-            
+
             Expanded(
               child: Form(
                 key: _formKey,
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
-                     const Text(
+                    const Text(
                       'Buat Event Baru',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white),
+                      style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Isi detail event yang ingin kamu selenggarakan.',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      style:
+                          TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                     const SizedBox(height: 16),
                     const Divider(color: AppTheme.border),
                     const SizedBox(height: 16),
 
                     _buildLabel('Judul Event *'),
-                    _buildTextField(hint: 'Masukkan judul...'),
+                    _buildTextFormField(
+                      controller: _titleCtrl,
+                      hint: 'Masukkan judul...',
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Wajib diisi' : null,
+                    ),
                     const SizedBox(height: 12),
 
                     _buildLabel('Deskripsi'),
-                    _buildTextField(hint: 'Deskripsikan event kamu...', maxLines: 3),
+                    _buildTextFormField(
+                      controller: _descCtrl,
+                      hint: 'Deskripsikan event kamu...',
+                      maxLines: 3,
+                    ),
                     const SizedBox(height: 12),
 
                     _buildLabel('Genre Dibutuhkan *'),
-                    _buildDropdown(hint: 'Pilih genre...'),
+                    _buildDropdown(
+                      value: _selectedGenre,
+                      hint: 'Pilih genre...',
+                      items: _genres,
+                      onChanged: (v) =>
+                          setState(() => _selectedGenre = v),
+                    ),
                     const SizedBox(height: 12),
 
                     _buildLabel('Budget (Rp) *'),
-                    _buildTextField(hint: 'Masukkan jumlah...', keyboardType: TextInputType.number),
+                    _buildTextFormField(
+                      controller: _budgetCtrl,
+                      hint: 'Contoh: 2000000',
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly
+                      ],
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Wajib diisi' : null,
+                    ),
                     const SizedBox(height: 12),
 
                     _buildLabel('Tanggal Event *'),
-                    _buildTextField(hint: 'dd/mm/yyyy', suffixIcon: Icons.calendar_today),
+                    _buildTextFormField(
+                      controller: _dateCtrl,
+                      hint: 'YYYY-MM-DD',
+                      suffixIcon: Icons.calendar_today,
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Wajib diisi' : null,
+                      onTap: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now()
+                              .add(const Duration(days: 7)),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now()
+                              .add(const Duration(days: 365 * 2)),
+                          builder: (context, child) => Theme(
+                            data: ThemeData.dark().copyWith(
+                              colorScheme: const ColorScheme.dark(
+                                primary: Color(0xFFB500FF),
+                              ),
+                            ),
+                            child: child!,
+                          ),
+                        );
+                        if (date != null) {
+                          _dateCtrl.text =
+                              '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+                        }
+                      },
+                    ),
                     const SizedBox(height: 12),
 
                     _buildLabel('Status Awal'),
-                    _buildDropdown(hint: 'Draft (simpan dulu)'),
+                    _buildDropdown(
+                      value: _selectedStatus,
+                      hint: 'Open (default)',
+                      items: _statuses,
+                      onChanged: (v) =>
+                          setState(() => _selectedStatus = v),
+                    ),
                     const SizedBox(height: 12),
 
                     _buildLabel('Nama Venue *'),
-                    _buildTextField(hint: 'Masukkan venue...'),
+                    _buildTextFormField(
+                      controller: _venueCtrl,
+                      hint: 'Masukkan venue...',
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Wajib diisi' : null,
+                    ),
                     const SizedBox(height: 12),
 
                     _buildLabel('Kota *'),
-                    _buildTextField(hint: 'Masukkan kota...'),
+                    _buildTextFormField(
+                      controller: _cityCtrl,
+                      hint: 'Masukkan kota...',
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Wajib diisi' : null,
+                    ),
                     const SizedBox(height: 16),
 
-                    const Text('Pilih Lokasi di Peta', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
+                    const Text('Pilih Lokasi di Peta',
+                        style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500)),
                     const SizedBox(height: 6),
-                    
+
                     // Map View
                     Container(
                       height: 160,
@@ -147,14 +297,17 @@ class _CreateEventModalState extends State<CreateEventModal> {
                           FlutterMap(
                             mapController: _mapController,
                             options: MapOptions(
-                              initialCenter: const LatLng(-6.914744, 107.609810), // Bandung
+                              initialCenter: const LatLng(
+                                  -6.914744, 107.609810),
                               initialZoom: 13.0,
                               onTap: _onMapTap,
                             ),
                             children: [
                               TileLayer(
-                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                userAgentPackageName: 'com.example.caritalent',
+                                urlTemplate:
+                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                userAgentPackageName:
+                                    'com.example.caritalent',
                               ),
                               if (_selectedLocation != null)
                                 MarkerLayer(
@@ -165,7 +318,7 @@ class _CreateEventModalState extends State<CreateEventModal> {
                                       height: 40,
                                       child: const Icon(
                                         Icons.location_on,
-                                        color: Color(0xFFD8B4FE), // Light Purple
+                                        color: Color(0xFFD8B4FE),
                                         size: 32,
                                       ),
                                     ),
@@ -173,20 +326,25 @@ class _CreateEventModalState extends State<CreateEventModal> {
                                 ),
                             ],
                           ),
-                          // Zoom controls
                           Positioned(
                             left: 8,
                             top: 8,
                             child: Column(
                               children: [
                                 _buildMapButton(Icons.add, () {
-                                  final currentZoom = _mapController.camera.zoom;
-                                  _mapController.move(_mapController.camera.center, currentZoom + 1);
+                                  final z =
+                                      _mapController.camera.zoom;
+                                  _mapController.move(
+                                      _mapController.camera.center,
+                                      z + 1);
                                 }),
                                 const SizedBox(height: 4),
                                 _buildMapButton(Icons.remove, () {
-                                  final currentZoom = _mapController.camera.zoom;
-                                  _mapController.move(_mapController.camera.center, currentZoom - 1);
+                                  final z =
+                                      _mapController.camera.zoom;
+                                  _mapController.move(
+                                      _mapController.camera.center,
+                                      z - 1);
                                 }),
                               ],
                             ),
@@ -195,83 +353,110 @@ class _CreateEventModalState extends State<CreateEventModal> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    
+
                     _buildLabel('Latitude'),
-                    _buildTextField(controller: _latController, readOnly: true, fillColor: AppTheme.uiDark),
+                    _buildTextField(
+                        controller: _latController,
+                        readOnly: true,
+                        fillColor: AppTheme.uiDark),
                     const SizedBox(height: 12),
 
                     _buildLabel('Longitude'),
-                    _buildTextField(controller: _lngController, readOnly: true, fillColor: AppTheme.uiDark),
-                    
+                    _buildTextField(
+                        controller: _lngController,
+                        readOnly: true,
+                        fillColor: AppTheme.uiDark),
+
                     const SizedBox(height: 16),
                   ],
                 ),
               ),
             ),
-            
+
             // Bottom Actions
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
                 color: AppTheme.neutralDark,
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-                border: Border(top: BorderSide(color: AppTheme.border)),
+                borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(24)),
+                border: Border(
+                    top: BorderSide(color: AppTheme.border)),
               ),
               child: Row(
                 children: [
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Batal', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 16)),
+                      child: const Text('Batal',
+                          style: TextStyle(
+                              color: Colors.white70,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16)),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     flex: 2,
                     child: InkWell(
-                      onTap: () {},
+                      onTap: _isLoading ? null : _submit,
                       borderRadius: BorderRadius.circular(30),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(30),
                           gradient: const LinearGradient(
-                            colors: [Color(0xFFC026D3), Color(0xFF6B21A8)],
+                            colors: [
+                              Color(0xFFC026D3),
+                              Color(0xFF6B21A8)
+                            ],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFC026D3).withValues(alpha: 0.4),
+                              color: const Color(0xFFC026D3)
+                                  .withValues(alpha: 0.4),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             )
                           ],
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white,
+                        child: _isLoading
+                            ? const Center(
+                                child: SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white),
+                                ),
+                              )
+                            : const Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add,
+                                      color: Colors.white, size: 18),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Buat Event',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                        fontWeight:
+                                            FontWeight.bold),
+                                  ),
+                                ],
                               ),
-                              padding: const EdgeInsets.all(2),
-                              child: const Icon(Icons.add, color: Color(0xFF9333EA), size: 16, weight: 800),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Buat Event',
-                              style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -279,20 +464,24 @@ class _CreateEventModalState extends State<CreateEventModal> {
   }
 
   Widget _buildLabel(String text) {
-    bool hasAsterisk = text.endsWith('*');
-    String baseText = hasAsterisk ? text.substring(0, text.length - 1).trim() : text;
-
+    final hasAsterisk = text.endsWith('*');
+    final baseText =
+        hasAsterisk ? text.substring(0, text.length - 1).trim() : text;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: RichText(
         text: TextSpan(
           text: baseText,
-          style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w600, fontFamily: 'Poppins'),
+          style: const TextStyle(
+              fontSize: 10,
+              color: Colors.white70,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Poppins'),
           children: [
             if (hasAsterisk)
               const TextSpan(
                 text: ' *',
-                style: TextStyle(color: Color(0xFFFCA5A5)), // Pale Red
+                style: TextStyle(color: Color(0xFFFCA5A5)),
               )
           ],
         ),
@@ -300,6 +489,61 @@ class _CreateEventModalState extends State<CreateEventModal> {
     );
   }
 
+  // Validated form field
+  Widget _buildTextFormField({
+    required TextEditingController controller,
+    String? hint,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    IconData? suffixIcon,
+    bool readOnly = false,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+    VoidCallback? onTap,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      readOnly: readOnly,
+      inputFormatters: inputFormatters,
+      validator: validator,
+      onTap: onTap,
+      style: const TextStyle(fontSize: 13, color: Colors.white),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle:
+            const TextStyle(color: Colors.white38, fontSize: 13),
+        suffixIcon: suffixIcon != null
+            ? Icon(suffixIcon, color: Colors.white70, size: 18)
+            : null,
+        fillColor: AppTheme.uiDark,
+        filled: true,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide:
+              BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide:
+              BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppTheme.highlight),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.redAccent),
+        ),
+      ),
+    );
+  }
+
+  // Read-only non-validated field
   Widget _buildTextField({
     String? hint,
     int maxLines = 1,
@@ -317,18 +561,24 @@ class _CreateEventModalState extends State<CreateEventModal> {
       style: const TextStyle(fontSize: 13, color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-        suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: Colors.white70, size: 18) : null,
-        fillColor: fillColor ?? AppTheme.uiDark, // Using uiDark for that deep input field look
+        hintStyle:
+            const TextStyle(color: Colors.white38, fontSize: 13),
+        suffixIcon: suffixIcon != null
+            ? Icon(suffixIcon, color: Colors.white70, size: 18)
+            : null,
+        fillColor: fillColor ?? AppTheme.uiDark,
         filled: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderSide:
+              BorderSide(color: Colors.white.withValues(alpha: 0.1)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+          borderSide:
+              BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -338,27 +588,44 @@ class _CreateEventModalState extends State<CreateEventModal> {
     );
   }
 
-  Widget _buildDropdown({required String hint}) {
+  Widget _buildDropdown({
+    required String hint,
+    required List<String> items,
+    String? value,
+    required ValueChanged<String?> onChanged,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       decoration: BoxDecoration(
         color: AppTheme.uiDark,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(
+            color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           isExpanded: true,
-          hint: Text(hint, style: const TextStyle(color: Colors.white38, fontSize: 13)),
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 18),
+          value: value,
+          hint: Text(hint,
+              style: const TextStyle(
+                  color: Colors.white38, fontSize: 13)),
+          icon: const Icon(Icons.keyboard_arrow_down,
+              color: Colors.white54, size: 18),
           dropdownColor: AppTheme.neutralDark,
-          items: const [],
-          onChanged: (_) {},
+          items: items
+              .map((s) => DropdownMenuItem(
+                    value: s,
+                    child: Text(s,
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 13)),
+                  ))
+              .toList(),
+          onChanged: onChanged,
         ),
       ),
     );
   }
-  
+
   Widget _buildMapButton(IconData icon, VoidCallback onPressed) {
     return InkWell(
       onTap: onPressed,
