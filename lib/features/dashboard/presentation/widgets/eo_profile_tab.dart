@@ -1,5 +1,4 @@
 import 'package:caritalent_mobile/app/theme/app_theme.dart';
-import 'package:caritalent_mobile/core/widgets/app_card.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/auth/application/auth_controller.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_change_password_page.dart';

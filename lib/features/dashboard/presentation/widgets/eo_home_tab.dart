@@ -2,6 +2,9 @@ import 'package:caritalent_mobile/app/theme/app_theme.dart';
 import 'package:caritalent_mobile/core/widgets/app_card.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/auth/application/auth_controller.dart';
+import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/event_model.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/create_event_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,21 +18,26 @@ class EoHomeTab extends ConsumerWidget {
     final user = ref.watch(authControllerProvider).user;
     final name = user?.name ?? 'Event Organizer';
 
+    final eventsAsync = ref.watch(myEventsProvider);
+    final bookingsAsync = ref.watch(myBookingsProvider);
+
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
           Text(
             'Event Organizer Dashboard',
-            style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.5),
+            style: textTheme.bodySmall
+                ?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.5),
           ),
           const SizedBox(height: 4),
           GradientText(
             name,
             style: textTheme.displaySmall?.copyWith(
-              fontWeight: FontWeight.w900,
-              fontSize: 32, // Adjusted size based on Image 1
-            ) ?? const TextStyle(),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 32,
+                ) ??
+                const TextStyle(),
           ),
           const SizedBox(height: 8),
           Text(
@@ -55,11 +63,15 @@ class EoHomeTab extends ConsumerWidget {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.add_circle_outline, color: Colors.white, size: 20),
+                        Icon(Icons.add_circle_outline,
+                            color: Colors.white, size: 20),
                         SizedBox(width: 8),
                         Text(
                           'Buat Event Baru',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13),
                         ),
                       ],
                     ),
@@ -69,7 +81,7 @@ class EoHomeTab extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: GestureDetector(
-                  onTap: () {},
+                  onTap: () => ref.read(eoNavIndexProvider.notifier).state = 1,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(
@@ -80,11 +92,14 @@ class EoHomeTab extends ConsumerWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.calendar_month_outlined, color: AppTheme.highlight, size: 20),
+                        const Icon(Icons.calendar_month_outlined,
+                            color: AppTheme.highlight, size: 20),
                         const SizedBox(width: 8),
                         GradientText(
                           'Lihat Semua Event',
-                          style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 13) ?? const TextStyle(),
+                          style: textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.bold, fontSize: 13) ??
+                              const TextStyle(),
                         ),
                       ],
                     ),
@@ -94,40 +109,150 @@ class EoHomeTab extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _buildStatCard(context, 'Total Events', '10', 'Semua event yang dibuat', Icons.calendar_today_outlined)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildStatCard(context, 'Active Events', '2', 'Semua event yang dibuat', Icons.event_available_outlined)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _buildStatCard(context, 'Total Bookings', '2', 'Semua event yang dibuat', Icons.handshake_outlined)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildStatCard(context, 'Completed', '2', 'Semua event yang dibuat', Icons.verified_outlined)),
-            ],
+
+          // Stats Cards — from real data
+          eventsAsync.when(
+            data: (events) {
+              final totalEvents = events.length;
+              final activeEvents =
+                  events.where((e) => e.status.toLowerCase() == 'dibuka').length;
+              return bookingsAsync.when(
+                data: (bookings) {
+                  final totalBookings = bookings.length;
+                  final completed = bookings
+                      .where((b) => b.status == 'completed')
+                      .length;
+                  return Column(
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                              child: _buildStatCard(
+                                  context,
+                                  'Total Events',
+                                  '$totalEvents',
+                                  'Semua event yang dibuat',
+                                  Icons.calendar_today_outlined)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                              child: _buildStatCard(
+                                  context,
+                                  'Active Events',
+                                  '$activeEvents',
+                                  'Event sedang dibuka',
+                                  Icons.event_available_outlined)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                              child: _buildStatCard(
+                                  context,
+                                  'Total Bookings',
+                                  '$totalBookings',
+                                  'Semua booking aktif',
+                                  Icons.handshake_outlined)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                              child: _buildStatCard(
+                                  context,
+                                  'Completed',
+                                  '$completed',
+                                  'Booking selesai',
+                                  Icons.verified_outlined)),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+                loading: () => _buildStatsLoading(context),
+                error: (_, __) => _buildStatsLoading(context),
+              );
+            },
+            loading: () => _buildStatsLoading(context),
+            error: (_, __) => _buildStatsLoading(context),
           ),
           const SizedBox(height: 32),
-          _buildSectionTitle(context, 'My Events', 'Ringkasan event terbaru', () {}),
+
+          // Recent Events
+          _buildSectionTitle(context, 'My Events', 'Ringkasan event terbaru',
+              () => ref.read(eoNavIndexProvider.notifier).state = 1),
           const SizedBox(height: 16),
-          ..._buildFakeEvents(context),
+          eventsAsync.when(
+            data: (events) {
+              if (events.isEmpty) {
+                return _buildEmpty(context, 'Belum ada event');
+              }
+              final recent = events.take(3).toList();
+              return Column(
+                children: [
+                  for (final e in recent) ...[
+                    _buildEventCard(context, e),
+                    const SizedBox(height: 12),
+                  ],
+                ],
+              );
+            },
+            loading: () =>
+                const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Text('Error: $e',
+                style: const TextStyle(color: Colors.redAccent)),
+          ),
           const SizedBox(height: 32),
-          _buildSectionTitle(context, 'Bookings', 'Ringkasan booking terkini', null),
+
+          // Recent Bookings
+          _buildSectionTitle(
+              context, 'Bookings', 'Ringkasan booking terkini', null),
           const SizedBox(height: 16),
-          ..._buildFakeBookings(context),
+          bookingsAsync.when(
+            data: (bookings) {
+              if (bookings.isEmpty) {
+                return _buildEmpty(context, 'Belum ada booking');
+              }
+              final recent = bookings.take(3).toList();
+              return Column(
+                children: [
+                  for (final b in recent) ...[
+                    _buildBookingCard(context, b),
+                    const SizedBox(height: 12),
+                  ],
+                ],
+              );
+            },
+            loading: () =>
+                const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Text('Error: $e',
+                style: const TextStyle(color: Colors.redAccent)),
+          ),
           const SizedBox(height: 48),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value, String hint, IconData icon) {
-    final textTheme = Theme.of(context).textTheme;
+  Widget _buildStatsLoading(BuildContext context) {
+    return const SizedBox(
+      height: 120,
+      child: Center(child: CircularProgressIndicator()),
+    );
+  }
 
+  Widget _buildEmpty(BuildContext context, String msg) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(msg,
+            style: const TextStyle(color: Colors.white38, fontSize: 14)),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(BuildContext context, String title, String value,
+      String hint, IconData icon) {
+    final textTheme = Theme.of(context).textTheme;
     return AppCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -141,7 +266,10 @@ class EoHomeTab extends ConsumerWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.5, color: AppTheme.neutralMedium),
+                  style: textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                      color: AppTheme.neutralMedium),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -151,7 +279,8 @@ class EoHomeTab extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(
             value,
-            style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 28),
+            style: textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold, color: Colors.white, fontSize: 28),
           ),
           const SizedBox(height: 2),
           Text(
@@ -165,7 +294,8 @@ class EoHomeTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionTitle(BuildContext context, String title, String subtitle, VoidCallback? onSeeAll) {
+  Widget _buildSectionTitle(BuildContext context, String title, String subtitle,
+      VoidCallback? onSeeAll) {
     final textTheme = Theme.of(context).textTheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -178,7 +308,7 @@ class EoHomeTab extends ConsumerWidget {
               title,
               style: textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w900,
-                color: AppTheme.highlight, // Solid purple instead of gradient
+                color: AppTheme.highlight,
               ),
             ),
             const SizedBox(height: 4),
@@ -189,7 +319,8 @@ class EoHomeTab extends ConsumerWidget {
           GestureDetector(
             onTap: onSeeAll,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: AppTheme.highlight.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
@@ -199,12 +330,13 @@ class EoHomeTab extends ConsumerWidget {
                   Text(
                     'Lihat Semua',
                     style: textTheme.labelSmall?.copyWith(
-                      color: AppTheme.highlight, // Purple instead of Pink
+                      color: AppTheme.highlight,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.arrow_forward, size: 14, color: AppTheme.highlight),
+                  const Icon(Icons.arrow_forward,
+                      size: 14, color: AppTheme.highlight),
                 ],
               ),
             ),
@@ -213,18 +345,9 @@ class EoHomeTab extends ConsumerWidget {
     );
   }
 
-  List<Widget> _buildFakeEvents(BuildContext context) {
-    return [
-      _buildEventCard(context, 'HALO', '17 Des 2000 • Jalan Kaca Kaca Wetan', 'RP 50.000', false),
-      const SizedBox(height: 12),
-      _buildEventCard(context, 'halo', '8 Agu 2008 • Kafe', 'RP 5.000', false),
-      const SizedBox(height: 12),
-      _buildEventCard(context, 'asas', '8 Des 2004 • blabla', 'RP 5.000', true),
-    ];
-  }
-
-  Widget _buildEventCard(BuildContext context, String title, String subtitle, String price, bool isOpen) {
+  Widget _buildEventCard(BuildContext context, EventModel event) {
     final textTheme = Theme.of(context).textTheme;
+    final isOpen = event.isOpen;
 
     return AppCard(
       padding: const EdgeInsets.all(16),
@@ -234,14 +357,20 @@ class EoHomeTab extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+              Expanded(
+                child: Text(
+                  event.title,
+                  style: textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: isOpen
                           ? Colors.green.withValues(alpha: 0.15)
@@ -249,7 +378,7 @@ class EoHomeTab extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      isOpen ? 'OPEN' : 'DRAFT',
+                      event.statusLabel,
                       style: textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: isOpen ? Colors.green : Colors.white70,
@@ -258,14 +387,16 @@ class EoHomeTab extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppTheme.highlight.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.highlight.withValues(alpha: 0.5)),
+                      border: Border.all(
+                          color: AppTheme.highlight.withValues(alpha: 0.5)),
                     ),
                     child: Text(
-                      price,
+                      event.budgetFormatted,
                       style: textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -277,17 +408,28 @@ class EoHomeTab extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(subtitle, style: textTheme.bodySmall),
+          Text('${event.eventDate} • ${event.venueName}',
+              style: textTheme.bodySmall),
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.people_outline, size: 16, color: Colors.white70),
+              const Icon(Icons.people_outline,
+                  size: 16, color: Colors.white70),
               const SizedBox(width: 4),
-              Text('0 pelamar', style: textTheme.bodySmall?.copyWith(color: Colors.white70)),
+              Text('${event.totalApplicants} pelamar',
+                  style: textTheme.bodySmall
+                      ?.copyWith(color: Colors.white70)),
               const SizedBox(width: 16),
-              const Icon(Icons.location_on_outlined, size: 16, color: Colors.white70),
+              const Icon(Icons.location_on_outlined,
+                  size: 16, color: Colors.white70),
               const SizedBox(width: 4),
-              Text('Lihat Lokasi', style: textTheme.bodySmall?.copyWith(color: Colors.white70)),
+              Expanded(
+                child: Text(event.city,
+                    style: textTheme.bodySmall
+                        ?.copyWith(color: Colors.white70),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ),
             ],
           ),
         ],
@@ -295,23 +437,16 @@ class EoHomeTab extends ConsumerWidget {
     );
   }
 
-  List<Widget> _buildFakeBookings(BuildContext context) {
-    return [
-      _buildBookingCard(context, 'Pasar Bandoeng Weekend Vibes', '17 Mei 2026 • Pasar Bandoeng - Kota Baru Parahyangan', 'PENDING'),
-      const SizedBox(height: 12),
-      _buildBookingCard(context, 'Pasar Bandoeng DJ Night Februari', '22 Feb 2026 • Pasar Bandoeng - Kota Baru Parahyangan', 'COMPLETED'),
-    ];
-  }
-
-  Widget _buildBookingCard(BuildContext context, String title, String subtitle, String status) {
+  Widget _buildBookingCard(BuildContext context, BookingModel booking) {
     final textTheme = Theme.of(context).textTheme;
     Color statusColor;
-    if (status == 'PENDING') {
-      statusColor = Colors.orange;
-    } else if (status == 'COMPLETED') {
+    final s = booking.status.toLowerCase();
+    if (s == 'confirmed') {
       statusColor = Colors.green;
+    } else if (s == 'completed') {
+      statusColor = AppTheme.highlight;
     } else {
-      statusColor = Colors.white;
+      statusColor = Colors.orangeAccent;
     }
 
     return AppCard(
@@ -325,20 +460,25 @@ class EoHomeTab extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  title,
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  booking.eventTitle,
+                  style: textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                  border: Border.all(
+                      color: statusColor.withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  status,
+                  booking.statusCapitalized,
                   style: textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: statusColor,
@@ -348,7 +488,8 @@ class EoHomeTab extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(subtitle, style: textTheme.bodySmall),
+          Text(booking.eventDateVenueFormatted,
+              style: textTheme.bodySmall),
         ],
       ),
     );

@@ -43,5 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-.DS_Store
-.DS_Store
+
+# Platform-specific directories (generated, tidak perlu di-commit)
+android/
+ios/
+linux/
+macos/
