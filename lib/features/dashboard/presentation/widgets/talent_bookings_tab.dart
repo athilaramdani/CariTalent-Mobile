@@ -1,177 +1,318 @@
 import 'package:caritalent_mobile/app/theme/app_theme.dart';
+import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class TalentBookingsTab extends ConsumerWidget {
+class TalentBookingsTab extends ConsumerStatefulWidget {
   const TalentBookingsTab({super.key});
 
-  static const List<_BookingItem> _allBookings = [
-    _BookingItem(
-      title: 'Punk Night Vol. 3',
-      agreedPrice: 'Rp 1.500.000',
-      date: '15 Apr 2026',
-      venue: 'Kafe Kota Bandung',
-      status: 'Confirmed',
-      statusColor: Colors.blue,
-      source: 'Apply',
-    ),
-    _BookingItem(
-      title: 'Gathering Kantor Tech',
-      agreedPrice: 'Rp 5.000.000',
-      date: '10 Jun 2025',
-      venue: 'Hotel Transylvania',
-      status: 'Confirmed',
-      statusColor: Colors.blue,
-      source: 'Invitation',
-    ),
-    _BookingItem(
-      title: 'Pernikahan Budi & Ani',
-      agreedPrice: 'Rp 3.500.000',
-      date: '20 May 2025',
-      venue: 'Gedung Sate Bandung',
-      status: 'Completed',
-      statusColor: Colors.green,
-      source: 'Invitation',
-    ),
-    _BookingItem(
-      title: 'Festival Musik Kemerdekaan',
-      agreedPrice: 'Rp 2.000.000',
-      date: '17 Aug 2025',
-      venue: 'Lapangan Gasibu',
-      status: 'Cancelled',
-      statusColor: Colors.red,
-      source: 'Apply',
-    ),
-  ];
+  @override
+  ConsumerState<TalentBookingsTab> createState() => _TalentBookingsTabState();
+}
+
+class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
+  String _selectedFilter = 'Semua';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final searchQuery = ref.watch(bookingSearchQueryProvider);
+    final bookingsAsync = ref.watch(myBookingsProvider);
 
-    // Filter bookings based on search query
-    final filteredBookings = _allBookings.where((booking) {
-      if (searchQuery.isEmpty) return true;
-      final query = searchQuery.toLowerCase();
-      return booking.title.toLowerCase().contains(query) ||
-          booking.venue.toLowerCase().contains(query) ||
-          booking.status.toLowerCase().contains(query) ||
-          booking.source.toLowerCase().contains(query);
-    }).toList();
+    return SafeArea(
+      child: bookingsAsync.when(
+        data: (bookings) {
+          final confirmed =
+              bookings.where((b) => b.status == 'confirmed').length;
+          final completed =
+              bookings.where((b) => b.status == 'completed').length;
+          final totalEarnings = bookings
+              .where((b) => b.status == 'completed')
+              .fold<double>(0, (sum, b) => sum + b.agreedPrice);
 
-    return Scaffold(
-      backgroundColor: AppTheme.neutralDark,
-      appBar: AppBar(
-        title: Text('Daftar Booking', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: AppTheme.uiDark,
-        elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: AppTheme.border, height: 1.0),
-        ),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+          final filtered = _selectedFilter == 'Semua'
+              ? bookings
+              : bookings
+                  .where((b) => b.status == _selectedFilter.toLowerCase())
+                  .toList();
 
+          final formattedEarnings = _formatCurrency(totalEarnings);
 
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              onChanged: (value) {
-                ref.read(bookingSearchQueryProvider.notifier).state = value;
-              },
-              decoration: InputDecoration(
-                hintText: 'Cari nama acara, tempat, dll...',
-                hintStyle: textTheme.bodyMedium?.copyWith(color: AppTheme.neutralMedium),
-                prefixIcon: const Icon(Icons.search, color: AppTheme.neutralMedium),
-                suffixIcon: searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: AppTheme.neutralMedium),
-                        onPressed: () {
-                          ref.read(bookingSearchQueryProvider.notifier).state = '';
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: AppTheme.uiDark,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: AppTheme.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: AppTheme.border),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: AppTheme.highlight),
-                ),
+          return ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            children: [
+              GradientText(
+                'My Bookings',
+                style: textTheme.headlineMedium
+                        ?.copyWith(fontWeight: FontWeight.w900) ??
+                    const TextStyle(),
               ),
-              style: textTheme.bodyMedium,
-            ),
-          ),
-          
-          // Bookings List
-          Expanded(
-            child: filteredBookings.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.search_off_rounded, size: 64, color: AppTheme.neutralMedium),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Booking tidak ditemukan',
-                          style: textTheme.titleMedium?.copyWith(color: AppTheme.neutralMedium),
-                        ),
+              const SizedBox(height: 8),
+              Text(
+                'Booking terkonfirmasi dan selesai\nbeserta detail event dan harga deal',
+                style: textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 24),
+
+              // Stats
+              Row(
+                children: [
+                  _buildStatCard(
+                      context, '${bookings.length}', 'TOTAL', null),
+                  const SizedBox(width: 12),
+                  _buildStatCard(
+                      context, '$confirmed', 'CONFIRMED', AppTheme.highlight),
+                  const SizedBox(width: 12),
+                  _buildStatCard(
+                      context, '$completed', 'SELESAI', Colors.greenAccent),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Earnings card
+              if (completed > 0)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.green.withValues(alpha: 0.3),
+                        Colors.teal.withValues(alpha: 0.15),
                       ],
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: filteredBookings.length,
-                    itemBuilder: (context, index) {
-                      final booking = filteredBookings[index];
-                      return _buildBookingCard(
-                        context: context,
-                        title: booking.title,
-                        agreedPrice: booking.agreedPrice,
-                        date: booking.date,
-                        venue: booking.venue,
-                        status: booking.status,
-                        statusColor: booking.statusColor,
-                        source: booking.source,
-                        textTheme: textTheme,
-                      );
-                    },
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: Colors.green.withValues(alpha: 0.2)),
                   ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.account_balance_wallet_outlined,
+                          color: Colors.greenAccent, size: 28),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Total Penghasilan',
+                              style: TextStyle(
+                                  color: Colors.greenAccent,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600)),
+                          Text(
+                            formattedEarnings,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 24),
+
+              // Filter chips
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildFilterChip(context, 'Semua', '${bookings.length}'),
+                    _buildFilterChip(context, 'Confirmed', '$confirmed'),
+                    _buildFilterChip(context, 'Completed', '$completed'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              if (filtered.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.event_busy_outlined,
+                            size: 52, color: Colors.white24),
+                        const SizedBox(height: 16),
+                        Text('Tidak ada booking',
+                            style: textTheme.bodyMedium
+                                ?.copyWith(color: Colors.white38)),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                for (final booking in filtered) ...[
+                  _BookingCard(
+                    booking: booking,
+                    onCancel: booking.status == 'confirmed'
+                        ? () => _cancelBooking(booking.id)
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+              const SizedBox(height: 48),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+              const SizedBox(height: 16),
+              Text('Gagal memuat bookings: $e',
+                  style: const TextStyle(color: Colors.white54)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(myBookingsProvider),
+                child: const Text('Coba Lagi'),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildBookingCard({
-    required BuildContext context,
-    required String title,
-    required String agreedPrice,
-    required String date,
-    required String venue,
-    required String status,
-    required Color statusColor,
-    required String source,
-    required TextTheme textTheme,
-  }) {
+  Future<void> _cancelBooking(int id) async {
+    try {
+      await ref.read(bookingRepositoryProvider).cancelBooking(id);
+      ref.invalidate(myBookingsProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Gagal membatalkan booking: $e'),
+          backgroundColor: Colors.redAccent,
+        ));
+      }
+    }
+  }
+
+  String _formatCurrency(double amount) {
+    final n = amount.toInt();
+    final s = n
+        .toString()
+        .replaceAllMapped(
+            RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+    return 'Rp $s';
+  }
+
+  Widget _buildStatCard(
+      BuildContext context, String value, String label, Color? valueColor) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          color: AppTheme.uiDark,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        child: Column(
+          children: [
+            Text(value,
+                style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w400,
+                    color: valueColor ?? Colors.white)),
+            const SizedBox(height: 10),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.white54,
+                    letterSpacing: 1.5,
+                    fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(BuildContext context, String label, String count) {
+    final isActive = _selectedFilter == label;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedFilter = label),
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: isActive
+              ? const LinearGradient(
+                  colors: [Color(0xFFB500FF), Color(0xFFE94057)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                )
+              : null,
+          color: isActive ? null : Colors.transparent,
+          border: isActive ? null : Border.all(color: Colors.white24),
+        ),
+        child: Row(
+          children: [
+            Text(label,
+                style: TextStyle(
+                    color: isActive ? Colors.white : Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+              ),
+              child: Text(count,
+                  style: TextStyle(
+                      color: isActive ? Colors.white : Colors.white54,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Booking Card ─────────────────────────────────────────────────────────────
+
+class _BookingCard extends StatefulWidget {
+  final BookingModel booking;
+  final VoidCallback? onCancel;
+
+  const _BookingCard({required this.booking, this.onCancel});
+
+  @override
+  State<_BookingCard> createState() => _BookingCardState();
+}
+
+class _BookingCardState extends State<_BookingCard> {
+  bool _cancelling = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final booking = widget.booking;
+    final textTheme = Theme.of(context).textTheme;
+    final s = booking.status.toLowerCase();
+
+    Color statusColor;
+    if (s == 'confirmed') {
+      statusColor = AppTheme.highlight;
+    } else if (s == 'completed') {
+      statusColor = Colors.green;
+    } else {
+      statusColor = Colors.white70;
+    }
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.uiDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,102 +322,134 @@ class TalentBookingsTab extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  title,
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                ),
+                child: Text(booking.eventTitle,
+                    style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold, color: Colors.white),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: statusColor.withValues(alpha: 0.3)),
-                ),
-                child: Text(
-                  status.toUpperCase(),
-                  style: textTheme.labelSmall?.copyWith(
-                    color: statusColor,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(Icons.monetization_on_outlined, size: 14, color: AppTheme.highlight),
-              const SizedBox(width: 6),
-              Text(
-                agreedPrice, 
-                style: textTheme.labelMedium?.copyWith(color: AppTheme.highlight, fontWeight: FontWeight.bold)
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppTheme.neutralDark,
+                  color: Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.border),
+                  border: Border.all(
+                      color: statusColor.withValues(alpha: 0.5)),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      source == 'Apply' ? Icons.assignment_outlined : Icons.mail_outline, 
-                      size: 10, 
-                      color: AppTheme.neutralMedium
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      source,
-                      style: textTheme.labelSmall?.copyWith(color: AppTheme.neutralMedium, fontSize: 9),
-                    ),
-                  ],
+                child: Text(
+                  booking.statusCapitalized,
+                  style: TextStyle(
+                      color: statusColor,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0),
                 ),
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(color: AppTheme.border, height: 1),
-          ),
+          const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.calendar_today, size: 14, color: AppTheme.neutralMedium),
-              const SizedBox(width: 6),
-              Text(date, style: textTheme.bodySmall),
-              const SizedBox(width: 16),
-              const Icon(Icons.location_on, size: 14, color: AppTheme.neutralMedium),
-              const SizedBox(width: 6),
+              Icon(Icons.event_outlined, size: 13, color: statusColor),
+              const SizedBox(width: 4),
               Expanded(
-                child: Text(venue, style: textTheme.bodySmall, overflow: TextOverflow.ellipsis),
+                child: Text(booking.eventDateVenueFormatted,
+                    style: textTheme.bodySmall
+                        ?.copyWith(color: Colors.white54),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
               ),
             ],
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Divider(
+                height: 1, color: Colors.white.withValues(alpha: 0.05)),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('HARGA DEAL',
+                      style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 10,
+                          letterSpacing: 1.5,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 6),
+                  Text(booking.agreedPriceFormatted,
+                      style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFFE879F9),
+                          fontWeight: FontWeight.w900)),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text('SUMBER',
+                      style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 10,
+                          letterSpacing: 1.5,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 6),
+                  Text(booking.sourceLabel,
+                      style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ],
+          ),
+          if (widget.onCancel != null && s == 'confirmed') ...[
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: _cancelling
+                  ? null
+                  : () async {
+                      setState(() => _cancelling = true);
+                      widget.onCancel!();
+                      if (mounted) setState(() => _cancelling = false);
+                    },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: Colors.redAccent.withValues(alpha: 0.4)),
+                ),
+                alignment: Alignment.center,
+                child: _cancelling
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.redAccent))
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.cancel_outlined,
+                              color: Colors.redAccent, size: 16),
+                          SizedBox(width: 6),
+                          Text('Batalkan Booking',
+                              style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
-}
-
-class _BookingItem {
-  final String title;
-  final String agreedPrice;
-  final String date;
-  final String venue;
-  final String status;
-  final Color statusColor;
-  final String source;
-
-  const _BookingItem({
-    required this.title,
-    required this.agreedPrice,
-    required this.date,
-    required this.venue,
-    required this.status,
-    required this.statusColor,
-    required this.source,
-  });
 }

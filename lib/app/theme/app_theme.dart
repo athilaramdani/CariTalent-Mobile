@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const highlight = Color(0xFF8A2BE2);
-  static const accent = Color(0xFF00BFFF);
-  static const uiDark = Color(0xFF1E1B4B);
+  static const highlight = Color(0xFFB57AFF);
+  static const accent = Color(0xFFE94057);
+  static const uiDark = Color(0xFF16152B); // slightly darker to match the image
   static const neutralDark = Color(0xFF111827);
   static const neutralMedium = Color(0xFF6B7280);
   static const panel = Color(0x14FFFFFF);
@@ -18,7 +18,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: uiDark,
+      scaffoldBackgroundColor: const Color(0xFF080714),
       fontFamily: 'Poppins',
       appBarTheme: const AppBarTheme(
         centerTitle: false,
