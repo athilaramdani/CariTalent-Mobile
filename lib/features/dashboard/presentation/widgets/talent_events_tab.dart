@@ -762,10 +762,21 @@ class _EventCard extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
-          // Action Button
-          Align(
-            alignment: Alignment.centerRight,
-            child: _ApplyButton(event: event),
+          // Action Buttons: Detail + Melamar
+          Row(
+            children: [
+              TextButton(
+                onPressed: () => _showDetail(context, ref),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.03),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text('Detail', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: _ApplyButton(event: event)),
+            ],
           ),
         ],
       ),
@@ -786,6 +797,127 @@ class _EventCard extends ConsumerWidget {
               overflow: TextOverflow.ellipsis),
         ),
       ],
+    );
+  }
+
+  void _showDetail(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: SingleChildScrollView(
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppTheme.uiDark,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('DETAIL EVENT', style: TextStyle(color: Color(0xFFB0A8C6), fontSize: 12, fontWeight: FontWeight.bold)),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close, color: Colors.white54),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(event.title, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+
+                  // Organizer / Budget / Date
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.02),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('PENYELENGGARA (EO)', style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 6),
+                        Text('Organizer #${event.organizerId}', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(child: Text('ANGGARAN (BUDGET)\n${event.budgetFormatted}', style: const TextStyle(color: Colors.white70),)),
+                            Expanded(child: Text('TANGGAL & WAKTU\n${event.eventDate}', textAlign: TextAlign.right, style: const TextStyle(color: Colors.white70),)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  const Text('DESKRIPSI ACARA', style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(event.description, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  const SizedBox(height: 14),
+                  const Text('LOKASI & VENUE', style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined, size: 16, color: Colors.white54),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text('${event.venueName}, ${event.city}', style: const TextStyle(color: Colors.white70))),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Footer actions
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.06),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('Tutup', style: TextStyle(color: Colors.white70)),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mengirim lamaran...')));
+                            try {
+                              await ref.read(applicationRepositoryProvider).applyEvent(eventId: event.id, proposedPrice: event.budget);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lamaran terkirim'), backgroundColor: Colors.green));
+                                Navigator.of(context).pop();
+                              }
+                            } catch (e) {
+                              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal melamar: $e'), backgroundColor: Colors.redAccent));
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(colors: [Color(0xFFB500FF), Color(0xFFDE33A2)]),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Text('Melamar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
