@@ -370,7 +370,7 @@ class _EventCardState extends ConsumerState<_EventCard> {
                     ViewLocationModal.show(
                       context,
                       eventName: event.title,
-                      displayAddress: event.venueName,
+                      displayAddress: '${event.venueName}, ${event.city}',
                       location: LatLng(event.latitude!, event.longitude!),
                     );
                   }
@@ -382,16 +382,17 @@ class _EventCardState extends ConsumerState<_EventCard> {
                             ? Icons.location_off_outlined
                             : Icons.location_on_outlined,
                         size: 16,
-                        color: Colors.white70),
+                        color: AppTheme.highlight),
                     const SizedBox(width: 6),
                     Text(
                       _deleted
                           ? 'Dihapus'
-                          : (event.latitude == null
-                              ? event.city
-                              : 'Lihat Lokasi'),
+                          : 'Lihat Lokasi',
                       style:
-                          textTheme.bodySmall?.copyWith(color: Colors.white70),
+                          textTheme.bodySmall?.copyWith(
+                            color: AppTheme.highlight,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),
@@ -487,7 +488,7 @@ class _EventCardState extends ConsumerState<_EventCard> {
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: () => CreateEventModal.show(context),
+                onTap: () => CreateEventModal.show(context, event: event),
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(

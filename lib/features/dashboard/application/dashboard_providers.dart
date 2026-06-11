@@ -3,11 +3,14 @@ import 'package:caritalent_mobile/features/dashboard/data/application_repository
 import 'package:caritalent_mobile/features/dashboard/data/booking_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/data/event_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/data/invitation_repository.dart';
+import 'package:caritalent_mobile/features/dashboard/data/notification_repository.dart';
+import 'package:caritalent_mobile/features/dashboard/data/review_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/data/talent_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/application_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/event_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/invitation_model.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/notification_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/recommendation_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/review_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/talent_model.dart';
@@ -52,6 +55,14 @@ final invitationRepositoryProvider = Provider<InvitationRepository>((ref) {
 
 final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
   return BookingRepository(ref.watch(apiClientProvider));
+});
+
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
+  return NotificationRepository(ref.watch(apiClientProvider));
+});
+
+final reviewRepositoryProvider = Provider<ReviewRepository>((ref) {
+  return ReviewRepository(ref.watch(apiClientProvider));
 });
 
 // ─── Data Providers ───────────────────────────────────────────────────────────
@@ -143,4 +154,46 @@ final eventApplicationsProvider = FutureProvider.autoDispose
 final recommendationsProvider = FutureProvider.autoDispose
     .family<RecommendationsData, int>((ref, eventId) async {
   return ref.read(eventRepositoryProvider).fetchRecommendations(eventId);
+});
+
+// ─── Talent Browse Providers (EO) ────────────────────────────────────────────
+
+class TalentListFilters {
+  final String? search;
+  final String? city;
+  final String? genre;
+
+  const TalentListFilters({this.search, this.city, this.genre});
+}
+
+final talentListFiltersProvider =
+    StateProvider.autoDispose<TalentListFilters>(
+        (ref) => const TalentListFilters());
+
+/// EO: browse semua talent publik
+final talentListProvider =
+    FutureProvider.autoDispose<List<TalentModel>>((ref) async {
+  final filters = ref.watch(talentListFiltersProvider);
+  return ref.read(talentRepositoryProvider).fetchTalentList(
+        search: filters.search,
+        city: filters.city,
+        genre: filters.genre,
+      );
+});
+
+// ─── Notification Providers ──────────────────────────────────────────────────
+
+/// Semua notifikasi user yang login
+final notificationsProvider =
+    FutureProvider.autoDispose<List<NotificationModel>>((ref) async {
+  return ref.read(notificationRepositoryProvider).fetchNotifications();
+});
+
+/// Jumlah notifikasi yang belum dibaca
+final unreadNotificationCountProvider = Provider.autoDispose<int>((ref) {
+  return ref.watch(notificationsProvider).when(
+        data: (list) => list.where((n) => !n.isRead).length,
+        loading: () => 0,
+        error: (_, __) => 0,
+      );
 });

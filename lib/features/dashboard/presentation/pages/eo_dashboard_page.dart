@@ -2,6 +2,7 @@ import 'package:caritalent_mobile/app/theme/app_theme.dart';
 import 'package:caritalent_mobile/core/widgets/app_shell.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/pages/notifications_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/eo_bookings_tab.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/eo_events_tab.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/eo_home_tab.dart';
@@ -9,6 +10,7 @@ import 'package:caritalent_mobile/features/dashboard/presentation/widgets/eo_inv
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/eo_profile_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class EoDashboardPage extends ConsumerWidget {
   const EoDashboardPage({super.key});
@@ -30,9 +32,42 @@ class EoDashboardPage extends ConsumerWidget {
               backgroundColor: Colors.transparent,
               elevation: 0,
               actions: [
-                IconButton(
-                  icon: const Icon(Icons.notifications_none, color: Colors.white),
-                  onPressed: () {},
+                // Notification bell with unread badge
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none, color: Colors.white),
+                      onPressed: () => context.push(NotificationsPage.routePath),
+                    ),
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Consumer(
+                        builder: (ctx, r, _) {
+                          final count = r.watch(unreadNotificationCountProvider);
+                          if (count == 0) return const SizedBox.shrink();
+                          return Container(
+                            width: 16,
+                            height: 16,
+                            decoration: const BoxDecoration(
+                              color: Colors.redAccent,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                count > 9 ? '9+' : '$count',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
                 Container(
                   width: 32,

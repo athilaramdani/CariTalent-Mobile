@@ -6,8 +6,10 @@ import 'package:caritalent_mobile/features/dashboard/application/dashboard_provi
 import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/event_model.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/create_event_modal.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/view_location_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 
 class EoHomeTab extends ConsumerWidget {
   const EoHomeTab({super.key});
@@ -115,7 +117,7 @@ class EoHomeTab extends ConsumerWidget {
             data: (events) {
               final totalEvents = events.length;
               final activeEvents =
-                  events.where((e) => e.status.toLowerCase() == 'dibuka').length;
+                  events.where((e) => e.status.toLowerCase() == 'open').length;
               return bookingsAsync.when(
                 data: (bookings) {
                   final totalBookings = bookings.length;
@@ -420,15 +422,35 @@ class EoHomeTab extends ConsumerWidget {
                   style: textTheme.bodySmall
                       ?.copyWith(color: Colors.white70)),
               const SizedBox(width: 16),
-              const Icon(Icons.location_on_outlined,
-                  size: 16, color: Colors.white70),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(event.city,
-                    style: textTheme.bodySmall
-                        ?.copyWith(color: Colors.white70),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
+              GestureDetector(
+                onTap: () {
+                  if (event.latitude != null) {
+                    ViewLocationModal.show(
+                      context,
+                      eventName: event.title,
+                      displayAddress: '${event.venueName}, ${event.city}',
+                      location: LatLng(event.latitude!, event.longitude!),
+                    );
+                  }
+                },
+                child: Row(
+                  children: [
+                    Icon(
+                        event.latitude == null
+                            ? Icons.location_off_outlined
+                            : Icons.location_on_outlined,
+                        size: 16,
+                        color: AppTheme.highlight),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Lihat Lokasi',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppTheme.highlight,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

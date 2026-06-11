@@ -14,6 +14,53 @@ class EoBookingsTab extends ConsumerStatefulWidget {
 
 class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
   String _selectedFilter = 'Semua';
+  bool _isProcessing = false;
+  
+  Future<void> _completeBooking(int id) async {
+    setState(() => _isProcessing = true);
+    try {
+      await ref.read(bookingRepositoryProvider).completeBooking(id);
+      ref.invalidate(myBookingsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Booking berhasil ditandai selesai!'),
+          backgroundColor: Colors.green,
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Gagal menyelesaikan booking: $e'),
+          backgroundColor: Colors.redAccent,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  Future<void> _cancelBooking(int id) async {
+    setState(() => _isProcessing = true);
+    try {
+      await ref.read(bookingRepositoryProvider).cancelBooking(id);
+      ref.invalidate(myBookingsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Booking berhasil dibatalkan'),
+          backgroundColor: Colors.orange,
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Gagal membatalkan booking: $e'),
+          backgroundColor: Colors.redAccent,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -337,6 +384,42 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
               ),
             ],
           ),
+          if (s == 'confirmed') ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessing ? null : () => _completeBooking(booking.id),
+                    icon: const Icon(Icons.check_circle_outline, size: 18),
+                    label: const Text('Tandai Selesai'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.withValues(alpha: 0.1),
+                      foregroundColor: Colors.green,
+                      elevation: 0,
+                      side: BorderSide(color: Colors.green.withValues(alpha: 0.3)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isProcessing ? null : () => _cancelBooking(booking.id),
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    label: const Text('Batalkan'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.3)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
