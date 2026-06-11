@@ -3,6 +3,9 @@ import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/auth/application/auth_controller.dart';
 import 'package:caritalent_mobile/core/widgets/app_header.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/invitation_model.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/application_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_reviews_page.dart';
@@ -15,6 +18,15 @@ class TalentHomeTab extends ConsumerWidget {
     final user = ref.watch(authControllerProvider).user;
     final textTheme = Theme.of(context).textTheme;
 
+    // Watch all data
+    final talentAsync = ref.watch(myTalentProvider);
+    final invitationsAsync = ref.watch(myInvitationsProvider);
+    final bookingsAsync = ref.watch(myBookingsProvider);
+    final applicationsAsync = ref.watch(myApplicationsProvider);
+    final reviewsAsync = ref.watch(myReviewsProvider);
+
+    final name = user?.name ?? 'Talent';
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -22,63 +34,107 @@ class TalentHomeTab extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // 1. Top Navbar
-            _buildTopNav(),
+            const AppHeader(),
             const SizedBox(height: 32),
 
             // 2. Main Title Section
-            _buildMainTitles(user?.name ?? 'The Rotten Bandung', textTheme),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Welcome back,',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                const SizedBox(height: 4),
+                GradientText(
+                  name,
+                  style: textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ) ?? const TextStyle(),
+                ),
+                const SizedBox(height: 16),
+                talentAsync.when(
+                  data: (talent) => Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ...talent.genre.take(3).map((g) => _buildTag(g)),
+                      if (talent.verified) _buildVerifiedTag(),
+                    ],
+                  ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+              ],
+            ),
             const SizedBox(height: 24),
 
-            // 3. Stats Grid
-            _buildStatsGrid(context, textTheme),
+            // 3. Stats Grid from real data
+            _buildStatsGridLive(context, textTheme, ref,
+              applicationsAsync: applicationsAsync,
+              invitationsAsync: invitationsAsync,
+              bookingsAsync: bookingsAsync,
+              reviewsAsync: reviewsAsync,
+            ),
             const SizedBox(height: 32),
 
             // 4. Invitations Section
             _buildSectionHeader(context, 'Invitations', 'Undangan eksklusif dari EO', textTheme, onSeeAll: () {
               ref.read(talentNavIndexProvider.notifier).state = 3;
             }),
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              padding: const EdgeInsets.symmetric(vertical: 32),
-              decoration: BoxDecoration(
-                color: AppTheme.uiDark,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-              ),
-              child: const Center(
-                child: Text(
-                  'No current invitations available',
-                  style: TextStyle(color: Colors.white54, fontSize: 13),
-                ),
-              ),
+            const SizedBox(height: 12),
+            invitationsAsync.when(
+              data: (invitations) {
+                final pending = invitations.where((i) => i.status == 'pending').toList();
+                if (pending.isEmpty) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    decoration: BoxDecoration(
+                      color: AppTheme.uiDark,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Tidak ada undangan aktif',
+                        style: TextStyle(color: Colors.white54, fontSize: 13),
+                      ),
+                    ),
+                  );
+                }
+                return Column(
+                  children: pending.take(2).map((inv) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildInvitationCard(context, inv, textTheme, ref),
+                  )).toList(),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, __) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 32),
 
             // 5. Upcoming Bookings Section
-            _buildSectionHeader(context, 'Upcoming Bookings', 'Registrasi booking terbaru', textTheme, onSeeAll: () {
+            _buildSectionHeader(context, 'Upcoming Bookings', 'Booking terkonfirmasi', textTheme, onSeeAll: () {
               ref.read(talentNavIndexProvider.notifier).state = 4;
             }),
-            _buildBookingCard(
-              context: context,
-              title: 'Pernikahan Budi & Ani',
-              status: 'Confirmed',
-              date: '20 May 2025',
-              location: 'Gedung Sate Bandung',
-              price: 'Rp 5.000.000',
-              description: 'Penampilan band akustik untuk resepsi pernikahan durasi 2 jam...',
-              statusColor: Colors.green,
-              textTheme: textTheme,
-            ),
-            _buildBookingCard(
-              context: context,
-              title: 'Gathering Kantor Tech',
-              status: 'Pending',
-              date: '10 Jun 2025',
-              location: 'Hotel Transylvania',
-              price: 'Rp 6.500.000',
-              description: 'Acara gathering perusahaan dengan target peserta 150 orang...',
-              statusColor: Colors.orange,
-              textTheme: textTheme,
+            const SizedBox(height: 12),
+            bookingsAsync.when(
+              data: (bookings) {
+                final upcoming = bookings.where((b) => b.status == 'confirmed').toList();
+                if (upcoming.isEmpty) {
+                  return _buildEmptyCard('Tidak ada upcoming bookings');
+                }
+                return Column(
+                  children: upcoming.take(2).map((b) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildBookingCardLive(context, b, textTheme),
+                  )).toList(),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, __) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 32),
 
@@ -86,29 +142,21 @@ class TalentHomeTab extends ConsumerWidget {
             _buildSectionHeader(context, 'Recent Applications', 'Lamaran event terbaru', textTheme, onSeeAll: () {
               ref.read(talentNavIndexProvider.notifier).state = 2;
             }),
-            _buildRecentAppCard(
-              context: context,
-              title: 'Braga Jazz Evening',
-              status: 'Accepted',
-              date: '12 Mar 2025',
-              statusColor: Colors.green,
-              textTheme: textTheme,
-            ),
-            _buildRecentAppCard(
-              context: context,
-              title: 'Festival Musik Kemerdekaan',
-              status: 'Applied',
-              date: '17 Aug 2025',
-              statusColor: const Color(0xFFB500FF), // Purple
-              textTheme: textTheme,
-            ),
-            _buildRecentAppCard(
-              context: context,
-              title: 'Cafe Acoustic Night',
-              status: 'Rejected',
-              date: '05 Sep 2025',
-              statusColor: Colors.red,
-              textTheme: textTheme,
+            const SizedBox(height: 12),
+            applicationsAsync.when(
+              data: (applications) {
+                if (applications.isEmpty) {
+                  return _buildEmptyCard('Belum ada lamaran');
+                }
+                return Column(
+                  children: applications.take(3).map((app) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildRecentAppCardLive(context, app, textTheme),
+                  )).toList(),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, __) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 32),
 
@@ -117,105 +165,82 @@ class TalentHomeTab extends ConsumerWidget {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const TalentReviewsPage()));
             }),
             const SizedBox(height: 12),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const TalentReviewsPage()));
-              },
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF271340), Color(0xFF1B0E2A)],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFB500FF), Color(0xFFDE33A2)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(14),
+            reviewsAsync.when(
+              data: (data) {
+                final rating = data.averageRating.toStringAsFixed(1);
+                final count = data.totalReviews;
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const TalentReviewsPage()));
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF271340), Color(0xFF1B0E2A)],
                       ),
-                      child: const Icon(Icons.star_rate_outlined, color: Colors.white, size: 26),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Lihat Semua Ulasan',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFB500FF), Color(0xFFDE33A2)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
+                          child: const Icon(Icons.star_rate_outlined, color: Colors.white, size: 26),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              ...List.generate(5, (i) => const Icon(Icons.star, color: Colors.amber, size: 13)),
-                              const SizedBox(width: 6),
-                              const Text('5.0 / 5  ·  1 ulasan', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                              const Text(
+                                'Lihat Semua Ulasan',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  ...List.generate(5, (i) => Icon(
+                                    i < data.averageRating.floor() ? Icons.star : Icons.star_border,
+                                    color: Colors.amber, size: 13,
+                                  )),
+                                  const SizedBox(width: 6),
+                                  Text('$rating / 5  ·  $count ulasan',
+                                    style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'What organizers say about your performance',
+                                style: TextStyle(color: Colors.white38, fontSize: 11),
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'What organizers say about your performance',
-                            style: TextStyle(color: Colors.white38, fontSize: 11),
-                          ),
-                        ],
-                      ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios, color: Color(0xFFC48DF6), size: 16),
+                      ],
                     ),
-                    const Icon(Icons.arrow_forward_ios, color: Color(0xFFC48DF6), size: 16),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, __) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 24),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTopNav() {
-    return const AppHeader();
-  }
-
-  Widget _buildMainTitles(String name, TextTheme textTheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Welcome back,',
-          style: TextStyle(color: Colors.white70, fontSize: 13),
-        ),
-        const SizedBox(height: 4),
-        GradientText(
-          name == 'Talent' ? 'The Rotten Bandung' : name,
-          style: textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.5,
-          ) ?? const TextStyle(),
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _buildTag('Pop Punk'),
-            _buildTag('Hardcore'),
-            _buildTag('Alternative Rock'),
-            _buildVerifiedTag(),
-          ],
-        ),
-      ],
     );
   }
 
@@ -229,11 +254,7 @@ class TalentHomeTab extends ConsumerWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Color(0xFF2ECC71),
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-        ),
+        style: const TextStyle(color: Color(0xFF2ECC71), fontSize: 10, fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -245,25 +266,41 @@ class TalentHomeTab extends ConsumerWidget {
         color: const Color(0xFF2ECC71).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
+      child: const Row(
         mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
           Icon(Icons.circle, color: Color(0xFF2ECC71), size: 8),
           SizedBox(width: 6),
-          Text(
-            'Verified Talent',
-            style: TextStyle(
-              color: Color(0xFF2ECC71),
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text('Verified Talent', style: TextStyle(color: Color(0xFF2ECC71), fontSize: 10, fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 
-  Widget _buildStatsGrid(BuildContext context, TextTheme textTheme) {
+  Widget _buildStatsGridLive(
+    BuildContext context,
+    TextTheme textTheme,
+    WidgetRef ref, {
+    required AsyncValue applicationsAsync,
+    required AsyncValue invitationsAsync,
+    required AsyncValue bookingsAsync,
+    required AsyncValue reviewsAsync,
+  }) {
+    final appCount = applicationsAsync.when(
+      data: (apps) => '${(apps as List).length}', loading: () => '—', error: (_, __) => '—');
+    final invCount = invitationsAsync.when(
+      data: (invs) => '${(invs as List).length}', loading: () => '—', error: (_, __) => '—');
+    final bookCount = bookingsAsync.when(
+      data: (bkgs) => '${(bkgs as List).length}', loading: () => '—', error: (_, __) => '—');
+    final rating = reviewsAsync.when(
+      data: (r) {
+        final data = r as dynamic;
+        return '${data.averageRating.toStringAsFixed(1)} / 5';
+      },
+      loading: () => '— / 5',
+      error: (_, __) => '— / 5',
+    );
+
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -273,14 +310,16 @@ class TalentHomeTab extends ConsumerWidget {
       mainAxisSpacing: 8,
       childAspectRatio: 1.6,
       children: [
-        _buildStatCard(context, 'TOTAL APPLICATIONS', '3', 'Lamaran yang sudah dikirim', Icons.assignment_outlined, const Color(0xFFC48DF6)),
-        _buildStatCard(context, 'TOTAL INVITATIONS', '4', 'Undangan dari organizer', Icons.mail_outline, const Color(0xFFC48DF6)),
-        _buildStatCard(context, 'TOTAL BOOKINGS', '1', 'Booking terkonfirmasi dan selesai', Icons.event_available_outlined, Colors.blue),
+        _buildStatCard(context, 'TOTAL APPLICATIONS', appCount, 'Lamaran yang sudah dikirim',
+            Icons.assignment_outlined, const Color(0xFFC48DF6)),
+        _buildStatCard(context, 'TOTAL INVITATIONS', invCount, 'Undangan dari organizer',
+            Icons.mail_outline, const Color(0xFFC48DF6)),
+        _buildStatCard(context, 'TOTAL BOOKINGS', bookCount, 'Booking terkonfirmasi dan selesai',
+            Icons.event_available_outlined, Colors.blue),
         GestureDetector(
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const TalentReviewsPage()));
-          },
-          child: _buildStatCard(context, 'AVERAGE RATING', '5.0 / 5', 'Berdasarkan perform terakhir', Icons.stars_outlined, Colors.blue),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TalentReviewsPage())),
+          child: _buildStatCard(context, 'AVERAGE RATING', rating, 'Berdasarkan perform terakhir',
+              Icons.stars_outlined, Colors.blue),
         ),
       ],
     );
@@ -305,40 +344,22 @@ class TalentHomeTab extends ConsumerWidget {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 1),
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white54,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  child: Text(title,
+                    style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.w600),
+                    maxLines: 2, overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              height: 1.0,
-            ),
+          Text(value,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, height: 1.0),
           ),
           const SizedBox(height: 4),
-          Text(
-            hint,
-            style: const TextStyle(
-              fontSize: 10,
-              color: Colors.white54,
-              height: 1.2,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          Text(hint,
+            style: const TextStyle(fontSize: 10, color: Colors.white54, height: 1.2),
+            maxLines: 2, overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -363,13 +384,8 @@ class TalentHomeTab extends ConsumerWidget {
             onTap: onSeeAll,
             child: Row(
               children: [
-                Text(
-                  'Lihat Semua',
-                  style: textTheme.labelMedium?.copyWith(
-                    color: const Color(0xFFC48DF6),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text('Lihat Semua',
+                  style: textTheme.labelMedium?.copyWith(color: const Color(0xFFC48DF6), fontWeight: FontWeight.w600)),
                 const SizedBox(width: 4),
                 const Icon(Icons.arrow_forward, color: Color(0xFFC48DF6), size: 14),
               ],
@@ -379,19 +395,60 @@ class TalentHomeTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildBookingCard({
-    required BuildContext context,
-    required String title,
-    required String status,
-    required String date,
-    required String location,
-    required String price,
-    required String description,
-    required Color statusColor,
-    required TextTheme textTheme,
-  }) {
+  Widget _buildEmptyCard(String msg) {
     return Container(
-      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      decoration: BoxDecoration(
+        color: AppTheme.uiDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Center(child: Text(msg, style: const TextStyle(color: Colors.white54, fontSize: 13))),
+    );
+  }
+
+  Widget _buildInvitationCard(BuildContext context, InvitationModel inv, TextTheme textTheme, WidgetRef ref) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.uiDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(inv.eventTitle,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                Text('${inv.eventDateFormatted} • ${inv.offeredPriceFormatted}',
+                  style: const TextStyle(color: Colors.white54, fontSize: 12)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: () => ref.read(talentNavIndexProvider.notifier).state = 3,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFFB500FF), Color(0xFFDE33A2)]),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text('Lihat', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingCardLive(BuildContext context, BookingModel booking, TextTheme textTheme) {
+    return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.uiDark,
@@ -403,48 +460,25 @@ class TalentHomeTab extends ConsumerWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               Expanded(
-                 child: Text(
-                   title,
-                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                 ),
-               ),
-               Container(
-                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                 decoration: BoxDecoration(
-                   color: statusColor.withValues(alpha: 0.1),
-                   borderRadius: BorderRadius.circular(8),
-                 ),
-                 child: Text(
-                   status.toLowerCase(),
-                   style: textTheme.labelSmall?.copyWith(
-                     color: statusColor,
-                     fontWeight: FontWeight.bold,
-                   ),
-                 ),
-               ),
+              Expanded(
+                child: Text(booking.eventTitle,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(booking.statusCapitalized,
+                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(description, style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.white54),
-              const SizedBox(width: 8),
-              Text(date, style: const TextStyle(color: Colors.white70, fontSize: 13)),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(Icons.location_on_outlined, size: 14, color: Colors.white54),
-              const SizedBox(width: 8),
-              Text(location, style: const TextStyle(color: Colors.white70, fontSize: 13)),
-            ],
-          ),
+          Text(booking.eventDateVenueFormatted,
+            style: const TextStyle(color: Colors.white70, fontSize: 13)),
           const SizedBox(height: 16),
           Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
           const SizedBox(height: 16),
@@ -452,7 +486,8 @@ class TalentHomeTab extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Agreed Price', style: TextStyle(color: Colors.white54, fontSize: 13)),
-              Text(price, style: const TextStyle(color: Color(0xFF2ECC71), fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(booking.agreedPriceFormatted,
+                style: const TextStyle(color: Color(0xFF2ECC71), fontSize: 16, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -460,16 +495,16 @@ class TalentHomeTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildRecentAppCard({
-    required BuildContext context,
-    required String title,
-    required String status,
-    required String date,
-    required Color statusColor,
-    required TextTheme textTheme,
-  }) {
+  Widget _buildRecentAppCardLive(BuildContext context, ApplicationModel app, TextTheme textTheme) {
+    Color statusColor;
+    if (app.status == 'accepted') {
+      statusColor = Colors.green;
+    } else if (app.status == 'rejected') {
+      statusColor = Colors.red;
+    } else {
+      statusColor = const Color(0xFFB500FF);
+    }
     return Container(
-      margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.uiDark,
@@ -484,13 +519,13 @@ class TalentHomeTab extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  app.event?.title ?? 'Event',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text('$date • ${status.toLowerCase()}', style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                Text('${app.dateFormatted} • ${app.status}',
+                  style: const TextStyle(color: Colors.white54, fontSize: 13)),
               ],
             ),
           ),
@@ -502,11 +537,8 @@ class TalentHomeTab extends ConsumerWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              status.toLowerCase(),
-              style: textTheme.labelSmall?.copyWith(
-                color: statusColor,
-                fontWeight: FontWeight.bold,
-              ),
+              '${app.status[0].toUpperCase()}${app.status.substring(1)}',
+              style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 11),
             ),
           ),
         ],

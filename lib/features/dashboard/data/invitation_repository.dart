@@ -53,7 +53,7 @@ class InvitationRepository {
       data: {
         'event_id': eventId,
         'talent_id': talentId,
-        'offered_price': offeredPrice,
+        'offered_price': offeredPrice.toInt(),
       },
       parser: (_) {},
     );

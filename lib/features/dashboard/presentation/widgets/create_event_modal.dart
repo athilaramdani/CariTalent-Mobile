@@ -1,5 +1,6 @@
 import 'package:caritalent_mobile/app/theme/app_theme.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/event_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -7,14 +8,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 class CreateEventModal extends ConsumerStatefulWidget {
-  const CreateEventModal({super.key});
+  final EventModel? event;
+  const CreateEventModal({super.key, this.event});
 
-  static Future<void> show(BuildContext context) {
+  static Future<void> show(BuildContext context, {EventModel? event}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const CreateEventModal(),
+      builder: (_) => CreateEventModal(event: event),
     );
   }
 
@@ -26,14 +28,14 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
   final _formKey = GlobalKey<FormState>();
 
   // Text controllers
-  final _titleCtrl = TextEditingController();
-  final _descCtrl = TextEditingController();
-  final _budgetCtrl = TextEditingController();
-  final _dateCtrl = TextEditingController();
-  final _venueCtrl = TextEditingController();
-  final _cityCtrl = TextEditingController();
-  final _latController = TextEditingController(text: 'Belum ada pin');
-  final _lngController = TextEditingController(text: 'Belum ada pin');
+  late final TextEditingController _titleCtrl;
+  late final TextEditingController _descCtrl;
+  late final TextEditingController _budgetCtrl;
+  late final TextEditingController _dateCtrl;
+  late final TextEditingController _venueCtrl;
+  late final TextEditingController _cityCtrl;
+  late final TextEditingController _latController;
+  late final TextEditingController _lngController;
 
   // Dropdown states
   String? _selectedGenre;
@@ -42,11 +44,51 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
   final _mapController = MapController();
   bool _isLoading = false;
 
-  static const _genres = [
-    'Rock', 'Jazz', 'Pop', 'Electronic', 'Indie',
-    'Folk', 'Classical', 'Acoustic', 'Hip-Hop', 'R&B',
-  ];
-  static const _statuses = ['open', 'closed'];
+  // Mutable so we can add custom genres from saved events
+  late final List<String> _genres;
+  static const _statuses = ['open', 'closed', 'draft', 'completed', 'cancelled'];
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.event;
+
+    // Build genres list, adding any custom genre from the saved event
+    final baseGenres = [
+      'Rock', 'Jazz', 'Pop', 'Electronic', 'Indie',
+      'Folk', 'Classical', 'Acoustic', 'Hip-Hop', 'R&B',
+    ];
+    if (e != null && e.genres.isNotEmpty) {
+      for (final g in e.genres) {
+        if (!baseGenres.contains(g)) baseGenres.add(g);
+      }
+    }
+    _genres = baseGenres;
+
+    _titleCtrl = TextEditingController(text: e?.title);
+    _descCtrl = TextEditingController(text: e?.description);
+    _budgetCtrl = TextEditingController(text: e?.budget.toString());
+    _dateCtrl = TextEditingController(text: e?.eventDate);
+    _venueCtrl = TextEditingController(text: e?.venueName);
+    _cityCtrl = TextEditingController(text: e?.city);
+    
+    _latController = TextEditingController(
+      text: e?.latitude != null ? e!.latitude!.toStringAsFixed(6) : 'Belum ada pin'
+    );
+    _lngController = TextEditingController(
+      text: e?.longitude != null ? e!.longitude!.toStringAsFixed(6) : 'Belum ada pin'
+    );
+
+    // Set selected genre only if it exists in the (possibly extended) list
+    if (e != null && e.genres.isNotEmpty) {
+      final firstGenre = e.genres.first;
+      _selectedGenre = _genres.contains(firstGenre) ? firstGenre : null;
+    }
+    _selectedStatus = e?.status;
+    if (e?.latitude != null && e?.longitude != null) {
+      _selectedLocation = LatLng(e!.latitude!, e!.longitude!);
+    }
+  }
 
   @override
   void dispose() {
@@ -74,26 +116,43 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(eventRepositoryProvider).createEvent(
-            title: _titleCtrl.text.trim(),
-            description: _descCtrl.text.trim(),
-            budget: int.parse(_budgetCtrl.text.replaceAll('.', '')),
-            eventDate: _dateCtrl.text.trim(),
-            venueName: _venueCtrl.text.trim(),
-            city: _cityCtrl.text.trim(),
-            status: _selectedStatus ?? 'open',
-            genre: _selectedGenre != null ? [_selectedGenre!] : [],
-            latitude: _selectedLocation?.latitude,
-            longitude: _selectedLocation?.longitude,
-          );
+      final data = {
+        'title': _titleCtrl.text.trim(),
+        'description': _descCtrl.text.trim(),
+        'budget': int.parse(_budgetCtrl.text.replaceAll('.', '')),
+        'event_date': _dateCtrl.text.trim(),
+        'venue_name': _venueCtrl.text.trim(),
+        'city': _cityCtrl.text.trim(),
+        'status': _selectedStatus ?? 'open',
+        'genre': _selectedGenre != null ? [_selectedGenre!] : [],
+        if (_selectedLocation != null) 'latitude': _selectedLocation!.latitude,
+        if (_selectedLocation != null) 'longitude': _selectedLocation!.longitude,
+      };
+
+      if (widget.event != null) {
+        await ref.read(eventRepositoryProvider).updateEvent(widget.event!.id, data);
+      } else {
+        await ref.read(eventRepositoryProvider).createEvent(
+              title: data['title'] as String,
+              description: data['description'] as String,
+              budget: data['budget'] as int,
+              eventDate: data['event_date'] as String,
+              venueName: data['venue_name'] as String,
+              city: data['city'] as String,
+              status: data['status'] as String,
+              genre: data['genre'] as List<String>,
+              latitude: data['latitude'] as double?,
+              longitude: data['longitude'] as double?,
+            );
+      }
 
       ref.invalidate(myEventsProvider);
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Event berhasil dibuat! 🎉'),
+          SnackBar(
+            content: Text(widget.event != null ? 'Event berhasil diperbarui! 🎉' : 'Event berhasil dibuat! 🎉'),
             backgroundColor: Colors.green,
           ),
         );
@@ -102,7 +161,7 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal membuat event: $e'),
+            content: Text('Gagal ${widget.event != null ? "memperbarui" : "membuat"} event: $e'),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -114,6 +173,8 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
 
   @override
   Widget build(BuildContext context) {
+    final isEdit = widget.event != null;
+    
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -141,9 +202,9 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                         color: Colors.white, size: 20),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  const Text(
-                    'Buat Event',
-                    style: TextStyle(
+                  Text(
+                    isEdit ? 'Edit Event' : 'Buat Event',
+                    style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         color: Colors.white),
@@ -160,18 +221,18 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
-                    const Text(
-                      'Buat Event Baru',
-                      style: TextStyle(
+                    Text(
+                      isEdit ? 'Edit Detail Event' : 'Buat Event Baru',
+                      style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
                           color: Colors.white),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Isi detail event yang ingin kamu selenggarakan.',
+                    Text(
+                      isEdit ? 'Perbarui informasi event kamu.' : 'Isi detail event yang ingin kamu selenggarakan.',
                       style:
-                          TextStyle(color: Colors.white70, fontSize: 12),
+                          const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                     const SizedBox(height: 16),
                     const Divider(color: AppTheme.border),
@@ -225,11 +286,14 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                       validator: (v) =>
                           v == null || v.isEmpty ? 'Wajib diisi' : null,
                       onTap: () async {
+                        final initial = widget.event != null 
+                          ? DateTime.tryParse(widget.event!.eventDate) ?? DateTime.now().add(const Duration(days: 7))
+                          : DateTime.now().add(const Duration(days: 7));
+                          
                         final date = await showDatePicker(
                           context: context,
-                          initialDate: DateTime.now()
-                              .add(const Duration(days: 7)),
-                          firstDate: DateTime.now(),
+                          initialDate: initial,
+                          firstDate: DateTime.now().subtract(const Duration(days: 365)),
                           lastDate: DateTime.now()
                               .add(const Duration(days: 365 * 2)),
                           builder: (context, child) => Theme(
@@ -249,10 +313,10 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                     ),
                     const SizedBox(height: 12),
 
-                    _buildLabel('Status Awal'),
+                    _buildLabel('Status'),
                     _buildDropdown(
                       value: _selectedStatus,
-                      hint: 'Open (default)',
+                      hint: 'Pilih status...',
                       items: _statuses,
                       onChanged: (v) =>
                           setState(() => _selectedStatus = v),
@@ -297,8 +361,7 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                           FlutterMap(
                             mapController: _mapController,
                             options: MapOptions(
-                              initialCenter: const LatLng(
-                                  -6.914744, 107.609810),
+                              initialCenter: _selectedLocation ?? const LatLng(-6.914744, 107.609810),
                               initialZoom: 13.0,
                               onTap: _onMapTap,
                             ),
@@ -434,16 +497,16 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                                       color: Colors.white),
                                 ),
                               )
-                            : const Row(
+                            : Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add,
+                                  Icon(isEdit ? Icons.save_outlined : Icons.add,
                                       color: Colors.white, size: 18),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    'Buat Event',
-                                    style: TextStyle(
+                                    isEdit ? 'Simpan Perubahan' : 'Buat Event',
+                                    style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 15,
                                         fontWeight:
@@ -614,11 +677,11 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
           dropdownColor: AppTheme.neutralDark,
           items: items
               .map((s) => DropdownMenuItem(
-                    value: s,
-                    child: Text(s,
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 13)),
-                  ))
+                     value: s,
+                     child: Text(s,
+                         style: const TextStyle(
+                             color: Colors.white, fontSize: 13)),
+                   ))
               .toList(),
           onChanged: onChanged,
         ),

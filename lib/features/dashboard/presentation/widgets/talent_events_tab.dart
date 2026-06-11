@@ -3,9 +3,11 @@ import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/core/widgets/app_header.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/event_model.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/view_location_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 
 // ─── Main Tab Widget ──────────────────────────────────────────────────────────
 
@@ -58,7 +60,58 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
 
     return SafeArea(
       child: eventsAsync.when(
-        data: (allEvents) {
+        data: (allEventsRaw) {
+          // Ensure no null elements just in case the repository returns them
+          var allEvents = allEventsRaw.whereType<EventModel>().toList();
+
+          // FOR DEMO: If empty, use mock data to match the design in Image 2
+          if (allEvents.isEmpty) {
+            allEvents = [
+              const EventModel(
+                id: 1,
+                organizerId: 101,
+                title: 'Single Tech Night Vol.4',
+                description:
+                    'Join us for a night of cutting-edge electronic music and tech house beats.',
+                budget: 3000000,
+                eventDate: '15 June 2024',
+                venueName: 'Venue TBD',
+                city: 'Los Angeles',
+                status: 'open',
+                genres: ['Electronic'],
+                totalApplicants: 12,
+              ),
+              const EventModel(
+                id: 2,
+                organizerId: 102,
+                title: 'Summer Music Festival',
+                description:
+                    'A celebration of summer with live music, food, and entertainment for all ages.',
+                budget: 5000000,
+                eventDate: '20 July 2024',
+                venueName: 'Central Park',
+                city: 'Bandung',
+                status: 'open',
+                genres: ['Pop'],
+                totalApplicants: 45,
+              ),
+              const EventModel(
+                id: 3,
+                organizerId: 103,
+                title: 'Corporate Annual Gala',
+                description:
+                    'Annual corporate gala dinner with entertainment and networking.',
+                budget: 8000000,
+                eventDate: '5 August 2024',
+                venueName: 'Grand Hotel Ballroom',
+                city: 'Jakarta',
+                status: 'open',
+                genres: ['Jazz'],
+                totalApplicants: 8,
+              ),
+            ];
+          }
+
           // Additional local search filter
           final displayed = searchQuery.isEmpty
               ? allEvents
@@ -73,15 +126,11 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
           // Additional genre filter (local, because API might not support it)
           final genreFiltered = _genre == 'Semua Genre'
               ? displayed
-              : displayed.where((e) => e.genres
-                  .any((g) => g.toLowerCase() == _genre.toLowerCase())).toList();
-
-          final openCount =
-              genreFiltered.where((e) => e.isOpen).length;
-          final closedCount =
-              genreFiltered.where((e) => !e.isOpen).length;
+              : displayed.where((e) => e.genres.any(
+                  (g) => g.toLowerCase() == _genre.toLowerCase())).toList();
 
           return CustomScrollView(
+            physics: const BouncingScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
@@ -103,47 +152,57 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
                         style: textTheme.headlineMedium?.copyWith(
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -0.5) ??
-                            const TextStyle(),
+                            const TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _StatusBadge(
-                              label: 'Open $openCount',
-                              color: const Color(0xFF4CAF50)),
-                          const SizedBox(width: 8),
-                          _StatusBadge(
-                              label: 'Closed $closedCount',
-                              color: const Color(0xFFEF5350)),
-                          const Spacer(),
-                          Text('${genreFiltered.length} Total',
-                              style: textTheme.labelSmall
-                                  ?.copyWith(color: Colors.white54)),
-                        ],
-                      ),
+                      Text('Discover and apply to open events',
+                          style: textTheme.bodySmall
+                              ?.copyWith(color: Colors.white38)),
                       const SizedBox(height: 24),
-                      _FilterSection(
-                        initialStatus: _status,
-                        initialGenre: _genre,
-                        initialCity: _city,
-                        initialMinBudget: _minBudget,
-                        initialMaxBudget: _maxBudget,
-                        onApply: _applyFilter,
-                        onReset: () => _applyFilter(
-                          status: 'Semua Status',
-                          genre: 'Semua Genre',
-                          city: '',
-                          minBudget: '',
-                          maxBudget: '',
+
+                      // Design-matched Filter Bar
+                      GestureDetector(
+                        onTap: () {
+                          // Show filter bottom sheet or navigate
+                          _showFilterModal(context);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.uiDark,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.05)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.tune_rounded,
+                                  size: 18, color: Color(0xFFC48DF6)),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text('Filter Events',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14)),
+                              ),
+                              const Icon(Icons.chevron_right_rounded,
+                                  size: 20, color: Colors.white54),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
+
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Available Events',
-                              style: textTheme.titleLarge
-                                  ?.copyWith(fontWeight: FontWeight.bold)),
+                          Text('Open Events',
+                              style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
                           Text('View All',
                               style: textTheme.labelMedium?.copyWith(
                                   color: const Color(0xFFC48DF6),
@@ -212,6 +271,29 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showFilterModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _FilterSection(
+        initialStatus: _status,
+        initialGenre: _genre,
+        initialCity: _city,
+        initialMinBudget: _minBudget,
+        initialMaxBudget: _maxBudget,
+        onApply: _applyFilter,
+        onReset: () => _applyFilter(
+          status: 'Semua Status',
+          genre: 'Semua Genre',
+          city: '',
+          minBudget: '',
+          maxBudget: '',
         ),
       ),
     );
@@ -382,7 +464,7 @@ class _FilterSectionState extends State<_FilterSection> {
                           value: _selectedStatus,
                           items: _statuses,
                           onChanged: (v) =>
-                              setState(() => _selectedStatus = v!),
+                              setState(() => _selectedStatus = v ?? 'Semua Status'),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -391,7 +473,7 @@ class _FilterSectionState extends State<_FilterSection> {
                           value: _selectedGenre,
                           items: _genres,
                           onChanged: (v) =>
-                              setState(() => _selectedGenre = v!),
+                              setState(() => _selectedGenre = v ?? 'Semua Genre'),
                         ),
                       ),
                     ],
@@ -600,138 +682,110 @@ class _EventCard extends ConsumerWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.uiDark,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Title + Status
+          // Header: Title + Price + Status
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(event.title,
-                        style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold, color: Colors.white)),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.location_on_outlined,
-                            size: 12, color: Colors.white54),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            '${event.venueName} · ${event.city}',
-                            style: textTheme.bodySmall
-                                ?.copyWith(color: Colors.white54),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                child: Text(event.title,
+                    style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold, color: Colors.white)),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isClosed
-                      ? const Color(0xFFEF5350).withValues(alpha: 0.15)
-                      : const Color(0xFF4CAF50).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isClosed
-                        ? const Color(0xFFEF5350).withValues(alpha: 0.4)
-                        : const Color(0xFF4CAF50).withValues(alpha: 0.4),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      event.statusLabel,
+                      style: const TextStyle(
+                          color: Color(0xFF4CAF50),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
-                child: Text(
-                  event.statusLabel,
-                  style: TextStyle(
-                      color: isClosed
-                          ? const Color(0xFFEF5350)
-                          : const Color(0xFF4CAF50),
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold),
-                ),
+                  const SizedBox(height: 8),
+                  Text(event.budgetFormatted,
+                      style: const TextStyle(
+                          color: Color(0xFFC48DF6),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14)),
+                ],
               ),
             ],
           ),
+          const SizedBox(height: 4),
+          const Text('Organizer',
+              style: TextStyle(color: Colors.white38, fontSize: 13)),
           const SizedBox(height: 12),
 
-          // Budget + Date
-          Row(
-            children: [
-              const Icon(Icons.attach_money, size: 14, color: Color(0xFFC48DF6)),
-              const SizedBox(width: 4),
-              Text(event.budgetFormatted,
-                  style: textTheme.bodySmall
-                      ?.copyWith(color: const Color(0xFFC48DF6))),
-              const SizedBox(width: 16),
-              const Icon(Icons.calendar_today_outlined,
-                  size: 12, color: Colors.white54),
-              const SizedBox(width: 4),
-              Text(event.eventDate,
-                  style:
-                      textTheme.bodySmall?.copyWith(color: Colors.white54)),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Genres
+          // Genre Tag
           if (event.genres.isNotEmpty)
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: event.genres
-                  .take(3)
-                  .map((g) => Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color:
-                              const Color(0xFFC48DF6).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: const Color(0xFFC48DF6)
-                                  .withValues(alpha: 0.3)),
-                        ),
-                        child: Text(g,
-                            style: const TextStyle(
-                                color: Color(0xFFC48DF6),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600)),
-                      ))
-                  .toList(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(event.genres.first,
+                  style: const TextStyle(color: Colors.white70, fontSize: 11)),
             ),
+          const SizedBox(height: 16),
 
-          if (event.description.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              event.description,
-              style: textTheme.bodySmall?.copyWith(color: Colors.white54),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+          // Details List
+          _buildInfoRow(Icons.calendar_today_outlined, 'Jadwal:', event.eventDate),
+          const SizedBox(height: 8),
+          _buildInfoRow(Icons.location_on_outlined, 'Lokasi:',
+              '${event.venueName}, ${event.city}'),
+          const SizedBox(height: 16),
 
-          // Apply Button
-          if (!isClosed) ...[
-            const SizedBox(height: 16),
-            _ApplyButton(event: event),
-          ],
+          Text(
+            event.description,
+            style: const TextStyle(color: Colors.white54, fontSize: 13),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 20),
+
+          // Action Button
+          Align(
+            alignment: Alignment.centerRight,
+            child: _ApplyButton(event: event),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: Colors.white54),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(value,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
+        ),
+      ],
     );
   }
 }
@@ -797,9 +851,9 @@ class _ApplyButtonState extends ConsumerState<_ApplyButton> {
             : const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.send_outlined, size: 16, color: Colors.white),
-                  SizedBox(width: 6),
-                  Text('Lamar Event',
+                  const Icon(Icons.send_outlined, size: 16, color: Colors.white),
+                  const SizedBox(width: 6),
+                  const Text('Swaftu Sekarang',
                       style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

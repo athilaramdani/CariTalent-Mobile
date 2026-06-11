@@ -30,32 +30,45 @@ class EventModel {
   });
 
   factory EventModel.fromJson(Object? json) {
-    final map = json as Map<String, dynamic>;
+    if (json == null || json is! Map<String, dynamic>) {
+      return const EventModel(
+        id: 0,
+        organizerId: 0,
+        title: '',
+        description: '',
+        budget: 0,
+        eventDate: '',
+        venueName: '',
+        city: '',
+        status: '',
+        genres: [],
+        totalApplicants: 0,
+      );
+    }
+    final map = json;
 
     // Genre bisa berupa List<String> atau List<Map> (dengan field 'name')
     List<String> parseGenres(dynamic raw) {
-      if (raw == null) return [];
-      final list = raw as List<dynamic>;
+      if (raw == null || raw is! List) return [];
+      final list = raw;
       return list.map((e) {
         if (e is Map<String, dynamic>) {
           return e['name']?.toString() ?? '';
         }
-        return e.toString();
+        return e?.toString() ?? '';
       }).where((s) => s.isNotEmpty).toList();
     }
 
     return EventModel(
-      // 'id' bisa int atau null, fallback 0
       id: (map['id'] as num?)?.toInt() ?? 0,
       organizerId: (map['organizer_id'] as num?)?.toInt() ?? 0,
-      title: map['title'] as String? ?? '',
-      description: map['description'] as String? ?? '',
+      title: map['title']?.toString() ?? '',
+      description: map['description']?.toString() ?? '',
       budget: double.tryParse(map['budget']?.toString() ?? '0') ?? 0,
-      eventDate: map['event_date'] as String? ?? '',
-      venueName: map['venue_name'] as String? ?? '',
-      city: map['city'] as String? ?? '',
-      status: map['status'] as String? ?? '',
-      // 'genres' adalah relasi many-to-many → List<Map>, atau kadang List<String>
+      eventDate: map['event_date']?.toString() ?? '',
+      venueName: map['venue_name']?.toString() ?? '',
+      city: map['city']?.toString() ?? '',
+      status: map['status']?.toString() ?? '',
       genres: parseGenres(map['genres'] ?? map['genre_needed']),
       totalApplicants: (map['total_applicants'] as num?)?.toInt() ?? 0,
       latitude: map['latitude'] != null

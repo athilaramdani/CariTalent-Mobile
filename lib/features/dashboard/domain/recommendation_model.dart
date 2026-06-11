@@ -46,7 +46,7 @@ class RecommendationModel {
           : const ScoreBreakdown(
               genreScore: 0, budgetScore: 0, locationScore: 0),
       talent: TalentModel.fromJson(map['talent']),
-      isInvited: map['is_invited'] == true,
+      isInvited: map['is_invited'] == true || map['is_invited'] == 1,
     );
   }
 

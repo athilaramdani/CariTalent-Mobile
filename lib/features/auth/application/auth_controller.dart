@@ -133,6 +133,18 @@ class AuthController extends StateNotifier<AuthState> {
     state = state.copyWith(clearUser: true, isLoading: false);
   }
 
+  /// Re-fetches current user data from the server (e.g. after profile update)
+  Future<void> refreshUser() async {
+    try {
+      final user = await _repository.getCurrentUser();
+      if (user != null) {
+        state = state.copyWith(user: user);
+      }
+    } catch (_) {
+      // Silently ignore — user remains logged in with stale data
+    }
+  }
+
   Future<void> _run(Future<void> Function() action) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {

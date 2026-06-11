@@ -19,6 +19,13 @@ class ApiEndpoints {
   static const myEvents = '/events/my';
   static const sentInvitations = '/invitations/sent';
 
+  // Notifications
+  static const markAllNotificationsRead = '/notifications/read-all';
+  static String markNotificationRead(int id) => '/notifications/$id/read';
+
+  // Reviews
+  static const reviews = '/reviews';
+
   // User profile
   static const userProfile = '/users/profile';
   static const userPassword = '/users/password';
@@ -33,6 +40,7 @@ class ApiEndpoints {
   static String respondInvitation(int id) => '/invitations/$id/respond';
 
   // Bookings
+  static String bookingDetail(int id) => '/bookings/$id';
   static String completeBooking(int id) => '/bookings/$id/complete';
   static String cancelBooking(int id) => '/bookings/$id/cancel';
 
