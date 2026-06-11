@@ -10,6 +10,7 @@ class EventModel {
   final String status;
   final List<String> genres;
   final int totalApplicants;
+  final String? organizerName;
   final double? latitude;
   final double? longitude;
 
@@ -25,6 +26,7 @@ class EventModel {
     required this.status,
     required this.genres,
     required this.totalApplicants,
+    this.organizerName,
     this.latitude,
     this.longitude,
   });
@@ -42,6 +44,7 @@ class EventModel {
         city: '',
         status: '',
         genres: [],
+        organizerName: null,
         totalApplicants: 0,
       );
     }
@@ -70,6 +73,7 @@ class EventModel {
       city: map['city']?.toString() ?? '',
       status: map['status']?.toString() ?? '',
       genres: parseGenres(map['genres'] ?? map['genre_needed']),
+      organizerName: map['organizer_name']?.toString() ?? map['organizer']?['name']?.toString(),
       totalApplicants: (map['total_applicants'] as num?)?.toInt() ?? 0,
       latitude: map['latitude'] != null
           ? double.tryParse(map['latitude'].toString())

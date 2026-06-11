@@ -308,146 +308,394 @@ class _BookingCardState extends State<_BookingCard> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.uiDark,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header: Budget & Status
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Text(booking.eventTitle,
-                    style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold, color: Colors.white),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis),
-              ),
-              const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.transparent,
+                  color: const Color(0xFFC48DF6).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                      color: statusColor.withValues(alpha: 0.5)),
                 ),
-                child: Text(
-                  booking.statusCapitalized,
-                  style: TextStyle(
-                      color: statusColor,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.payments_outlined, size: 14, color: Color(0xFFC48DF6)),
+                    const SizedBox(width: 6),
+                    Text(booking.agreedPriceFormatted,
+                        style: const TextStyle(
+                            color: Color(0xFFC48DF6),
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold)),
+                  ],
                 ),
+              ),
+              _StatusLabel(
+                label: booking.statusCapitalized,
+                color: statusColor,
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
+
+          // Title
+          Text(booking.eventTitle,
+              style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold, color: Colors.white),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 12),
+
+          // Schedule & Location
+          _buildInfoRow(Icons.calendar_today_outlined, 'JADWAL ACARA', booking.eventDate),
+          const SizedBox(height: 10),
+          _buildInfoRow(Icons.location_on_outlined, 'LOKASI VENUE', 
+              '${booking.eventVenue} • ${booking.eventCity}'),
+          
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(height: 1, color: Colors.white10),
+          ),
+
+          // Source & Dibuat
           Row(
             children: [
-              Icon(Icons.event_outlined, size: 13, color: statusColor),
-              const SizedBox(width: 4),
               Expanded(
-                child: Text(booking.eventDateVenueFormatted,
-                    style: textTheme.bodySmall
-                        ?.copyWith(color: Colors.white54),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('SUMBER',
+                        style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(booking.sourceLabel, 
+                        style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('DIBUAT',
+                        style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(booking.dateFormatted, 
+                        style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            child: Divider(
-                height: 1, color: Colors.white.withValues(alpha: 0.05)),
-          ),
+
+          const SizedBox(height: 20),
+
+          // Actions
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('HARGA DEAL',
-                      style: TextStyle(
-                          color: Colors.white54,
-                          fontSize: 10,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 6),
-                  Text(booking.agreedPriceFormatted,
-                      style: const TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFFE879F9),
-                          fontWeight: FontWeight.w900)),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Text('SUMBER',
-                      style: TextStyle(
-                          color: Colors.white54,
-                          fontSize: 10,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 6),
-                  Text(booking.sourceLabel,
-                      style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500)),
-                ],
-              ),
-            ],
-          ),
-          if (widget.onCancel != null && s == 'confirmed') ...[
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: _cancelling
-                  ? null
-                  : () async {
+              if (widget.onCancel != null && s == 'confirmed')
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _cancelling ? null : () {
                       setState(() => _cancelling = true);
                       widget.onCancel!();
                       if (mounted) setState(() => _cancelling = false);
                     },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                      color: Colors.redAccent.withValues(alpha: 0.4)),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                         color: Colors.redAccent.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text('Batal', style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 ),
-                alignment: Alignment.center,
-                child: _cancelling
-                    ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.redAccent))
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+              if (widget.onCancel != null && s == 'confirmed') const SizedBox(width: 12),
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: () => _showDetail(context, booking),
+                  icon: const Icon(Icons.visibility_outlined, size: 16, color: Colors.white70),
+                  label: const Text('Detail', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.03),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 12, color: Colors.white54),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.bold)),
+              Text(value, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showDetail(BuildContext context, BookingModel booking) {
+    final statusColor = booking.status.toLowerCase() == 'confirmed' ? AppTheme.highlight : Colors.green;
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 500),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A2E),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 16, 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.cancel_outlined,
-                              color: Colors.redAccent, size: 16),
-                          SizedBox(width: 6),
-                          Text('Batalkan Booking',
+                          Text('DETAIL BOOKING EVENT',
                               style: TextStyle(
-                                  color: Colors.redAccent,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold)),
+                                  color: Color(0xFFC48DF6),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.0)),
+                          SizedBox(height: 8),
                         ],
                       ),
-              ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close_rounded, color: Colors.white54, size: 20),
+                      )
+                    ],
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(booking.eventTitle,
+                      style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 24),
+
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Organizer Card
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.04),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFC48DF6).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.business_rounded, color: Color(0xFFC48DF6), size: 24),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('PENYELENGGARA (EO)',
+                                        style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 4),
+                                    Text(booking.organizerName ?? 'Organizer #${booking.organizerId}',
+                                        style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                              _StatusLabel(label: booking.statusCapitalized, color: statusColor),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Pricing Grid
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _InfoBox(
+                                label: 'HARGA DEAL',
+                                value: booking.agreedPriceFormatted,
+                                valueColor: const Color(0xFFC48DF6),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _InfoBox(
+                                label: 'TANGGAL & WAKTU',
+                                value: booking.eventDate,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        const Text('DESKRIPSI ACARA',
+                            style: TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.03),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            booking.eventDescription,
+                            style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        const Text('LOKASI & VENUE',
+                            style: TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.03),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.location_on_rounded, color: Color(0xFFC48DF6), size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  '${booking.eventVenue}, ${booking.eventCity}',
+                                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Footer
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+                  ),
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      minimumSize: const Size(double.infinity, 54),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _StatusLabel extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _StatusLabel({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(label,
+          style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+    );
+  }
+}
+
+class _InfoBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  const _InfoBox({required this.label, required this.value, this.valueColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Text(value, style: TextStyle(color: valueColor ?? Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
         ],
       ),
     );

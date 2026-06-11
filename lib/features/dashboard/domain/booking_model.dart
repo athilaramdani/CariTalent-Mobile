@@ -43,6 +43,10 @@ class BookingModel {
   double? get eventLng => event?['longitude'] != null
       ? double.tryParse(event!['longitude'].toString())
       : null;
+  String get eventDescription => (event?['description'] as String?) ?? '';
+  String get eventCity => (event?['city'] as String?) ?? '';
+  String? get organizerName => (event?['organizer_name'] as String?) ?? (event?['organizer']?['name'] as String?);
+  int? get organizerId => (event?['organizer_id'] as num?)?.toInt();
 
   String get talentName => (talent?['stage_name'] as String?) ?? '';
 

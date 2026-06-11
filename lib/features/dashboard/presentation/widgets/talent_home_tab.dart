@@ -160,84 +160,6 @@ class TalentHomeTab extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
 
-            // 7. Talent Reviews Section
-            _buildSectionHeader(context, 'Talent Reviews', 'Ulasan dari event organizer', textTheme, onSeeAll: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const TalentReviewsPage()));
-            }),
-            const SizedBox(height: 12),
-            reviewsAsync.when(
-              data: (data) {
-                final rating = data.averageRating.toStringAsFixed(1);
-                final count = data.totalReviews;
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const TalentReviewsPage()));
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF271340), Color(0xFF1B0E2A)],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFB500FF), Color(0xFFDE33A2)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(Icons.star_rate_outlined, color: Colors.white, size: 26),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Lihat Semua Ulasan',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  ...List.generate(5, (i) => Icon(
-                                    i < data.averageRating.floor() ? Icons.star : Icons.star_border,
-                                    color: Colors.amber, size: 13,
-                                  )),
-                                  const SizedBox(width: 6),
-                                  Text('$rating / 5  ·  $count ulasan',
-                                    style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'What organizers say about your performance',
-                                style: TextStyle(color: Colors.white38, fontSize: 11),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.arrow_forward_ios, color: Color(0xFFC48DF6), size: 16),
-                      ],
-                    ),
-                  ),
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -318,45 +240,67 @@ class TalentHomeTab extends ConsumerWidget {
             Icons.event_available_outlined, Colors.blue),
         GestureDetector(
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TalentReviewsPage())),
-          child: _buildStatCard(context, 'AVERAGE RATING', rating, 'Berdasarkan perform terakhir',
-              Icons.stars_outlined, Colors.blue),
+          child: _buildStatCard(
+            context, 
+            'AVERAGE RATING', 
+            rating, 
+            'Berdasarkan perform terakhir',
+            Icons.stars_rounded, 
+            const Color(0xFFFFD700), // Gold
+            isHighlighted: true,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value, String hint, IconData icon, Color iconColor) {
+  Widget _buildStatCard(BuildContext context, String title, String value, String hint, IconData icon, Color iconColor, {bool isHighlighted = false}) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.uiDark,
+        color: isHighlighted ? const Color(0xFF271340) : AppTheme.uiDark,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(
+          color: isHighlighted 
+              ? const Color(0xFFC48DF6).withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.05)
+        ),
+        boxShadow: isHighlighted ? [
+          BoxShadow(
+            color: const Color(0xFFB500FF).withValues(alpha: 0.1),
+            blurRadius: 10,
+            spreadRadius: 2,
+          )
+        ] : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: iconColor, size: 16),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 1),
-                  child: Text(title,
-                    style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.w600),
-                    maxLines: 2, overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Icon(icon, color: iconColor, size: 16),
+                  const SizedBox(width: 8),
+                  Text(title,
+                    style: TextStyle(
+                      color: isHighlighted ? const Color(0xFFC48DF6) : Colors.white54, 
+                      fontSize: 10, 
+                      fontWeight: FontWeight.w600
+                    ),
                   ),
-                ),
+                ],
               ),
+              if (isHighlighted)
+                const Icon(Icons.arrow_forward_ios, color: Color(0xFFC48DF6), size: 10),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(value,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, height: 1.0),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(hint,
             style: const TextStyle(fontSize: 10, color: Colors.white54, height: 1.2),
             maxLines: 2, overflow: TextOverflow.ellipsis,

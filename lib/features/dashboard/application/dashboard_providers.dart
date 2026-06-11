@@ -78,15 +78,21 @@ class PublicEventsFilters {
   final String? status;
   final String? city;
   final String? search;
+  final String? genre;
   final int? budgetMin;
   final int? budgetMax;
+  final String? dateFrom;
+  final String? dateTo;
 
   const PublicEventsFilters({
     this.status,
     this.city,
     this.search,
+    this.genre,
     this.budgetMin,
     this.budgetMax,
+    this.dateFrom,
+    this.dateTo,
   });
 }
 
@@ -101,8 +107,11 @@ final publicEventsProvider =
         status: filters.status,
         city: filters.city,
         search: filters.search,
+        genre: filters.genre,
         budgetMin: filters.budgetMin,
         budgetMax: filters.budgetMax,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
       );
 });
 
