@@ -13,16 +13,22 @@ class EventRepository {
     String? status,
     String? city,
     String? search,
+    String? genre,
     int? budgetMin,
     int? budgetMax,
+    String? dateFrom,
+    String? dateTo,
     int perPage = 50,
   }) async {
     final params = <String, dynamic>{'per_page': perPage};
     if (status != null && status.isNotEmpty) params['status'] = status;
     if (city != null && city.isNotEmpty) params['city'] = city;
     if (search != null && search.isNotEmpty) params['search'] = search;
+    if (genre != null && genre.isNotEmpty) params['genre'] = genre;
     if (budgetMin != null) params['budget_min'] = budgetMin;
     if (budgetMax != null) params['budget_max'] = budgetMax;
+    if (dateFrom != null && dateFrom.isNotEmpty) params['date_from'] = dateFrom;
+    if (dateTo != null && dateTo.isNotEmpty) params['date_to'] = dateTo;
 
     return _api.get<List<EventModel>>(
       ApiEndpoints.events,
