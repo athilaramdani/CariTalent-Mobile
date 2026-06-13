@@ -4,6 +4,7 @@ import 'package:caritalent_mobile/features/dashboard/application/dashboard_provi
 import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class EoBookingsTab extends ConsumerStatefulWidget {
   const EoBookingsTab({super.key});
@@ -14,6 +15,53 @@ class EoBookingsTab extends ConsumerStatefulWidget {
 
 class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
   String _selectedFilter = 'Semua';
+  bool _isProcessing = false;
+  
+  Future<void> _completeBooking(int id) async {
+    setState(() => _isProcessing = true);
+    try {
+      await ref.read(bookingRepositoryProvider).completeBooking(id);
+      ref.invalidate(myBookingsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Booking berhasil ditandai selesai!'),
+          backgroundColor: Colors.green,
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Gagal menyelesaikan booking: $e'),
+          backgroundColor: Colors.redAccent,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  Future<void> _cancelBooking(int id) async {
+    setState(() => _isProcessing = true);
+    try {
+      await ref.read(bookingRepositoryProvider).cancelBooking(id);
+      ref.invalidate(myBookingsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Booking berhasil dibatalkan'),
+          backgroundColor: Colors.orange,
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Gagal membatalkan booking: $e'),
+          backgroundColor: Colors.redAccent,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +80,9 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
               ? bookings
               : bookings.where((b) {
                   switch (_selectedFilter) {
-                    case 'Confirmed':
+                    case 'Dikonfirmasi':
                       return b.status == 'confirmed';
-                    case 'Completed':
+                    case 'Selesai':
                       return b.status == 'completed';
                     default:
                       return true;
@@ -45,10 +93,12 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
               GradientText(
-                'My Bookings',
-                style: textTheme.headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.w900) ??
-                    const TextStyle(),
+                'Pemesanan',
+                style: GoogleFonts.syne(
+                  textStyle: textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -57,7 +107,7 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
               ),
               const SizedBox(height: 8),
               Text(
-                '${bookings.length} booking · $confirmed confirmed · $completed completed',
+                '${bookings.length} booking · $confirmed dikonfirmasi · $completed selesai',
                 style: textTheme.bodyMedium
                     ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
               ),
@@ -69,8 +119,8 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
                 child: Row(
                   children: [
                     _buildFilterChip(context, 'Semua', '${bookings.length}'),
-                    _buildFilterChip(context, 'Confirmed', '$confirmed'),
-                    _buildFilterChip(context, 'Completed', '$completed'),
+                    _buildFilterChip(context, 'Dikonfirmasi', '$confirmed'),
+                    _buildFilterChip(context, 'Selesai', '$completed'),
                   ],
                 ),
               ),
@@ -337,6 +387,42 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
               ),
             ],
           ),
+          if (s == 'confirmed') ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessing ? null : () => _completeBooking(booking.id),
+                    icon: const Icon(Icons.check_circle_outline, size: 18),
+                    label: const Text('Tandai Selesai'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.withValues(alpha: 0.1),
+                      foregroundColor: Colors.green,
+                      elevation: 0,
+                      side: BorderSide(color: Colors.green.withValues(alpha: 0.3)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isProcessing ? null : () => _cancelBooking(booking.id),
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    label: const Text('Batalkan'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.3)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

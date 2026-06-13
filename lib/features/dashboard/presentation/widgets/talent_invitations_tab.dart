@@ -1,9 +1,40 @@
 import 'package:caritalent_mobile/app/theme/app_theme.dart';
+import 'package:caritalent_mobile/core/widgets/app_header.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/invitation_model.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_map_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+String? _invitationStatusValue(String label) {
+  switch (label) {
+    case 'Menunggu':
+      return 'pending';
+    case 'Diterima':
+      return 'accepted';
+    case 'Ditolak':
+      return 'rejected';
+    default:
+      return null;
+  }
+}
+
+String _invitationStatusLabel(String status) {
+  switch (status.trim().toLowerCase()) {
+    case 'pending':
+      return 'Menunggu';
+    case 'accepted':
+      return 'Diterima';
+    case 'rejected':
+      return 'Ditolak';
+    default:
+      return status.isEmpty
+          ? '-'
+          : '${status[0].toUpperCase()}${status.substring(1)}';
+  }
+}
 
 class TalentInvitationsTab extends ConsumerStatefulWidget {
   const TalentInvitationsTab({super.key});
@@ -28,21 +59,26 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
               invitations.where((i) => i.status == 'pending').length;
           final accepted =
               invitations.where((i) => i.status == 'accepted').length;
+          final rejected =
+              invitations.where((i) => i.status == 'rejected').length;
 
-          final filtered = _selectedFilter == 'Semua'
+          final selectedStatus = _invitationStatusValue(_selectedFilter);
+          final filtered = selectedStatus == null
               ? invitations
-              : invitations
-                  .where((i) => i.status == _selectedFilter.toLowerCase())
-                  .toList();
+              : invitations.where((i) => i.status == selectedStatus).toList();
 
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
+              const AppHeader(),
+              const SizedBox(height: 32),
               GradientText(
-                'My Invitations',
-                style: textTheme.headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.w900) ??
-                    const TextStyle(),
+                'Undangan Terkirim',
+                style: GoogleFonts.syne(
+                  textStyle: textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -55,13 +91,32 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
               Row(
                 children: [
                   _buildStatCard(
-                      context, '${invitations.length}', 'TOTAL', null),
-                  const SizedBox(width: 12),
-                  _buildStatCard(context, '$pending', 'PENDING',
-                      Colors.orangeAccent),
-                  const SizedBox(width: 12),
+                    context,
+                    '${invitations.length}',
+                    'Semua',
+                    null,
+                  ),
+                  const SizedBox(width: 8),
                   _buildStatCard(
-                      context, '$accepted', 'ACCEPTED', Colors.greenAccent),
+                    context,
+                    '$pending',
+                    'Menunggu',
+                    Colors.orangeAccent,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildStatCard(
+                    context,
+                    '$accepted',
+                    'Diterima',
+                    Colors.greenAccent,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildStatCard(
+                    context,
+                    '$rejected',
+                    'Ditolak',
+                    Colors.redAccent,
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -72,8 +127,9 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
                 child: Row(
                   children: [
                     _buildFilterChip(context, 'Semua', '${invitations.length}'),
-                    _buildFilterChip(context, 'Pending', '$pending'),
-                    _buildFilterChip(context, 'Accepted', '$accepted'),
+                    _buildFilterChip(context, 'Menunggu', '$pending'),
+                    _buildFilterChip(context, 'Diterima', '$accepted'),
+                    _buildFilterChip(context, 'Ditolak', '$rejected'),
                   ],
                 ),
               ),
@@ -85,12 +141,18 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
                     padding: const EdgeInsets.all(40),
                     child: Column(
                       children: [
-                        const Icon(Icons.mail_outline,
-                            size: 52, color: Colors.white24),
+                        const Icon(
+                          Icons.mail_outline,
+                          size: 52,
+                          color: Colors.white24,
+                        ),
                         const SizedBox(height: 16),
-                        Text('Tidak ada undangan',
-                            style: textTheme.bodyMedium
-                                ?.copyWith(color: Colors.white38)),
+                        Text(
+                          'Tidak ada undangan',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: Colors.white38,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -110,22 +172,29 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
-              const SizedBox(height: 16),
-              Text('Gagal memuat undangan: $e',
-                  style: const TextStyle(color: Colors.white54)),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(myInvitationsProvider),
-                child: const Text('Coba Lagi'),
+        error:
+            (e, _) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.redAccent,
+                    size: 48,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Gagal memuat undangan: $e',
+                    style: const TextStyle(color: Colors.white54),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => ref.invalidate(myInvitationsProvider),
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
       ),
     );
   }
@@ -138,16 +207,22 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
       ref.invalidate(myInvitationsProvider);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Gagal: $e'),
-          backgroundColor: Colors.redAccent,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
       }
     }
   }
 
   Widget _buildStatCard(
-      BuildContext context, String value, String label, Color? valueColor) {
+    BuildContext context,
+    String value,
+    String label,
+    Color? valueColor,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 24),
@@ -158,26 +233,31 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w400,
-                    color: valueColor ?? Colors.white)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w400,
+                color: valueColor ?? Colors.white,
+              ),
+            ),
             const SizedBox(height: 10),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.white54,
-                    letterSpacing: 1.5,
-                    fontWeight: FontWeight.bold)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.white54,
+                letterSpacing: 1.5,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFilterChip(
-      BuildContext context, String label, String count) {
+  Widget _buildFilterChip(BuildContext context, String label, String count) {
     final isActive = _selectedFilter == label;
     return GestureDetector(
       onTap: () => setState(() => _selectedFilter = label),
@@ -186,23 +266,27 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: isActive
-              ? const LinearGradient(
-                  colors: [Color(0xFFB500FF), Color(0xFFE94057)],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                )
-              : null,
+          gradient:
+              isActive
+                  ? const LinearGradient(
+                    colors: [Color(0xFFB500FF), Color(0xFFE94057)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  )
+                  : null,
           color: isActive ? null : Colors.transparent,
           border: isActive ? null : Border.all(color: Colors.white24),
         ),
         child: Row(
           children: [
-            Text(label,
-                style: TextStyle(
-                    color: isActive ? Colors.white : Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold)),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? Colors.white : Colors.white70,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -210,11 +294,14 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
                 color: Colors.black.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
-              child: Text(count,
-                  style: TextStyle(
-                      color: isActive ? Colors.white : Colors.white54,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold)),
+              child: Text(
+                count,
+                style: TextStyle(
+                  color: isActive ? Colors.white : Colors.white54,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -277,28 +364,32 @@ class _InvitationCardState extends State<_InvitationCard> {
                 child: Text(
                   inv.eventTitle,
                   style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold, color: Colors.white),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                      color: statusColor.withValues(alpha: 0.3)),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  '${inv.status[0].toUpperCase()}${inv.status.substring(1)}',
+                  _invitationStatusLabel(inv.status),
                   style: TextStyle(
-                      color: statusColor,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0),
+                    color: statusColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0,
+                  ),
                 ),
               ),
             ],
@@ -306,33 +397,48 @@ class _InvitationCardState extends State<_InvitationCard> {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined,
-                  size: 12, color: Colors.white54),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 12,
+                color: Colors.white54,
+              ),
               const SizedBox(width: 4),
-              Text(inv.eventDateFormatted,
-                  style: textTheme.bodySmall
-                      ?.copyWith(color: Colors.white54)),
+              Text(
+                inv.eventDateFormatted,
+                style: textTheme.bodySmall?.copyWith(color: Colors.white54),
+              ),
               if (inv.eventVenue.isNotEmpty) ...[
                 const SizedBox(width: 8),
-                const Icon(Icons.location_on_outlined,
-                    size: 12, color: Colors.white54),
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 12,
+                  color: Colors.white54,
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     inv.eventVenue,
-                    style:
-                        textTheme.bodySmall?.copyWith(color: Colors.white54),
+                    style: textTheme.bodySmall?.copyWith(color: Colors.white54),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
+              const SizedBox(width: 8),
+              EventMapButton(
+                eventName: inv.eventTitle,
+                displayAddress: inv.eventAddress,
+                latitude: inv.eventLat,
+                longitude: inv.eventLng,
+              ),
             ],
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 14),
             child: Divider(
-                height: 1, color: Colors.white.withValues(alpha: 0.05)),
+              height: 1,
+              color: Colors.white.withValues(alpha: 0.05),
+            ),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -340,35 +446,47 @@ class _InvitationCardState extends State<_InvitationCard> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('HARGA DITAWARKAN',
-                      style: TextStyle(
-                          color: Colors.white54,
-                          fontSize: 10,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w700)),
+                  const Text(
+                    'HARGA DITAWARKAN',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 10,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text(inv.offeredPriceFormatted,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFFE879F9),
-                          fontWeight: FontWeight.w700)),
+                  Text(
+                    inv.offeredPriceFormatted,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFFE879F9),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text('DITERIMA',
-                      style: TextStyle(
-                          color: Colors.white54,
-                          fontSize: 10,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w700)),
+                  const Text(
+                    'DITERIMA',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 10,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text(inv.dateFormatted,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500)),
+                  Text(
+                    inv.dateFormatted,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -380,76 +498,85 @@ class _InvitationCardState extends State<_InvitationCard> {
             _loading
                 ? const Center(child: CircularProgressIndicator())
                 : Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async {
-                            setState(() => _loading = true);
-                            widget.onAccept();
-                            if (mounted) setState(() => _loading = false);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFF4CAF50),
-                                  Color(0xFF2E7D32)
-                                ],
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                          setState(() => _loading = true);
+                          widget.onAccept();
+                          if (mounted) setState(() => _loading = false);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.check_circle_outline,
+                                color: Colors.white,
+                                size: 16,
                               ),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check_circle_outline,
-                                    color: Colors.white, size: 16),
-                                SizedBox(width: 6),
-                                Text('Terima',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold)),
-                              ],
-                            ),
+                              SizedBox(width: 6),
+                              Text(
+                                'Terima',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async {
-                            setState(() => _loading = true);
-                            widget.onReject();
-                            if (mounted) setState(() => _loading = false);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: Colors.redAccent
-                                      .withValues(alpha: 0.4)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                          setState(() => _loading = true);
+                          widget.onReject();
+                          if (mounted) setState(() => _loading = false);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Colors.redAccent.withValues(alpha: 0.4),
                             ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.cancel_outlined,
-                                    color: Colors.redAccent, size: 16),
-                                SizedBox(width: 6),
-                                Text('Tolak',
-                                    style: TextStyle(
-                                        color: Colors.redAccent,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold)),
-                              ],
-                            ),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.cancel_outlined,
+                                color: Colors.redAccent,
+                                size: 16,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'Tolak',
+                                style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
           ],
 
           if (isAccepted) ...[
@@ -467,11 +594,14 @@ class _InvitationCardState extends State<_InvitationCard> {
                 children: [
                   Icon(Icons.check_circle, color: Colors.green, size: 16),
                   SizedBox(width: 6),
-                  Text('Undangan Diterima',
-                      style: TextStyle(
-                          color: Colors.green,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold)),
+                  Text(
+                    'Undangan Diterima',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),

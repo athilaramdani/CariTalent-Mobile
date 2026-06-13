@@ -37,17 +37,22 @@ class ApiClient {
         },
       ),
     );
+
+    // Debug: log all HTTP traffic to find FCM token 404
+    _dio.interceptors.add(LogInterceptor(
+      requestBody: true,
+      responseBody: true,
+      requestHeader: false,
+      logPrint: (o) => debugPrint('[DIO] $o'),
+    ));
   }
 
   final Dio _dio;
   final SecureStorageService _storage;
 
   String _defaultBaseUrl() {
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8000/api/v1';
-    }
-
-    return 'http://127.0.0.1:8000/api/v1';
+    // Menggunakan IP lokal PC agar bisa diakses langsung dari HP Fisik
+    return 'http://192.168.18.136:8000/api/v1';
   }
 
   Future<T> get<T>(
@@ -58,6 +63,18 @@ class ApiClient {
     return _request(
       () => _dio.get(path, queryParameters: queryParameters),
       parser,
+    );
+  }
+
+  Future<T> getRaw<T>(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    required T Function(Object? json) parser,
+  }) async {
+    return _request(
+      () => _dio.get(path, queryParameters: queryParameters),
+      parser,
+      unwrapData: false,
     );
   }
 
@@ -87,7 +104,9 @@ class ApiClient {
   Future<T> _request<T>(
     Future<Response<dynamic>> Function() request,
     T Function(Object? json) parser,
-  ) async {
+    {
+    bool unwrapData = true,
+  }) async {
     try {
       final response = await request();
       final body = response.data;
@@ -98,7 +117,9 @@ class ApiClient {
           errors: body['errors'],
         );
       }
-      return parser(body is Map<String, dynamic> ? body['data'] : body);
+      final payload =
+          unwrapData && body is Map<String, dynamic> ? body['data'] : body;
+      return parser(payload);
     } on DioException catch (error) {
       final body = error.response?.data;
       if (body is Map<String, dynamic>) {

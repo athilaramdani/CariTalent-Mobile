@@ -1,9 +1,11 @@
-import 'package:caritalent_mobile/core/network/api_exception.dart';
+import 'package:caritalent_mobile/core/services/fcm_service.dart';
 import 'package:caritalent_mobile/features/auth/data/auth_repository.dart';
 import 'package:caritalent_mobile/features/auth/domain/app_user.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:caritalent_mobile/core/network/api_client.dart';
+import 'package:caritalent_mobile/core/network/api_exception.dart';
 import 'package:caritalent_mobile/core/storage/secure_storage_service.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
@@ -15,7 +17,10 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
   (ref) {
-    return AuthController(ref.watch(authRepositoryProvider));
+    return AuthController(
+      ref.watch(authRepositoryProvider),
+      ref.watch(fcmServiceProvider),
+    );
   },
 );
 
@@ -52,11 +57,12 @@ class AuthState {
 }
 
 class AuthController extends StateNotifier<AuthState> {
-  AuthController(this._repository) : super(const AuthState()) {
+  AuthController(this._repository, this._fcm) : super(const AuthState()) {
     bootstrap();
   }
 
   final AuthRepository _repository;
+  final FcmService _fcm;
 
   Future<void> bootstrap() async {
     try {
@@ -66,6 +72,15 @@ class AuthController extends StateNotifier<AuthState> {
         isBootstrapping: false,
         clearError: true,
       );
+      // Only initialize FCM if user is actually logged in
+      if (user != null) {
+        try {
+          await _fcm.initialize();
+        } catch (e) {
+          // FCM error should not break auth state
+          debugPrint('[Bootstrap] FCM init error: $e');
+        }
+      }
     } catch (_) {
       state = state.copyWith(clearUser: true, isBootstrapping: false);
     }
@@ -73,23 +88,8 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> login(String email, String password) async {
     await _run(() async {
-      // Dummy Login Implementation
-      if (email == 'eo@dummy.com') {
-        state = state.copyWith(
-          user: const AppUser(id: 1, name: 'Bill Stephen', email: 'eo@dummy.com', role: 'eo', phone: '081234560002'),
-          isLoading: false,
-          clearError: true,
-        );
-        return;
-      }
-      if (email == 'talent@dummy.com') {
-        state = state.copyWith(
-          user: const AppUser(id: 2, name: 'Rizky Maulana', email: 'talent@dummy.com', role: 'talent', phone: '081234560001'),
-          isLoading: false,
-          clearError: true,
-        );
-        return;
-      }
+      // Dummy login has been removed because it breaks FCM push notifications.
+      // You must use a real account to test notifications.
       
       final session = await _repository.login(email: email, password: password);
       state = state.copyWith(
@@ -97,6 +97,8 @@ class AuthController extends StateNotifier<AuthState> {
         isLoading: false,
         clearError: true,
       );
+      // Daftarkan FCM token ke backend setelah login berhasil
+      await _fcm.initialize();
     });
   }
 
@@ -124,13 +126,34 @@ class AuthController extends StateNotifier<AuthState> {
         isLoading: false,
         clearError: true,
       );
+      // Register FCM after register (same as login)
+      try {
+        await _fcm.initialize();
+      } catch (e) {
+        debugPrint('[Register] FCM init error: $e');
+      }
     });
   }
 
   Future<void> logout() async {
     state = state.copyWith(isLoading: true, clearError: true);
-    await _repository.logout();
-    state = state.copyWith(clearUser: true, isLoading: false);
+    try {
+      await _repository.logout();
+    } finally {
+      state = state.copyWith(clearUser: true, isLoading: false);
+    }
+  }
+
+  /// Re-fetches current user data from the server (e.g. after profile update)
+  Future<void> refreshUser() async {
+    try {
+      final user = await _repository.getCurrentUser();
+      if (user != null) {
+        state = state.copyWith(user: user);
+      }
+    } catch (_) {
+      // Silently ignore — user remains logged in with stale data
+    }
   }
 
   Future<void> _run(Future<void> Function() action) async {

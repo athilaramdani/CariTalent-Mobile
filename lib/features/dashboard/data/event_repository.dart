@@ -13,16 +13,24 @@ class EventRepository {
     String? status,
     String? city,
     String? search,
+    String? genre,
     int? budgetMin,
     int? budgetMax,
+    String? dateFrom,
+    String? dateTo,
     int perPage = 50,
   }) async {
     final params = <String, dynamic>{'per_page': perPage};
-    if (status != null && status.isNotEmpty) params['status'] = status;
+    if (status != null && status.isNotEmpty) {
+      params['status'] = _statusToBackend(status);
+    }
     if (city != null && city.isNotEmpty) params['city'] = city;
     if (search != null && search.isNotEmpty) params['search'] = search;
+    if (genre != null && genre.isNotEmpty) params['genre'] = genre;
     if (budgetMin != null) params['budget_min'] = budgetMin;
     if (budgetMax != null) params['budget_max'] = budgetMax;
+    if (dateFrom != null && dateFrom.isNotEmpty) params['date_from'] = dateFrom;
+    if (dateTo != null && dateTo.isNotEmpty) params['date_to'] = dateTo;
 
     return _api.get<List<EventModel>>(
       ApiEndpoints.events,
@@ -65,7 +73,7 @@ class EventRepository {
     required String venueName,
     required String city,
     required String status,
-    required List<String> genre,
+    required List<int> genreIds,
     double? latitude,
     double? longitude,
   }) async {
@@ -76,8 +84,8 @@ class EventRepository {
       'event_date': eventDate,
       'venue_name': venueName,
       'city': city,
-      'status': status,
-      'genre': genre,
+      'status': _statusToBackend(status),
+      'genre_ids': genreIds,
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
     };
@@ -90,9 +98,18 @@ class EventRepository {
 
   /// PUT /events/{id} — update event
   Future<void> updateEvent(int id, Map<String, dynamic> data) async {
+    final body = Map<String, dynamic>.from(data);
+    final status = body['status'];
+    if (status is String && status.isNotEmpty) {
+      body['status'] = _statusToBackend(status);
+    }
+    if (body.containsKey('genre')) {
+      body['genre_ids'] = body.remove('genre');
+    }
+
     await _api.put<void>(
       ApiEndpoints.updateEvent(id),
-      data: data,
+      data: body,
       parser: (_) {},
     );
   }
@@ -132,5 +149,25 @@ class EventRepository {
       ApiEndpoints.eventRecommendations(eventId),
       parser: RecommendationsData.fromJson,
     );
+  }
+
+  static String _statusToBackend(String status) {
+    switch (status.trim().toLowerCase()) {
+      case 'open':
+      case 'dibuka':
+        return 'dibuka';
+      case 'closed':
+      case 'ditutup':
+        return 'ditutup';
+      case 'completed':
+      case 'selesai':
+        return 'selesai';
+      case 'cancelled':
+      case 'canceled':
+      case 'dibatalkan':
+        return 'dibatalkan';
+      default:
+        return status;
+    }
   }
 }

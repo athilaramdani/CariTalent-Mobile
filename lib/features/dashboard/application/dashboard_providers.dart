@@ -2,12 +2,17 @@ import 'package:caritalent_mobile/core/network/api_client.dart';
 import 'package:caritalent_mobile/features/dashboard/data/application_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/data/booking_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/data/event_repository.dart';
+import 'package:caritalent_mobile/features/dashboard/data/genre_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/data/invitation_repository.dart';
+import 'package:caritalent_mobile/features/dashboard/data/notification_repository.dart';
+import 'package:caritalent_mobile/features/dashboard/data/review_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/data/talent_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/application_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/event_model.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/genre_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/invitation_model.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/notification_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/recommendation_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/review_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/talent_model.dart';
@@ -38,6 +43,10 @@ final eventRepositoryProvider = Provider<EventRepository>((ref) {
   return EventRepository(ref.watch(apiClientProvider));
 });
 
+final genreRepositoryProvider = Provider<GenreRepository>((ref) {
+  return GenreRepository(ref.watch(apiClientProvider));
+});
+
 final talentRepositoryProvider = Provider<TalentRepository>((ref) {
   return TalentRepository(ref.watch(apiClientProvider));
 });
@@ -54,6 +63,14 @@ final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
   return BookingRepository(ref.watch(apiClientProvider));
 });
 
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
+  return NotificationRepository(ref.watch(apiClientProvider));
+});
+
+final reviewRepositoryProvider = Provider<ReviewRepository>((ref) {
+  return ReviewRepository(ref.watch(apiClientProvider));
+});
+
 // ─── Data Providers ───────────────────────────────────────────────────────────
 
 /// EO: list event milik EO yang login
@@ -67,15 +84,21 @@ class PublicEventsFilters {
   final String? status;
   final String? city;
   final String? search;
+  final String? genre;
   final int? budgetMin;
   final int? budgetMax;
+  final String? dateFrom;
+  final String? dateTo;
 
   const PublicEventsFilters({
     this.status,
     this.city,
     this.search,
+    this.genre,
     this.budgetMin,
     this.budgetMax,
+    this.dateFrom,
+    this.dateTo,
   });
 }
 
@@ -90,9 +113,16 @@ final publicEventsProvider =
         status: filters.status,
         city: filters.city,
         search: filters.search,
+        genre: filters.genre,
         budgetMin: filters.budgetMin,
         budgetMax: filters.budgetMax,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
       );
+});
+
+final genresProvider = FutureProvider.autoDispose<List<GenreModel>>((ref) async {
+  return ref.read(genreRepositoryProvider).fetchGenres();
 });
 
 /// Talent: lamaran saya (source=apply)
@@ -143,4 +173,44 @@ final eventApplicationsProvider = FutureProvider.autoDispose
 final recommendationsProvider = FutureProvider.autoDispose
     .family<RecommendationsData, int>((ref, eventId) async {
   return ref.read(eventRepositoryProvider).fetchRecommendations(eventId);
+});
+
+// ─── Talent Browse Providers (EO) ────────────────────────────────────────────
+
+class TalentListFilters {
+  final String? search;
+  final String? city;
+  final String? genre;
+
+  const TalentListFilters({this.search, this.city, this.genre});
+}
+
+final talentListFiltersProvider =
+    StateProvider.autoDispose<TalentListFilters>(
+        (ref) => const TalentListFilters());
+
+/// EO: browse semua talent publik
+final talentListProvider =
+    FutureProvider.autoDispose<List<TalentModel>>((ref) async {
+  final filters = ref.watch(talentListFiltersProvider);
+  return ref.read(talentRepositoryProvider).fetchTalentList(
+        search: filters.search,
+        city: filters.city,
+        genre: filters.genre,
+      );
+});
+
+// ─── Notification Providers ──────────────────────────────────────────────────
+
+/// Semua notifikasi user yang login
+final notificationsProvider =
+    FutureProvider.autoDispose<List<NotificationModel>>((ref) async {
+  return ref.read(notificationRepositoryProvider).fetchNotifications();
+});
+
+/// Jumlah notifikasi yang belum dibaca
+final unreadNotificationCountProvider = Provider.autoDispose<int>((ref) {
+  final list = ref.watch(notificationsProvider).valueOrNull;
+  if (list == null) return 0;
+  return list.where((n) => !n.isRead).length;
 });

@@ -1,5 +1,7 @@
 import 'package:caritalent_mobile/core/constants/user_roles.dart';
 import 'package:caritalent_mobile/features/auth/presentation/pages/login_page.dart';
+import 'package:caritalent_mobile/features/auth/presentation/pages/register_talent_page.dart';
+import 'package:caritalent_mobile/features/auth/presentation/pages/register_eo_page.dart';
 import 'package:caritalent_mobile/features/auth/presentation/pages/register_page.dart';
 import 'package:caritalent_mobile/features/auth/presentation/pages/splash_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_applicants_page.dart';
@@ -7,8 +9,11 @@ import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_chang
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_dashboard_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_edit_profile_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_recommendations_page.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_change_password_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_dashboard_page.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_edit_profile_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_profile_page.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/pages/notifications_page.dart';
 import 'package:caritalent_mobile/features/public/presentation/pages/public_home_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,7 +28,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: PublicHomePage.routePath,
-        builder: (context, state) => const PublicHomePage(),
+        builder: (context, state) {
+          final page = int.tryParse(state.uri.queryParameters['page'] ?? '0') ?? 0;
+          return PublicHomePage(initialPage: page);
+        },
+      ),
+      GoRoute(
+        path: '/onboarding/:slide',
+        builder: (context, state) {
+          final slide = int.tryParse(state.pathParameters['slide'] ?? '1') ?? 1;
+          return PublicHomePage(initialPage: slide - 1);
+        },
       ),
       GoRoute(
         path: LoginPage.routePath,
@@ -31,7 +46,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RegisterPage.routePath,
-        builder: (context, state) => const RegisterPage(),
+        builder: (context, state) => const PublicHomePage(initialPage: 3),
+      ),
+      GoRoute(
+        path: RegisterTalentPage.routePath,
+        builder: (context, state) => const RegisterTalentPage(),
+      ),
+      GoRoute(
+        path: RegisterEoPage.routePath,
+        builder: (context, state) => const RegisterEoPage(),
       ),
       GoRoute(
         path: TalentDashboardPage.routePath,
@@ -70,6 +93,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: EoChangePasswordPage.routePath,
         builder: (context, state) => const EoChangePasswordPage(),
+      ),
+      GoRoute(
+        path: NotificationsPage.routePath,
+        builder: (context, state) => const NotificationsPage(),
       ),
     ],
   );

@@ -1,12 +1,15 @@
 import 'package:caritalent_mobile/app/theme/app_theme.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/auth/application/auth_controller.dart';
+import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_change_password_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_edit_profile_page.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/profile_logout_button.dart';
 import 'package:caritalent_mobile/features/public/presentation/pages/public_home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class EoProfileTab extends ConsumerWidget {
   const EoProfileTab({super.key});
@@ -36,15 +39,17 @@ class EoProfileTab extends ConsumerWidget {
 // Removed redundant local header
 
           const Text(
-            'Account Settings',
+            'Pengaturan Akun',
             style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           GradientText(
-            'Profile Settings',
-            style: textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-            ) ?? const TextStyle(),
+            'Pengaturan Profil',
+            style: GoogleFonts.syne(
+              textStyle: textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -126,12 +131,12 @@ class EoProfileTab extends ConsumerWidget {
               children: [
                 const Text('Keamanan Akun', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
-                const Text('Ubah password untuk menjaga\nkeamanan akun kamu', style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+                const Text('Ubah kata sandi untuk menjaga\nkeamanan akun kamu', style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
                 ),
-                const Text('PASSWORD SAAT INI', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 2.0, fontWeight: FontWeight.w700)),
+                const Text('KATA SANDI SAAT INI', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 2.0, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 Row(
                   children: List.generate(8, (index) => Container(
@@ -163,7 +168,7 @@ class EoProfileTab extends ConsumerWidget {
                       children: const [
                         Icon(Icons.sync, color: Colors.white, size: 18),
                         SizedBox(width: 8),
-                        Text('Ubah Password', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                        Text('Ubah Kata Sandi', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -180,23 +185,35 @@ class EoProfileTab extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
           ),
-          
-          Row(
-            children: [
-              _buildStatSquare(context, Icons.business_center_outlined, 'ROLE', 'Event Organizer'),
-              const SizedBox(width: 12),
-              _buildStatSquare(context, Icons.event_outlined, 'TOTAL EVENTS', '10'),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-               _buildStatSquare(context, Icons.book_online_outlined, 'TOTAL BOOKINGS', '2'),
-              const SizedBox(width: 12),
-              _buildStatSquare(context, Icons.verified_user_outlined, 'MEMBER SEJAK', '2026'),
-            ],
-          ),
-          
+
+          // Real event + booking stats
+          Builder(builder: (ctx) {
+            final eventsAsync = ref.watch(myEventsProvider);
+            final bookingsAsync = ref.watch(myBookingsProvider);
+            final totalEvents = eventsAsync.when(
+              data: (e) => '${e.length}', loading: () => '—', error: (_, __) => '—');
+            final totalBookings = bookingsAsync.when(
+              data: (b) => '${b.length}', loading: () => '—', error: (_, __) => '—');
+            return Column(
+              children: [
+                Row(
+                  children: [
+                    _buildStatSquare(context, Icons.business_center_outlined, 'ROLE', 'Event Organizer'),
+                    const SizedBox(width: 12),
+                    _buildStatSquare(context, Icons.event_outlined, 'TOTAL EVENT', totalEvents),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildStatSquare(context, Icons.book_online_outlined, 'TOTAL BOOKING', totalBookings),
+                    const SizedBox(width: 12),
+                    _buildStatSquare(context, Icons.verified_user_outlined, 'MEMBER SEJAK', '2026'),
+                  ],
+                ),
+              ],
+            );
+          }),
           const SizedBox(height: 32),
           
           const Text('Additional Settings', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),

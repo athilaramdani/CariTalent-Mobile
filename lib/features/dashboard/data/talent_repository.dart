@@ -15,6 +15,36 @@ class TalentRepository {
     );
   }
 
+  /// GET /talents — browse all public talent profiles (for EO)
+  Future<List<TalentModel>> fetchTalentList({
+    String? search,
+    String? city,
+    String? genre,
+    int perPage = 50,
+  }) async {
+    final params = <String, dynamic>{'per_page': perPage};
+    if (search != null && search.isNotEmpty) params['search'] = search;
+    if (city != null && city.isNotEmpty) params['city'] = city;
+    if (genre != null && genre.isNotEmpty) params['genre'] = genre;
+
+    return _api.get<List<TalentModel>>(
+      ApiEndpoints.talents,
+      queryParameters: params,
+      parser: (json) {
+        if (json is List) {
+          return json.map((e) => TalentModel.fromJson(e)).toList();
+        }
+        if (json is Map<String, dynamic>) {
+          final list = (json['talents'] ?? json['data']) as List<dynamic>?;
+          if (list != null) {
+            return list.map((e) => TalentModel.fromJson(e)).toList();
+          }
+        }
+        return [];
+      },
+    );
+  }
+
   /// PUT /talents/{id} — update talent profile
   Future<void> updateTalentProfile(int id, Map<String, dynamic> data) async {
     await _api.put<void>(
