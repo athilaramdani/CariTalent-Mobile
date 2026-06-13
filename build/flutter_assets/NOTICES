@@ -10391,12 +10391,6 @@ limitations under the License.
 --------------------------------------------------------------------------------
 go_router
 path_provider_android
-url_launcher_android
-url_launcher_ios
-url_launcher_linux
-url_launcher_macos
-url_launcher_web
-url_launcher_windows
 
 Copyright 2013 The Flutter Authors
 
