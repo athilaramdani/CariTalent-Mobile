@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class EventModel {
   final int id;
   final int organizerId;
@@ -9,6 +11,7 @@ class EventModel {
   final String city;
   final String status;
   final List<String> genres;
+  final String address;
   final int totalApplicants;
   final String? organizerName;
   final double? latitude;
@@ -23,6 +26,7 @@ class EventModel {
     required this.eventDate,
     required this.venueName,
     required this.city,
+    required this.address,
     required this.status,
     required this.genres,
     required this.totalApplicants,
@@ -31,70 +35,28 @@ class EventModel {
     this.longitude,
   });
 
-  factory EventModel.fromJson(Object? json) {
-    if (json == null || json is! Map<String, dynamic>) {
-      return const EventModel(
-        id: 0,
-        organizerId: 0,
-        title: '',
-        description: '',
-        budget: 0,
-        eventDate: '',
-        venueName: '',
-        city: '',
-        status: '',
-        genres: [],
-        organizerName: null,
-        totalApplicants: 0,
-      );
-    }
-    final map = json;
-    final organizer = map['organizer'] is Map<String, dynamic>
-        ? map['organizer'] as Map<String, dynamic>
-        : null;
-    final organizerUser = organizer?['user'] is Map<String, dynamic>
-        ? organizer!['user'] as Map<String, dynamic>
-        : null;
-
-    // Genre bisa berupa List<String> atau List<Map> (dengan field 'name')
-    List<String> parseGenres(dynamic raw) {
-      if (raw == null || raw is! List) return [];
-      final list = raw;
-      return list.map((e) {
-        if (e is Map<String, dynamic>) {
-          return e['name']?.toString() ?? '';
-        }
-        return e?.toString() ?? '';
-      }).where((s) => s.isNotEmpty).toList();
-    }
-
+  factory EventModel.fromJson(Map<String, dynamic> json) {
     return EventModel(
-      id: (map['id'] as num?)?.toInt() ?? 0,
-      organizerId: _readInt(map['organizer_id']) ??
-          _readInt(organizer?['id']) ??
-          _readInt(organizer?['user_id']) ??
-          0,
-      title: map['title']?.toString() ?? '',
-      description: map['description']?.toString() ?? '',
-      budget: double.tryParse(map['budget']?.toString() ?? '0') ?? 0,
-      eventDate: map['event_date']?.toString() ?? '',
-      venueName: map['venue_name']?.toString() ?? '',
-      city: map['city']?.toString() ?? '',
-      status: map['status']?.toString() ?? '',
-      genres: parseGenres(map['genres'] ?? map['genre_needed']),
-      organizerName: map['organizer_name']?.toString() ??
-          map['eo_name']?.toString() ??
-          map['organization_name']?.toString() ??
-          organizer?['name']?.toString() ??
-          organizer?['stage_name']?.toString() ??
-          organizerUser?['name']?.toString(),
-      totalApplicants: (map['total_applicants'] as num?)?.toInt() ?? 0,
-      latitude: map['latitude'] != null
-          ? double.tryParse(map['latitude'].toString())
-          : null,
-      longitude: map['longitude'] != null
-          ? double.tryParse(map['longitude'].toString())
-          : null,
+      id: json['id'] as int,
+      organizerId: _readInt(json['organizer_id'] ?? json['e_o_id']) ?? 0,
+      title: json['title'] ?? json['event_name'] ?? 'Untitled Event',
+      description: json['description'] ?? '',
+      budget: (json['budget'] ?? 0).toDouble(),
+      eventDate: json['event_date'] ?? json['date'] ?? '',
+      venueName: json['venue_name'] ?? json['venue'] ?? '',
+      city: json['city'] ?? json['location'] ?? '',
+      address: json['address'] ?? json['full_address'] ?? json['venue_address'] ?? '',
+      status: json['status'] ?? 'open',
+      genres: json['genres'] is List
+          ? (json['genres'] as List).map((e) {
+              if (e is Map && e.containsKey('name')) return e['name'].toString();
+              return e.toString();
+            }).toList()
+          : [],
+      totalApplicants: json['total_applicants'] ?? 0,
+      organizerName: json['organizer_name'] ?? json['e_o_name'],
+      latitude: json['latitude'] is num ? (json['latitude'] as num).toDouble() : null,
+      longitude: json['longitude'] is num ? (json['longitude'] as num).toDouble() : null,
     );
   }
 
@@ -126,8 +88,41 @@ class EventModel {
       case 'dibatalkan':
         return 'Dibatalkan';
       default:
-        return status;
+        // Try to capitalize if unknown
+        if (status.isEmpty) return 'Unknown';
+        return status[0].toUpperCase() + status.substring(1).toLowerCase();
     }
+  }
+
+  /// Status colors for UI
+  Color get statusColor {
+    switch (status.toLowerCase()) {
+      case 'open':
+      case 'dibuka':
+        return const Color(0xFF4CAF50); // Green
+      case 'closed':
+      case 'ditutup':
+        return const Color(0xFFF44336); // Red
+      case 'completed':
+      case 'selesai':
+        return const Color(0xFFC48DF6); // Purple
+      case 'cancelled':
+      case 'canceled':
+      case 'dibatalkan':
+        return const Color(0xFF9E9E9E); // Grey
+      default:
+        return const Color(0xFF38BDF8); // Default Cyan
+    }
+  }
+
+  bool get isClosed {
+    final value = status.toLowerCase();
+    return value == 'closed' || value == 'ditutup';
+  }
+
+  bool get isCompleted {
+    final value = status.toLowerCase();
+    return value == 'completed' || value == 'selesai';
   }
 
   bool get isOpen {

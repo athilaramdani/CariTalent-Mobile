@@ -4,7 +4,7 @@ import 'package:caritalent_mobile/features/auth/application/auth_controller.dart
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_change_password_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_edit_profile_page.dart';
-import 'package:caritalent_mobile/features/public/presentation/pages/public_home_page.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/profile_logout_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -212,7 +212,7 @@ class EoProfileTab extends ConsumerWidget {
           }),
           const SizedBox(height: 32),
           
-          const Text('Pengaturan Tambahan', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+          const Text('Additional Settings', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           
           GestureDetector(
@@ -228,7 +228,7 @@ class EoProfileTab extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.redAccent.withValues(alpha: 0.15)),
               ),
-              child: const Text('Keluar', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 14)),
+              child: const Text('Logout', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 14)),
             ),
           ),
           const SizedBox(height: 48),

@@ -136,8 +136,11 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     state = state.copyWith(isLoading: true, clearError: true);
-    await _repository.logout();
-    state = state.copyWith(clearUser: true, isLoading: false);
+    try {
+      await _repository.logout();
+    } finally {
+      state = state.copyWith(clearUser: true, isLoading: false);
+    }
   }
 
   /// Re-fetches current user data from the server (e.g. after profile update)
