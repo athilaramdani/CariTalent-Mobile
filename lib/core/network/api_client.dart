@@ -61,6 +61,18 @@ class ApiClient {
     );
   }
 
+  Future<T> getRaw<T>(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    required T Function(Object? json) parser,
+  }) async {
+    return _request(
+      () => _dio.get(path, queryParameters: queryParameters),
+      parser,
+      unwrapData: false,
+    );
+  }
+
   Future<T> post<T>(
     String path, {
     Object? data,
@@ -87,7 +99,9 @@ class ApiClient {
   Future<T> _request<T>(
     Future<Response<dynamic>> Function() request,
     T Function(Object? json) parser,
-  ) async {
+    {
+    bool unwrapData = true,
+  }) async {
     try {
       final response = await request();
       final body = response.data;
@@ -98,7 +112,9 @@ class ApiClient {
           errors: body['errors'],
         );
       }
-      return parser(body is Map<String, dynamic> ? body['data'] : body);
+      final payload =
+          unwrapData && body is Map<String, dynamic> ? body['data'] : body;
+      return parser(payload);
     } on DioException catch (error) {
       final body = error.response?.data;
       if (body is Map<String, dynamic>) {

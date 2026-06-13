@@ -24,14 +24,24 @@ class ApplicationModel {
 
   factory ApplicationModel.fromJson(Object? json) {
     final map = json as Map<String, dynamic>;
+    final invitation = map['invitation'];
+    final source =
+        (map['source'] ?? map['apply_method'] ?? map['application_source'])
+                ?.toString() ??
+            (invitation != null ? 'invitation' : 'apply');
+
     return ApplicationModel(
       id: (map['id'] as num?)?.toInt() ?? 0,
-      source: map['source'] as String? ?? 'apply',
-      message: map['message'] as String?,
-      proposedPrice: map['proposed_price'] != null
-          ? double.tryParse(map['proposed_price'].toString())
-          : null,
-      status: map['status'] as String? ?? 'pending',
+      source: source,
+      message: (map['message'] ??
+              map['description'] ??
+              map['cover_letter'] ??
+              map['application_message'])
+          ?.toString(),
+      proposedPrice: _readDouble(
+        map['proposed_price'] ?? map['offered_price'] ?? map['price'],
+      ),
+      status: map['status']?.toString() ?? 'pending',
       createdAt: map['created_at'] as String? ?? '',
       talent: map['talent'] != null
           ? TalentModel.fromJson(map['talent'])
@@ -62,4 +72,29 @@ class ApplicationModel {
       return createdAt;
     }
   }
+
+  String get sourceLabel {
+    switch (source.trim().toLowerCase()) {
+      case 'invitation':
+      case 'invite':
+      case 'undangan':
+        return 'Undangan';
+      case 'direct':
+      case 'apply':
+      case 'application':
+      default:
+        return 'Apply Langsung';
+    }
+  }
+
+  bool get isDirectApply {
+    final value = source.trim().toLowerCase();
+    return value != 'invitation' && value != 'invite' && value != 'undangan';
+  }
+}
+
+double? _readDouble(Object? value) {
+  if (value == null) return null;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value.toString());
 }

@@ -1,6 +1,8 @@
 import 'package:caritalent_mobile/app/theme/app_theme.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/event_model.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/genre_model.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -34,19 +36,18 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
   late final TextEditingController _dateCtrl;
   late final TextEditingController _venueCtrl;
   late final TextEditingController _cityCtrl;
-  late final TextEditingController _latController;
-  late final TextEditingController _lngController;
+  late final TextEditingController _addressCtrl;
 
   // Dropdown states
-  String? _selectedGenre;
-  String? _selectedStatus;
+  final Set<String> _selectedGenres = {};
   LatLng? _selectedLocation;
   final _mapController = MapController();
   bool _isLoading = false;
+  bool _isResolvingAddress = false;
+  int _geocodeRequestId = 0;
 
   // Mutable so we can add custom genres from saved events
-  late final List<String> _genres;
-  static const _statuses = ['open', 'closed', 'draft', 'completed', 'cancelled'];
+  late final List<GenreModel> _genres;
 
   @override
   void initState() {
@@ -54,13 +55,12 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
     final e = widget.event;
 
     // Build genres list, adding any custom genre from the saved event
-    final baseGenres = [
-      'Rock', 'Jazz', 'Pop', 'Electronic', 'Indie',
-      'Folk', 'Classical', 'Acoustic', 'Hip-Hop', 'R&B',
-    ];
+    final baseGenres = <GenreModel>[];
     if (e != null && e.genres.isNotEmpty) {
       for (final g in e.genres) {
-        if (!baseGenres.contains(g)) baseGenres.add(g);
+        if (!baseGenres.any((genre) => genre.name == g)) {
+          baseGenres.add(GenreModel(id: 0, name: g));
+        }
       }
     }
     _genres = baseGenres;
@@ -68,25 +68,20 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
     _titleCtrl = TextEditingController(text: e?.title);
     _descCtrl = TextEditingController(text: e?.description);
     _budgetCtrl = TextEditingController(text: e?.budget.toString());
-    _dateCtrl = TextEditingController(text: e?.eventDate);
+    _dateCtrl = TextEditingController(text: _formatDateForDisplay(e?.eventDate));
     _venueCtrl = TextEditingController(text: e?.venueName);
     _cityCtrl = TextEditingController(text: e?.city);
-    
-    _latController = TextEditingController(
-      text: e?.latitude != null ? e!.latitude!.toStringAsFixed(6) : 'Belum ada pin'
-    );
-    _lngController = TextEditingController(
-      text: e?.longitude != null ? e!.longitude!.toStringAsFixed(6) : 'Belum ada pin'
+    _addressCtrl = TextEditingController(
+      text: e != null && e.venueName.isNotEmpty
+          ? '${e.venueName}, ${e.city}'
+          : 'Belum ada lokasi dipilih',
     );
 
-    // Set selected genre only if it exists in the (possibly extended) list
     if (e != null && e.genres.isNotEmpty) {
-      final firstGenre = e.genres.first;
-      _selectedGenre = _genres.contains(firstGenre) ? firstGenre : null;
+      _selectedGenres.addAll(e.genres);
     }
-    _selectedStatus = e?.status;
-    if (e?.latitude != null && e?.longitude != null) {
-      _selectedLocation = LatLng(e!.latitude!, e!.longitude!);
+    if (e != null && e.latitude != null && e.longitude != null) {
+      _selectedLocation = LatLng(e.latitude!, e.longitude!);
     }
   }
 
@@ -98,21 +93,180 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
     _dateCtrl.dispose();
     _venueCtrl.dispose();
     _cityCtrl.dispose();
-    _latController.dispose();
-    _lngController.dispose();
+    _addressCtrl.dispose();
     super.dispose();
   }
 
-  void _onMapTap(TapPosition tapPosition, LatLng point) {
+  Future<void> _onMapTap(TapPosition tapPosition, LatLng point) async {
     setState(() {
       _selectedLocation = point;
-      _latController.text = point.latitude.toStringAsFixed(6);
-      _lngController.text = point.longitude.toStringAsFixed(6);
+      _isResolvingAddress = true;
+      _addressCtrl.text = 'Mencari alamat lokasi...';
     });
+    await _resolveAddress(point);
+  }
+
+  Future<void> _resolveAddress(LatLng point) async {
+    final requestId = ++_geocodeRequestId;
+    try {
+      final response = await Dio().get<Map<String, dynamic>>(
+        'https://nominatim.openstreetmap.org/reverse',
+        queryParameters: {
+          'format': 'jsonv2',
+          'lat': point.latitude,
+          'lon': point.longitude,
+          'addressdetails': 1,
+        },
+        options: Options(
+          headers: {'User-Agent': 'CariTalent-Mobile/1.0'},
+          sendTimeout: const Duration(seconds: 8),
+          receiveTimeout: const Duration(seconds: 8),
+        ),
+      );
+      if (!mounted || requestId != _geocodeRequestId) return;
+
+      final data = response.data ?? {};
+      final address = data['address'] as Map<String, dynamic>? ?? {};
+      final displayName =
+          data['display_name']?.toString() ?? 'Alamat tidak ditemukan';
+      final city = _pickCity(address);
+
+      setState(() {
+        _addressCtrl.text = displayName;
+        if (city.isNotEmpty) _cityCtrl.text = city;
+        _isResolvingAddress = false;
+      });
+    } catch (_) {
+      if (!mounted || requestId != _geocodeRequestId) return;
+      setState(() {
+        _addressCtrl.text = 'Alamat belum ditemukan untuk titik ini';
+        _isResolvingAddress = false;
+      });
+    }
+  }
+
+  String _pickCity(Map<String, dynamic> address) {
+    const keys = [
+      'city',
+      'town',
+      'municipality',
+      'county',
+      'village',
+      'suburb',
+      'state',
+    ];
+    for (final key in keys) {
+      final value = address[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return '';
+  }
+
+  DateTime _todayDate() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  DateTime? _parseEventDate(String? raw) {
+    final value = raw?.trim();
+    if (value == null || value.isEmpty) return null;
+
+    final isoDate = DateTime.tryParse(value);
+    if (isoDate != null) {
+      return DateTime(isoDate.year, isoDate.month, isoDate.day);
+    }
+
+    final match = RegExp(r'^(\d{2})-(\d{2})-(\d{4})$').firstMatch(value);
+    if (match == null) return null;
+
+    final day = int.parse(match.group(1)!);
+    final month = int.parse(match.group(2)!);
+    final year = int.parse(match.group(3)!);
+    final date = DateTime(year, month, day);
+    if (date.year != year || date.month != month || date.day != day) return null;
+    return date;
+  }
+
+  String _formatDisplayDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.year.toString().padLeft(4, '0')}';
+  }
+
+  String _formatIsoDate(DateTime date) {
+    return '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formatDateForDisplay(String? raw) {
+    final date = _parseEventDate(raw);
+    return date == null ? (raw?.trim() ?? '') : _formatDisplayDate(date);
+  }
+
+  String _formatDateForApi(String raw) {
+    final date = _parseEventDate(raw);
+    return date == null ? raw.trim() : _formatIsoDate(date);
+  }
+
+  String? _validateEventDate(String? value) {
+    if (value == null || value.trim().isEmpty) return 'Wajib diisi';
+
+    final date = _parseEventDate(value);
+    if (date == null) return 'Format tanggal harus DD-MM-YYYY';
+
+    if (date.isBefore(_todayDate())) {
+      return 'Tanggal tidak boleh sebelum hari ini';
+    }
+
+    return null;
+  }
+
+  List<GenreModel> _genreOptions(List<GenreModel>? backendGenres) {
+    final merged = <String, GenreModel>{};
+    final source = backendGenres ?? const <GenreModel>[];
+
+    for (final genre in source) {
+      if (genre.name.isNotEmpty) merged[genre.name] = genre;
+    }
+    for (final genre in _genres) {
+      if (genre.name.isNotEmpty) merged.putIfAbsent(genre.name, () => genre);
+    }
+
+    return merged.values.toList();
+  }
+
+  List<int> _selectedGenreIds(List<GenreModel> genres) {
+    return genres
+        .where((genre) => _selectedGenres.contains(genre.name))
+        .map((genre) => genre.id)
+        .where((id) => id > 0)
+        .toList();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedGenres.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pilih minimal satu genre.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    final genreOptions = _genreOptions(ref.read(genresProvider).valueOrNull);
+    final genreIds = _selectedGenreIds(genreOptions);
+    if (genreIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Genre belum tersedia dari backend. Coba refresh dulu.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
     try {
@@ -120,11 +274,11 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
         'title': _titleCtrl.text.trim(),
         'description': _descCtrl.text.trim(),
         'budget': int.parse(_budgetCtrl.text.replaceAll('.', '')),
-        'event_date': _dateCtrl.text.trim(),
+        'event_date': _formatDateForApi(_dateCtrl.text),
         'venue_name': _venueCtrl.text.trim(),
         'city': _cityCtrl.text.trim(),
-        'status': _selectedStatus ?? 'open',
-        'genre': _selectedGenre != null ? [_selectedGenre!] : [],
+        if (widget.event == null) 'status': 'dibuka',
+        'genre_ids': genreIds,
         if (_selectedLocation != null) 'latitude': _selectedLocation!.latitude,
         if (_selectedLocation != null) 'longitude': _selectedLocation!.longitude,
       };
@@ -139,8 +293,8 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
               eventDate: data['event_date'] as String,
               venueName: data['venue_name'] as String,
               city: data['city'] as String,
-              status: data['status'] as String,
-              genre: data['genre'] as List<String>,
+              status: 'dibuka',
+              genreIds: data['genre_ids'] as List<int>,
               latitude: data['latitude'] as double?,
               longitude: data['longitude'] as double?,
             );
@@ -174,6 +328,16 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.event != null;
+    final genresAsync = ref.watch(genresProvider);
+    final genreOptions = _genreOptions(genresAsync.valueOrNull);
+    final genresLoading = genresAsync.maybeWhen(
+      loading: () => true,
+      orElse: () => false,
+    );
+    final genresError = genresAsync.maybeWhen(
+      error: (_, __) => true,
+      orElse: () => false,
+    );
     
     return Padding(
       padding: EdgeInsets.only(
@@ -197,11 +361,7 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.close,
-                        color: Colors.white, size: 20),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+                  const SizedBox(width: 48),
                   Text(
                     isEdit ? 'Edit Event' : 'Buat Event',
                     style: const TextStyle(
@@ -209,7 +369,11 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                         fontSize: 16,
                         color: Colors.white),
                   ),
-                  const SizedBox(width: 48),
+                  IconButton(
+                    icon: const Icon(Icons.close,
+                        color: Colors.white, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ],
               ),
             ),
@@ -256,12 +420,11 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                     const SizedBox(height: 12),
 
                     _buildLabel('Genre Dibutuhkan *'),
-                    _buildDropdown(
-                      value: _selectedGenre,
-                      hint: 'Pilih genre...',
-                      items: _genres,
-                      onChanged: (v) =>
-                          setState(() => _selectedGenre = v),
+                    _buildGenreMultiSelect(
+                      context,
+                      genreOptions,
+                      isLoading: genresLoading,
+                      hasError: genresError,
                     ),
                     const SizedBox(height: 12),
 
@@ -281,19 +444,22 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                     _buildLabel('Tanggal Event *'),
                     _buildTextFormField(
                       controller: _dateCtrl,
-                      hint: 'YYYY-MM-DD',
+                      hint: 'DD-MM-YYYY',
                       suffixIcon: Icons.calendar_today,
-                      validator: (v) =>
-                          v == null || v.isEmpty ? 'Wajib diisi' : null,
+                      readOnly: true,
+                      validator: _validateEventDate,
                       onTap: () async {
-                        final initial = widget.event != null 
-                          ? DateTime.tryParse(widget.event!.eventDate) ?? DateTime.now().add(const Duration(days: 7))
-                          : DateTime.now().add(const Duration(days: 7));
+                        final today = _todayDate();
+                        final selectedDate = _parseEventDate(_dateCtrl.text);
+                        final initial = selectedDate != null &&
+                                !selectedDate.isBefore(today)
+                            ? selectedDate
+                            : today;
                           
                         final date = await showDatePicker(
                           context: context,
                           initialDate: initial,
-                          firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                          firstDate: today,
                           lastDate: DateTime.now()
                               .add(const Duration(days: 365 * 2)),
                           builder: (context, child) => Theme(
@@ -306,20 +472,9 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                           ),
                         );
                         if (date != null) {
-                          _dateCtrl.text =
-                              '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+                          _dateCtrl.text = _formatDisplayDate(date);
                         }
                       },
-                    ),
-                    const SizedBox(height: 12),
-
-                    _buildLabel('Status'),
-                    _buildDropdown(
-                      value: _selectedStatus,
-                      hint: 'Pilih status...',
-                      items: _statuses,
-                      onChanged: (v) =>
-                          setState(() => _selectedStatus = v),
                     ),
                     const SizedBox(height: 12),
 
@@ -417,18 +572,7 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                     ),
                     const SizedBox(height: 12),
 
-                    _buildLabel('Latitude'),
-                    _buildTextField(
-                        controller: _latController,
-                        readOnly: true,
-                        fillColor: AppTheme.uiDark),
-                    const SizedBox(height: 12),
-
-                    _buildLabel('Longitude'),
-                    _buildTextField(
-                        controller: _lngController,
-                        readOnly: true,
-                        fillColor: AppTheme.uiDark),
+                    _buildSelectedAddressCard(),
 
                     const SizedBox(height: 16),
                   ],
@@ -552,6 +696,224 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
     );
   }
 
+  Widget _buildGenreMultiSelect(
+    BuildContext context,
+    List<GenreModel> genres,
+    {
+    required bool isLoading,
+    required bool hasError,
+  }) {
+    final hasSelection = _selectedGenres.isNotEmpty;
+    return InkWell(
+      onTap:
+          isLoading || hasError || genres.isEmpty ? null : () => _showGenrePicker(context, genres),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.uiDark,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: hasSelection
+                  ? Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _selectedGenres
+                          .map(
+                            (genre) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color:
+                                    AppTheme.highlight.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: AppTheme.highlight
+                                      .withValues(alpha: 0.28),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    genre,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  GestureDetector(
+                                    onTap: () => setState(
+                                        () => _selectedGenres.remove(genre)),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white70,
+                                      size: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    )
+                  : Text(
+                      isLoading
+                          ? 'Memuat genre...'
+                          : hasError
+                              ? 'Genre gagal dimuat'
+                              : genres.isEmpty
+                                  ? 'Genre belum tersedia'
+                                  : 'Pilih genre...',
+                      style: const TextStyle(color: Colors.white38, fontSize: 13),
+                    ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.keyboard_arrow_down,
+                color: Colors.white54, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showGenrePicker(
+    BuildContext context,
+    List<GenreModel> genres,
+  ) async {
+    final tempSelected = Set<String>.from(_selectedGenres);
+    final result = await showDialog<Set<String>>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppTheme.neutralDark,
+              title: const Text(
+                'Pilih Genre',
+                style: TextStyle(color: Colors.white),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: genres
+                        .map(
+                          (genre) => CheckboxListTile(
+                            value: tempSelected.contains(genre.name),
+                            onChanged: (checked) {
+                              setDialogState(() {
+                                if (checked == true) {
+                                  tempSelected.add(genre.name);
+                                } else {
+                                  tempSelected.remove(genre.name);
+                                }
+                              });
+                            },
+                            dense: true,
+                            activeColor: AppTheme.highlight,
+                            checkColor: Colors.white,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            title: Text(
+                              genre.name,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Batal'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, tempSelected),
+                  child: const Text('Pilih'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedGenres
+          ..clear()
+          ..addAll(result);
+      });
+    }
+  }
+
+  Widget _buildSelectedAddressCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.highlight.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.highlight.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _isResolvingAddress
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppTheme.highlight,
+                  ),
+                )
+              : const Icon(
+                  Icons.location_on,
+                  color: AppTheme.highlight,
+                  size: 18,
+                ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'ALAMAT LOKASI TERPILIH',
+                  style: TextStyle(
+                    color: AppTheme.highlight,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.7,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _addressCtrl.text,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Validated form field
   Widget _buildTextFormField({
     required TextEditingController controller,
@@ -601,89 +963,6 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Colors.redAccent),
-        ),
-      ),
-    );
-  }
-
-  // Read-only non-validated field
-  Widget _buildTextField({
-    String? hint,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    IconData? suffixIcon,
-    TextEditingController? controller,
-    bool readOnly = false,
-    Color? fillColor,
-  }) {
-    return TextField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      readOnly: readOnly,
-      style: const TextStyle(fontSize: 13, color: Colors.white),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle:
-            const TextStyle(color: Colors.white38, fontSize: 13),
-        suffixIcon: suffixIcon != null
-            ? Icon(suffixIcon, color: Colors.white70, size: 18)
-            : null,
-        fillColor: fillColor ?? AppTheme.uiDark,
-        filled: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide:
-              BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide:
-              BorderSide(color: Colors.white.withValues(alpha: 0.05)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppTheme.highlight),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdown({
-    required String hint,
-    required List<String> items,
-    String? value,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-      decoration: BoxDecoration(
-        color: AppTheme.uiDark,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-            color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: value,
-          hint: Text(hint,
-              style: const TextStyle(
-                  color: Colors.white38, fontSize: 13)),
-          icon: const Icon(Icons.keyboard_arrow_down,
-              color: Colors.white54, size: 18),
-          dropdownColor: AppTheme.neutralDark,
-          items: items
-              .map((s) => DropdownMenuItem(
-                     value: s,
-                     child: Text(s,
-                         style: const TextStyle(
-                             color: Colors.white, fontSize: 13)),
-                   ))
-              .toList(),
-          onChanged: onChanged,
         ),
       ),
     );

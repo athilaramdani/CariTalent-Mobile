@@ -3,6 +3,7 @@ import 'package:caritalent_mobile/core/network/api_exception.dart';
 import 'package:caritalent_mobile/core/widgets/app_card.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/invitation_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/recommendation_model.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_applicants_page.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +29,8 @@ class _EoRecommendationsPageState
   @override
   Widget build(BuildContext context) {
     final recAsync = ref.watch(recommendationsProvider(widget.eventId));
+    final sentInvitations =
+        ref.watch(sentInvitationsProvider).valueOrNull ?? const <InvitationModel>[];
 
     return Scaffold(
       backgroundColor: AppTheme.neutralDark,
@@ -149,8 +152,11 @@ class _EoRecommendationsPageState
                                     const SizedBox(height: 16),
                                 itemBuilder: (_, i) {
                                   final rec = data.recommendations[i];
-                                  final isInvited = _invitedMap[rec.talent.id] ??
-                                      rec.isInvited;
+                                  final isInvited = _isInvited(
+                                    rec,
+                                    sentInvitations,
+                                    data,
+                                  );
                                   return _RecommendationCard(
                                     rec: rec,
                                     isInvited: isInvited,
@@ -203,14 +209,15 @@ class _EoRecommendationsPageState
     if (price == null) return;
 
     try {
+      final talentId = rec.talent.userId > 0 ? rec.talent.userId : rec.talent.id;
       await ref.read(invitationRepositoryProvider).sendInvitation(
             eventId: eventId,
-            talentId: rec.talent.userId,
+            talentId: talentId,
             offeredPrice: price,
           );
       // Optimistic UI: mark as invited immediately
-      setState(() => _invitedMap[rec.talent.id] = true);
-      
+      setState(() => _markInvited(rec));
+
       // Invalidate to sync with backend for long-term consistency
       ref.invalidate(recommendationsProvider(widget.eventId));
       ref.invalidate(sentInvitationsProvider);
@@ -273,10 +280,16 @@ class _EoRecommendationsPageState
           }
           // Handle common business rule: already invited
           final msg = errorMessage.toLowerCase();
-          if (msg.contains('sudah') || msg.contains('already') || e.statusCode == 422) {
+          if (msg.contains('sudah') ||
+              msg.contains('already') ||
+              msg.contains('diundang') ||
+              msg.contains('invited') ||
+              msg.contains('duplicate')) {
             // Still mark as invited in UI since invitation already exists
-            setState(() => _invitedMap[rec.talent.id] = true);
-            
+            setState(() => _markInvited(rec));
+            ref.invalidate(recommendationsProvider(widget.eventId));
+            ref.invalidate(sentInvitationsProvider);
+
             // Show the same SUCCESS pop-up for already invited to satisfy user's request for confirmation
             showDialog(
               context: context,
@@ -334,6 +347,52 @@ class _EoRecommendationsPageState
         ));
       }
     }
+  }
+
+  bool _isInvited(
+    RecommendationModel rec,
+    List<InvitationModel> sentInvitations,
+    RecommendationsData recommendationsData,
+  ) {
+    if (_invitedMap[rec.talent.id] == true ||
+        _invitedMap[rec.talent.userId] == true ||
+        rec.isInvited ||
+        recommendationsData.invitedTalentIds.contains(rec.talent.id) ||
+        recommendationsData.invitedTalentIds.contains(rec.talent.userId)) {
+      return true;
+    }
+
+    final talentIds = <int>{rec.talent.id, rec.talent.userId}
+      ..removeWhere((id) => id <= 0);
+    if (talentIds.isEmpty) return false;
+
+    return sentInvitations.any((invitation) {
+      final isSameEvent = invitation.eventId == widget.eventId ||
+          (invitation.eventId == null &&
+              _sameText(invitation.eventTitle, recommendationsData.eventTitle));
+      final status = invitation.status.trim().toLowerCase();
+      final isActiveInvitation =
+          status != 'rejected' && status != 'cancelled' && status != 'canceled';
+      final invitationTalentIds = <int>{
+        if (invitation.talentId != null) invitation.talentId!,
+        if (invitation.talent != null) invitation.talent!.id,
+        if (invitation.talent != null) invitation.talent!.userId,
+      }..removeWhere((id) => id <= 0);
+
+      return isSameEvent &&
+          isActiveInvitation &&
+          invitationTalentIds.any(talentIds.contains);
+    });
+  }
+
+  void _markInvited(RecommendationModel rec) {
+    if (rec.talent.id > 0) _invitedMap[rec.talent.id] = true;
+    if (rec.talent.userId > 0) _invitedMap[rec.talent.userId] = true;
+  }
+
+  bool _sameText(String left, String right) {
+    if (left.isEmpty || right.isEmpty) return false;
+    return left.trim().toLowerCase() == right.trim().toLowerCase();
   }
 }
 
@@ -534,7 +593,7 @@ class _RecommendationCard extends StatelessWidget {
                 children: [
                   Icon(Icons.person_search_outlined,
                       color: Color(0xFFD8B4FE), size: 16),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'Detail talent',
                     style: TextStyle(
@@ -651,7 +710,10 @@ class _TalentRecommendationDetailModalState
     final rec = widget.rec;
     final talent = rec.talent;
     final name = talent.stageName;
+    final fullName = talent.fullName ?? talent.stageName;
     final city = talent.city;
+    final email = talent.email;
+    final phone = talent.phone;
     final isVerified = talent.verified;
     final genres = talent.genre;
     final rating = talent.averageRating;
@@ -758,7 +820,7 @@ class _TalentRecommendationDetailModalState
                         Expanded(
                           child: _InfoCard(
                             label: 'NAMA LENGKAP',
-                            value: name,
+                            value: fullName,
                             icon: Icons.person_outline,
                           ),
                         ),
@@ -769,6 +831,28 @@ class _TalentRecommendationDetailModalState
                             icon: Icons.location_on_outlined,
                             value: city,
                             iconColor: Colors.orangeAccent,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _InfoCard(
+                            label: 'EMAIL',
+                            value: email?.isNotEmpty == true ? email! : '-',
+                            icon: Icons.email_outlined,
+                            iconColor: const Color(0xFFD8B4FE),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _InfoCard(
+                            label: 'NOMOR HP',
+                            value: phone?.isNotEmpty == true ? phone! : '-',
+                            icon: Icons.phone_outlined,
+                            iconColor: const Color(0xFFD8B4FE),
                           ),
                         ),
                       ],
@@ -927,51 +1011,6 @@ class _TalentRecommendationDetailModalState
                       const SizedBox(height: 12),
                     ],
 
-                    // Score summary in modal
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.08)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'SKOR REKOMENDASI',
-                                style: TextStyle(
-                                    color: Colors.white54,
-                                    fontSize: 10,
-                                    letterSpacing: 1.5,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                '${rec.score} / 100',
-                                style: const TextStyle(
-                                    color: Color(0xFFD8B4FE),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w900),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              _buildModalScoreItem('Genre', rec.scoreBreakdown.genreScore),
-                              _buildModalScoreItem('Budget', rec.scoreBreakdown.budgetScore),
-                              _buildModalScoreItem('Lokasi', rec.scoreBreakdown.locationScore),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
                     // Action button in modal
                     GestureDetector(
                       onTap: widget.isInvited
@@ -1040,24 +1079,6 @@ class _TalentRecommendationDetailModalState
     );
   }
 
-  Widget _buildModalScoreItem(String label, int value) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            '$value',
-            style: const TextStyle(
-                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white38, fontSize: 10),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ─── Invite Talent Dialog ─────────────────────────────────────────────────────

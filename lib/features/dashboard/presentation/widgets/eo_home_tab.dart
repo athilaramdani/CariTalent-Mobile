@@ -47,68 +47,51 @@ class EoHomeTab extends ConsumerWidget {
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final useWideLayout = constraints.maxWidth >= 560;
+              final buttons = [
+                _buildQuickActionButton(
+                  context,
+                  icon: Icons.add_circle_outline,
+                  label: 'Buat Event Baru',
                   onTap: () => CreateEventModal.show(context),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppTheme.highlight, AppTheme.accent],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_circle_outline,
-                            color: Colors.white, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Buat Event Baru',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
+                  isPrimary: true,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
+                _buildQuickActionButton(
+                  context,
+                  icon: Icons.calendar_month_outlined,
+                  label: 'Lihat Semua Event',
                   onTap: () => ref.read(eoNavIndexProvider.notifier).state = 1,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: AppTheme.panel,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.border),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.calendar_month_outlined,
-                            color: AppTheme.highlight, size: 20),
-                        const SizedBox(width: 8),
-                        GradientText(
-                          'Lihat Semua Event',
-                          style: textTheme.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.bold, fontSize: 13) ??
-                              const TextStyle(),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
-              ),
-            ],
+                _buildQuickActionButton(
+                  context,
+                  icon: Icons.book_online_outlined,
+                  label: 'Kelola Booking',
+                  onTap: () => ref.read(eoNavIndexProvider.notifier).state = 2,
+                ),
+              ];
+
+              if (useWideLayout) {
+                return Row(
+                  children: [
+                    for (var i = 0; i < buttons.length; i++) ...[
+                      Expanded(child: buttons[i]),
+                      if (i != buttons.length - 1) const SizedBox(width: 12),
+                    ],
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  for (var i = 0; i < buttons.length; i++) ...[
+                    buttons[i],
+                    if (i != buttons.length - 1) const SizedBox(height: 10),
+                  ],
+                ],
+              );
+            },
           ),
           const SizedBox(height: 24),
 
@@ -116,8 +99,7 @@ class EoHomeTab extends ConsumerWidget {
           eventsAsync.when(
             data: (events) {
               final totalEvents = events.length;
-              final activeEvents =
-                  events.where((e) => e.status.toLowerCase() == 'open').length;
+              final activeEvents = events.where((e) => e.isOpen).length;
               return bookingsAsync.when(
                 data: (bookings) {
                   final totalBookings = bookings.length;
@@ -239,6 +221,68 @@ class EoHomeTab extends ConsumerWidget {
     return const SizedBox(
       height: 120,
       child: Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  Widget _buildQuickActionButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isPrimary = false,
+  }) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        decoration: BoxDecoration(
+          gradient: isPrimary
+              ? const LinearGradient(
+                  colors: [AppTheme.highlight, AppTheme.accent],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                )
+              : null,
+          color: isPrimary ? null : AppTheme.panel,
+          borderRadius: BorderRadius.circular(12),
+          border: isPrimary ? null : Border.all(color: AppTheme.border),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: isPrimary ? Colors.white : AppTheme.highlight,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: isPrimary
+                  ? Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : GradientText(
+                      label,
+                      style: textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ) ??
+                          const TextStyle(),
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
