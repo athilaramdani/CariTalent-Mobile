@@ -2,6 +2,7 @@ import 'package:caritalent_mobile/core/network/api_client.dart';
 import 'package:caritalent_mobile/features/dashboard/data/application_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/data/booking_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/data/event_repository.dart';
+import 'package:caritalent_mobile/features/dashboard/data/genre_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/data/invitation_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/data/notification_repository.dart';
 import 'package:caritalent_mobile/features/dashboard/data/review_repository.dart';
@@ -9,6 +10,7 @@ import 'package:caritalent_mobile/features/dashboard/data/talent_repository.dart
 import 'package:caritalent_mobile/features/dashboard/domain/application_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/event_model.dart';
+import 'package:caritalent_mobile/features/dashboard/domain/genre_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/invitation_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/notification_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/recommendation_model.dart';
@@ -39,6 +41,10 @@ final invitationSearchQueryProvider =
 
 final eventRepositoryProvider = Provider<EventRepository>((ref) {
   return EventRepository(ref.watch(apiClientProvider));
+});
+
+final genreRepositoryProvider = Provider<GenreRepository>((ref) {
+  return GenreRepository(ref.watch(apiClientProvider));
 });
 
 final talentRepositoryProvider = Provider<TalentRepository>((ref) {
@@ -113,6 +119,10 @@ final publicEventsProvider =
         dateFrom: filters.dateFrom,
         dateTo: filters.dateTo,
       );
+});
+
+final genresProvider = FutureProvider.autoDispose<List<GenreModel>>((ref) async {
+  return ref.read(genreRepositoryProvider).fetchGenres();
 });
 
 /// Talent: lamaran saya (source=apply)

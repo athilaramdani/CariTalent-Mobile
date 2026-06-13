@@ -12,6 +12,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+const _statusFilters = [
+  _EventStatusFilter(label: 'Semua'),
+  _EventStatusFilter(label: 'Dibuka', value: 'open'),
+  _EventStatusFilter(label: 'Ditutup', value: 'closed'),
+  _EventStatusFilter(label: 'Selesai', value: 'completed'),
+  _EventStatusFilter(label: 'Dibatalkan', value: 'cancelled'),
+];
+
+class _EventStatusFilter {
+  final String label;
+  final String? value;
+
+  const _EventStatusFilter({required this.label, this.value});
+}
+
 class EoEventsTab extends ConsumerStatefulWidget {
   const EoEventsTab({super.key});
 
@@ -20,7 +35,7 @@ class EoEventsTab extends ConsumerStatefulWidget {
 }
 
 class _EoEventsTabState extends ConsumerState<EoEventsTab> {
-  String _selectedFilter = 'Semua';
+  String? _selectedStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -30,25 +45,20 @@ class _EoEventsTabState extends ConsumerState<EoEventsTab> {
     return SafeArea(
       child: eventsAsync.when(
         data: (events) {
-          // Filter chips data — status values dari API: open, closed, draft, completed, cancelled
-          final total = events.length;
-          final open =
-              events.where((e) => e.status.toLowerCase() == 'open').length;
-          final closed =
-              events.where((e) => e.status.toLowerCase() == 'closed').length;
-          final draft =
-              events.where((e) => e.status.toLowerCase() == 'draft').length;
-          final completed =
-              events.where((e) => e.status.toLowerCase() == 'completed').length;
-          final cancelled = events
-              .where((e) => e.status.toLowerCase() == 'cancelled')
-              .length;
+          // UI labels use Indonesian text while filter values follow API status values.
+          int countByStatus(String? status) {
+            if (status == null) return events.length;
+            return events
+                .where((e) => _normalizeEventStatus(e.status) == status)
+                .length;
+          }
 
-          final filtered = _selectedFilter == 'Semua'
+          final total = countByStatus(null);
+          final filtered = _selectedStatus == null
               ? events
               : events
-                  .where((e) => e.status.toLowerCase() ==
-                      _selectedFilter.toLowerCase())
+                  .where(
+                      (e) => _normalizeEventStatus(e.status) == _selectedStatus)
                   .toList();
 
           return ListView(
@@ -127,12 +137,12 @@ class _EoEventsTabState extends ConsumerState<EoEventsTab> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildFilterChip(context, 'Semua', '$total'),
-                    _buildFilterChip(context, 'Open', '$open'),
-                    _buildFilterChip(context, 'Closed', '$closed'),
-                    _buildFilterChip(context, 'Draft', '$draft'),
-                    _buildFilterChip(context, 'Completed', '$completed'),
-                    _buildFilterChip(context, 'Cancelled', '$cancelled'),
+                    for (final filter in _statusFilters)
+                      _buildFilterChip(
+                        context,
+                        filter: filter,
+                        count: countByStatus(filter.value),
+                      ),
                   ],
                 ),
               ),
@@ -157,6 +167,7 @@ class _EoEventsTabState extends ConsumerState<EoEventsTab> {
               else
                 for (final event in filtered) ...[
                   _EventCard(
+                    key: ValueKey('eo-event-${event.id}'),
                     event: event,
                     onDelete: () async {
                       try {
@@ -206,11 +217,15 @@ class _EoEventsTabState extends ConsumerState<EoEventsTab> {
     );
   }
 
-  Widget _buildFilterChip(BuildContext context, String label, String count) {
+  Widget _buildFilterChip(
+    BuildContext context, {
+    required _EventStatusFilter filter,
+    required int count,
+  }) {
     final textTheme = Theme.of(context).textTheme;
-    final isActive = _selectedFilter == label;
+    final isActive = _selectedStatus == filter.value;
     return GestureDetector(
-      onTap: () => setState(() => _selectedFilter = label),
+      onTap: () => setState(() => _selectedStatus = filter.value),
       child: Container(
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -228,7 +243,7 @@ class _EoEventsTabState extends ConsumerState<EoEventsTab> {
         ),
         child: Row(
           children: [
-            Text(label, style: textTheme.labelLarge),
+            Text(filter.label, style: textTheme.labelLarge),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.all(6),
@@ -237,7 +252,7 @@ class _EoEventsTabState extends ConsumerState<EoEventsTab> {
                 shape: BoxShape.circle,
               ),
               child: Text(
-                count,
+                '$count',
                 style: textTheme.labelSmall
                     ?.copyWith(fontSize: 10, fontWeight: FontWeight.bold),
               ),
@@ -251,32 +266,72 @@ class _EoEventsTabState extends ConsumerState<EoEventsTab> {
 
 // ─── Event Card ───────────────────────────────────────────────────────────────
 
+String _normalizeEventStatus(String status) {
+  switch (status.trim().toLowerCase()) {
+    case 'open':
+    case 'dibuka':
+      return 'open';
+    case 'closed':
+    case 'ditutup':
+      return 'closed';
+    case 'completed':
+    case 'selesai':
+      return 'completed';
+    case 'cancelled':
+    case 'canceled':
+    case 'dibatalkan':
+      return 'cancelled';
+    case 'draft':
+      return 'draft';
+    default:
+      return status.trim().toLowerCase();
+  }
+}
+
+String _eventStatusLabel(String status) {
+  switch (_normalizeEventStatus(status)) {
+    case 'open':
+      return 'DIBUKA';
+    case 'closed':
+      return 'DITUTUP';
+    case 'completed':
+      return 'SELESAI';
+    case 'cancelled':
+      return 'DIBATALKAN';
+    case 'draft':
+      return 'DRAFT';
+    default:
+      return status.toUpperCase();
+  }
+}
+
 class _EventCard extends ConsumerStatefulWidget {
   final EventModel event;
-  final VoidCallback? onDelete;
+  final Future<void> Function()? onDelete;
 
-  const _EventCard({required this.event, this.onDelete});
+  const _EventCard({super.key, required this.event, this.onDelete});
 
   @override
   ConsumerState<_EventCard> createState() => _EventCardState();
 }
 
 class _EventCardState extends ConsumerState<_EventCard> {
-  bool _deleted = false;
+  bool _isDeleting = false;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final event = widget.event;
-    final statusLower = _deleted ? 'deleted' : event.status.toLowerCase();
-    final statusDisplay = _deleted ? 'DELETED' : event.statusLabel.toUpperCase();
+    final statusLower = _normalizeEventStatus(event.status);
+    final statusDisplay = _eventStatusLabel(statusLower);
+    final canRequestRecommendations = !_isDeleting && statusLower == 'open';
 
     Color statusBgColor;
     Color statusTextColor;
     if (statusLower == 'open') {
       statusBgColor = Colors.green.withValues(alpha: 0.15);
       statusTextColor = Colors.green;
-    } else if (statusLower == 'cancelled' || statusLower == 'deleted') {
+    } else if (statusLower == 'cancelled') {
       statusBgColor = Colors.redAccent.withValues(alpha: 0.15);
       statusTextColor = Colors.redAccent;
     } else if (statusLower == 'completed') {
@@ -303,7 +358,7 @@ class _EventCardState extends ConsumerState<_EventCard> {
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       decoration:
-                          _deleted ? TextDecoration.lineThrough : null),
+                          _isDeleting ? TextDecoration.lineThrough : null),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -366,7 +421,7 @@ class _EventCardState extends ConsumerState<_EventCard> {
               const SizedBox(width: 20),
               GestureDetector(
                 onTap: () {
-                  if (!_deleted && event.latitude != null) {
+                  if (!_isDeleting && event.latitude != null) {
                     ViewLocationModal.show(
                       context,
                       eventName: event.title,
@@ -378,15 +433,15 @@ class _EventCardState extends ConsumerState<_EventCard> {
                 child: Row(
                   children: [
                     Icon(
-                        _deleted || event.latitude == null
+                        _isDeleting || event.latitude == null
                             ? Icons.location_off_outlined
                             : Icons.location_on_outlined,
                         size: 16,
                         color: AppTheme.highlight),
                     const SizedBox(width: 6),
                     Text(
-                      _deleted
-                          ? 'Dihapus'
+                      _isDeleting
+                          ? 'Menghapus'
                           : 'Lihat Lokasi',
                       style:
                           textTheme.bodySmall?.copyWith(
@@ -456,36 +511,38 @@ class _EventCardState extends ConsumerState<_EventCard> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 5,
-                child: GestureDetector(
-                  onTap: () => context.push(
-                      '${EoRecommendationsPage.routePath}/${event.id}'),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00BFFF),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.auto_awesome,
-                            size: 16, color: Color(0xFF001F3F)),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Rekomendasi',
-                          style: textTheme.labelMedium?.copyWith(
-                            color: const Color(0xFF001F3F),
-                            fontWeight: FontWeight.bold,
+              if (canRequestRecommendations) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 5,
+                  child: GestureDetector(
+                    onTap: () => context.push(
+                        '${EoRecommendationsPage.routePath}/${event.id}'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00BFFF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.auto_awesome,
+                              size: 16, color: Color(0xFF001F3F)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Rekomendasi',
+                            style: textTheme.labelMedium?.copyWith(
+                              color: const Color(0xFF001F3F),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: () => CreateEventModal.show(context, event: event),
@@ -500,7 +557,7 @@ class _EventCardState extends ConsumerState<_EventCard> {
                       size: 16, color: Colors.white70),
                 ),
               ),
-              if (!_deleted) ...[
+              if (!_isDeleting) ...[
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () async {
@@ -525,8 +582,11 @@ class _EventCardState extends ConsumerState<_EventCard> {
                       ),
                     );
                     if (confirm == true) {
-                      setState(() => _deleted = true);
-                      widget.onDelete?.call();
+                      setState(() => _isDeleting = true);
+                      await widget.onDelete?.call();
+                      if (mounted) {
+                        setState(() => _isDeleting = false);
+                      }
                     }
                   },
                   child: Container(

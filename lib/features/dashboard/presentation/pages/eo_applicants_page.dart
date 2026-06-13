@@ -426,22 +426,30 @@ class _ApplicantCardState extends State<_ApplicantCard> {
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: statusColor.withValues(alpha: 0.3)),
-                ),
-                child: Text(
-                  '${app.status[0].toUpperCase()}${app.status.substring(1)}',
-                  style: TextStyle(
-                      color: statusColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold),
-                ),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                alignment: WrapAlignment.end,
+                children: [
+                  _ApplicationSourceBadge(application: app),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                          color: statusColor.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      '${app.status[0].toUpperCase()}${app.status.substring(1)}',
+                      style: TextStyle(
+                          color: statusColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -554,6 +562,29 @@ class _ApplicantCardState extends State<_ApplicantCard> {
               ),
             ],
           ),
+          if (app.message != null && app.message!.trim().isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text(
+              'DESKRIPSI',
+              style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.45),
+                  fontSize: 11,
+                  letterSpacing: 1.0,
+                  fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '"${app.message!.trim()}"',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.62),
+                fontSize: 13,
+                fontStyle: FontStyle.italic,
+                height: 1.4,
+              ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
 
           // Action buttons only for pending
           if (isPending) ...[
@@ -760,6 +791,36 @@ class _ApplicantCardState extends State<_ApplicantCard> {
 
 // ─── Applicant Detail Modal ────────────────────────────────────────────────────
 
+class _ApplicationSourceBadge extends StatelessWidget {
+  final ApplicationModel application;
+
+  const _ApplicationSourceBadge({required this.application});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDirect = application.isDirectApply;
+    final color =
+        isDirect ? const Color(0xFF38BDF8) : const Color(0xFFD8B4FE);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.55)),
+      ),
+      child: Text(
+        application.sourceLabel,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
 class _ApplicantDetailModal extends StatefulWidget {
   final ApplicationModel application;
   final VoidCallback onAccept;
@@ -783,7 +844,10 @@ class _ApplicantDetailModalState extends State<_ApplicantDetailModal> {
     final app = widget.application;
     final talent = app.talent;
     final name = talent?.stageName ?? 'Talent';
+    final fullName = talent?.fullName ?? name;
     final city = talent?.city ?? '-';
+    final email = talent?.email;
+    final phone = talent?.phone;
     final isVerified = talent?.verified ?? false;
     final genres = talent?.genre ?? [];
     final rating = talent?.averageRating ?? 0.0;
@@ -891,7 +955,7 @@ class _ApplicantDetailModalState extends State<_ApplicantDetailModal> {
                         Expanded(
                           child: _InfoCard(
                             label: 'NAMA LENGKAP',
-                            value: name,
+                            value: fullName,
                             icon: Icons.person_outline,
                           ),
                         ),
@@ -902,6 +966,28 @@ class _ApplicantDetailModalState extends State<_ApplicantDetailModal> {
                             icon: Icons.location_on_outlined,
                             value: city,
                             iconColor: Colors.orangeAccent,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _InfoCard(
+                            label: 'EMAIL',
+                            value: email?.isNotEmpty == true ? email! : '-',
+                            icon: Icons.email_outlined,
+                            iconColor: const Color(0xFFD8B4FE),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _InfoCard(
+                            label: 'NOMOR HP',
+                            value: phone?.isNotEmpty == true ? phone! : '-',
+                            icon: Icons.phone_outlined,
+                            iconColor: const Color(0xFFD8B4FE),
                           ),
                         ),
                       ],
@@ -1079,6 +1165,16 @@ class _ApplicantDetailModalState extends State<_ApplicantDetailModal> {
                                 fontSize: 10,
                                 letterSpacing: 1.5,
                                 fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Metode Apply',
+                                  style: TextStyle(
+                                      color: Colors.white54, fontSize: 11)),
+                              _ApplicationSourceBadge(application: app),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           Row(

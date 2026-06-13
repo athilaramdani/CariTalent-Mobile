@@ -92,23 +92,32 @@ class EventModel {
     return 'Rp $s';
   }
 
-  /// Status dari API: 'open', 'closed', 'draft', 'cancelled', 'completed'
+  /// Status dari API: 'dibuka', 'ditutup', 'selesai', 'dibatalkan'
+  /// atau status lama app: 'open', 'closed', 'cancelled', 'completed'.
   String get statusLabel {
     switch (status.toLowerCase()) {
       case 'open':
+      case 'dibuka':
         return 'Open';
       case 'closed':
+      case 'ditutup':
         return 'Closed';
       case 'draft':
         return 'Draft';
       case 'completed':
+      case 'selesai':
         return 'Completed';
       case 'cancelled':
+      case 'canceled':
+      case 'dibatalkan':
         return 'Cancelled';
       default:
         return status;
     }
   }
 
-  bool get isOpen => status.toLowerCase() == 'open';
+  bool get isOpen {
+    final value = status.toLowerCase();
+    return value == 'open' || value == 'dibuka';
+  }
 }

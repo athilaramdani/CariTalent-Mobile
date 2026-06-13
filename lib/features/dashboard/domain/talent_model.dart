@@ -1,6 +1,9 @@
 class TalentModel {
   final int id;
   final int userId;
+  final String? fullName;
+  final String? email;
+  final String? phone;
   final String stageName;
   final List<String> genre;
   final double? priceMin;
@@ -15,6 +18,9 @@ class TalentModel {
   const TalentModel({
     required this.id,
     required this.userId,
+    this.fullName,
+    this.email,
+    this.phone,
     required this.stageName,
     required this.genre,
     this.priceMin,
@@ -29,6 +35,9 @@ class TalentModel {
 
   factory TalentModel.fromJson(Object? json) {
     final map = json as Map<String, dynamic>;
+    final user = map['user'] is Map<String, dynamic>
+        ? map['user'] as Map<String, dynamic>
+        : null;
 
     // Genre bisa List<String> atau List<Map> dengan field 'name'
     List<String> parseGenres(dynamic raw) {
@@ -41,8 +50,16 @@ class TalentModel {
 
     return TalentModel(
       id: (map['id'] as num?)?.toInt() ?? 0,
-      userId: (map['user_id'] as num?)?.toInt() ?? 0,
-      stageName: map['stage_name'] as String? ?? '',
+      userId: (map['user_id'] as num?)?.toInt() ??
+          (user?['id'] as num?)?.toInt() ??
+          0,
+      fullName: (map['name'] ?? map['full_name'] ?? user?['name'])?.toString(),
+      email: (map['email'] ?? user?['email'])?.toString(),
+      phone:
+          (map['phone'] ?? map['phone_number'] ?? map['no_hp'] ?? user?['phone'])
+              ?.toString(),
+      stageName:
+          (map['stage_name'] ?? map['name'] ?? user?['name'])?.toString() ?? '',
       genre: parseGenres(map['genre'] ?? map['genres']),
       priceMin: map['price_min'] != null
           ? double.tryParse(map['price_min'].toString())

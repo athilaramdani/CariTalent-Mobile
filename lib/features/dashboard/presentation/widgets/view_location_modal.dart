@@ -1,4 +1,3 @@
-import 'package:caritalent_mobile/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -38,6 +37,29 @@ class ViewLocationModal extends StatefulWidget {
 
 class _ViewLocationModalState extends State<ViewLocationModal> {
   final MapController _mapController = MapController();
+
+  Future<void> _openGoogleMaps() async {
+    final url = Uri.https(
+      'www.google.com',
+      '/maps/search/',
+      {
+        'api': '1',
+        'query': '${widget.location.latitude},${widget.location.longitude}',
+      },
+    );
+    final launched = await launchUrl(
+      url,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Google Maps tidak bisa dibuka di perangkat ini.'),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -179,13 +201,7 @@ class _ViewLocationModalState extends State<ViewLocationModal> {
               child: Align(
                 alignment: Alignment.centerRight,
                 child: GestureDetector(
-                  onTap: () async {
-                    final url = Uri.parse(
-                        'https://www.google.com/maps/search/?api=1&query=${widget.location.latitude},${widget.location.longitude}');
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(url);
-                    }
-                  },
+                  onTap: _openGoogleMaps,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     decoration: BoxDecoration(
