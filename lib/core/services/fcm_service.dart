@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:caritalent_mobile/app/app.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -137,6 +138,35 @@ class FcmService {
     final notification = message.notification;
 
     if (notification != null) {
+      // Tampilkan Snackbar di dalam aplikasi
+      rootScaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                notification.title ?? 'Notifikasi Baru',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              if (notification.body != null)
+                Text(notification.body!),
+            ],
+          ),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          backgroundColor: const Color(0xFFB500FF), // Tema warna aplikasi
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'LIHAT',
+            textColor: Colors.white,
+            onPressed: () {
+              // Bisa ditambahkan aksi, misalnya pindah tab ke Notifikasi
+            },
+          ),
+        ),
+      );
+
       try {
         _localNotifications.show(
           notification.hashCode,

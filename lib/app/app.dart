@@ -3,6 +3,8 @@ import 'package:caritalent_mobile/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 class CariTalentApp extends ConsumerWidget {
   const CariTalentApp({super.key});
 
@@ -15,6 +17,7 @@ class CariTalentApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: router,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
     );
   }
 }
