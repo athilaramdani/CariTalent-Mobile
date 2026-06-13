@@ -3,11 +3,10 @@ import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/core/widgets/app_header.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/event_model.dart';
-import 'package:caritalent_mobile/features/dashboard/presentation/widgets/view_location_modal.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_map_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart';
 
 // ─── Main Tab Widget ──────────────────────────────────────────────────────────
 
@@ -65,11 +64,55 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
     });
   }
 
+  int _countEventsByStatus(List<EventModel> events, Set<String> statuses) {
+    return events
+        .where((event) => statuses.contains(event.status.trim().toLowerCase()))
+        .length;
+  }
+
+  Widget _buildEventStatusOverview(List<EventModel> events) {
+    final opened = _countEventsByStatus(events, {'open', 'dibuka'});
+    final closed = _countEventsByStatus(events, {'closed', 'ditutup'});
+    final completed = _countEventsByStatus(events, {'completed', 'selesai'});
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _EventStatusInfoChip(
+            label: 'Total',
+            count: events.length,
+            color: const Color(0xFF38BDF8),
+          ),
+          const SizedBox(width: 8),
+          _EventStatusInfoChip(
+            label: 'Dibuka',
+            count: opened,
+            color: Colors.greenAccent,
+          ),
+          const SizedBox(width: 8),
+          _EventStatusInfoChip(
+            label: 'Ditutup',
+            count: closed,
+            color: Colors.redAccent,
+          ),
+          const SizedBox(width: 8),
+          _EventStatusInfoChip(
+            label: 'Selesai',
+            count: completed,
+            color: const Color(0xFFC48DF6),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final searchQuery = ref.watch(eventSearchQueryProvider);
     final eventsAsync = ref.watch(publicEventsProvider);
+    final applicationsAsync = ref.watch(myApplicationsProvider);
 
     return SafeArea(
       child: eventsAsync.when(
@@ -129,6 +172,14 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
               ? displayed
               : displayed.where((e) => e.genres.any(
                   (g) => g.toLowerCase() == _genre.toLowerCase())).toList();
+          final appliedEventIds = applicationsAsync.maybeWhen(
+            data: (applications) => applications
+                .map((application) =>
+                    application.eventId ?? application.event?.id)
+                .whereType<int>()
+                .toSet(),
+            orElse: () => <int>{},
+          );
 
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
@@ -160,6 +211,8 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
                       Text('Discover and apply to open events',
                           style: textTheme.bodySmall
                               ?.copyWith(color: Colors.white38)),
+                      const SizedBox(height: 16),
+                      _buildEventStatusOverview(allEvents),
                       const SizedBox(height: 24),
 
                       // Inline Expandable Filter
@@ -186,19 +239,10 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
                       ),
                       const SizedBox(height: 32),
 
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Open Events',
-                              style: textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                          Text('View All',
-                              style: textTheme.labelMedium?.copyWith(
-                                  color: const Color(0xFFC48DF6),
-                                  fontWeight: FontWeight.bold)),
-                        ],
-                      ),
+                      Text('Open Events',
+                          style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white)),
                       const SizedBox(height: 4),
                       Text(
                           'Browse through available events and apply to those that match your skills',
@@ -234,8 +278,13 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate(
-                          (context, index) =>
-                              _EventCard(event: genreFiltered[index]),
+                          (context, index) {
+                            final event = genreFiltered[index];
+                            return _EventCard(
+                              event: event,
+                              isApplied: appliedEventIds.contains(event.id),
+                            );
+                          },
                           childCount: genreFiltered.length,
                         ),
                       ),
@@ -269,28 +318,39 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
-class _StatusBadge extends StatelessWidget {
+// ─── Filter Section ───────────────────────────────────────────────────────────
+
+class _EventStatusInfoChip extends StatelessWidget {
   final String label;
+  final int count;
   final Color color;
-  const _StatusBadge({required this.label, required this.color});
+
+  const _EventStatusInfoChip({
+    required this.label,
+    required this.count,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
-      child: Text(label,
-          style: TextStyle(
-              color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+      child: Text(
+        '$label $count',
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }
-
-// ─── Filter Section ───────────────────────────────────────────────────────────
 
 typedef _OnApply = void Function({
   required String status,
@@ -343,7 +403,6 @@ class _FilterSectionState extends State<_FilterSection> {
   late String _selectedStatus;
   late String _selectedGenre;
 
-  static const _statuses = ['Semua Status', 'Dibuka', 'Ditutup'];
   static const _genres = [
     'Semua Genre',
     'Rock',
@@ -411,8 +470,6 @@ class _FilterSectionState extends State<_FilterSection> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.uiDark,
@@ -465,25 +522,12 @@ class _FilterSectionState extends State<_FilterSection> {
                   ),
                   const SizedBox(height: 12),
                   
-                  // Row 2: Status & Genre
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _FilterDropdown(
-                          value: _selectedStatus,
-                          items: _statuses,
-                          onChanged: (v) => setState(() => _selectedStatus = v ?? 'Semua Status'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _FilterDropdown(
-                          value: _selectedGenre,
-                          items: _genres,
-                          onChanged: (v) => setState(() => _selectedGenre = v ?? 'Semua Genre'),
-                        ),
-                      ),
-                    ],
+                  // Row 2: Genre
+                  _FilterDropdown(
+                    value: _selectedGenre,
+                    items: _genres,
+                    onChanged: (v) =>
+                        setState(() => _selectedGenre = v ?? 'Semua Genre'),
                   ),
                   const SizedBox(height: 12),
 
@@ -702,12 +746,16 @@ class _FilterDropdown extends StatelessWidget {
 
 class _EventCard extends ConsumerWidget {
   final EventModel event;
-  const _EventCard({required this.event});
+  final bool isApplied;
+
+  const _EventCard({
+    required this.event,
+    required this.isApplied,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
-    final isClosed = !event.isOpen;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -759,28 +807,52 @@ class _EventCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 4),
-          const Text('Organizer',
-              style: TextStyle(color: Colors.white38, fontSize: 13)),
+          Text(event.organizerLabel,
+              style: const TextStyle(color: Colors.white38, fontSize: 13)),
           const SizedBox(height: 12),
 
-          // Genre Tag
+          // Genre Tags
           if (event.genres.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(event.genres.first,
-                  style: const TextStyle(color: Colors.white70, fontSize: 11)),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: event.genres.map((genre) {
+                return Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(genre,
+                      style: const TextStyle(
+                          color: Colors.white70, fontSize: 11)),
+                );
+              }).toList(),
             ),
           const SizedBox(height: 16),
 
           // Details List
           _buildInfoRow(Icons.calendar_today_outlined, 'Jadwal:', event.eventDate),
           const SizedBox(height: 8),
-          _buildInfoRow(Icons.location_on_outlined, 'Lokasi:',
-              '${event.venueName}, ${event.city}'),
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoRow(
+                  Icons.location_on_outlined,
+                  'Lokasi:',
+                  '${event.venueName}, ${event.city}',
+                ),
+              ),
+              const SizedBox(width: 8),
+              EventMapButton(
+                eventName: event.title,
+                displayAddress: '${event.venueName}, ${event.city}',
+                latitude: event.latitude,
+                longitude: event.longitude,
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
 
           Text(
@@ -805,7 +877,7 @@ class _EventCard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Expanded(child: _ApplyButton(event: event)),
+              Expanded(child: _ApplyButton(event: event, isApplied: isApplied)),
             ],
           ),
         ],
@@ -921,7 +993,7 @@ class _EventCard extends ConsumerWidget {
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold)),
                                     const SizedBox(height: 4),
-                                    Text(event.organizerName ?? 'Organizer #${event.organizerId}',
+                                    Text(event.organizerLabel,
                                         style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 15,
@@ -1045,29 +1117,33 @@ class _EventCard extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         flex: 2,
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            _showApplyModal(context, ref, event);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(colors: [
-                                Color(0xFF31255A),
-                                Color(0xFF261D41)
-                              ]),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.05)),
-                            ),
-                            alignment: Alignment.center,
-                            child: const Text('Melamar',
-                                style: TextStyle(
-                                    color: Color(0xFFC48DF6),
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                        ),
+                        child: isApplied
+                            ? const _AppliedBadge(height: 50)
+                            : GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                  _showApplyModal(context, ref, event);
+                                },
+                                child: Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(colors: [
+                                      Color(0xFF31255A),
+                                      Color(0xFF261D41)
+                                    ]),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.05)),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: const Text('Melamar',
+                                      style: TextStyle(
+                                          color: Color(0xFFC48DF6),
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ),
                       ),
                     ],
                   ),
@@ -1315,6 +1391,7 @@ class _ApplyDialogState extends ConsumerState<_ApplyDialog> {
             proposedPrice: double.tryParse(_priceCtrl.text) ?? widget.event.budget,
             message: _messageCtrl.text,
           );
+      ref.invalidate(myApplicationsProvider);
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -1395,48 +1472,56 @@ class _StatusLabel extends StatelessWidget {
   }
 }
 
-class _ApplyButton extends ConsumerStatefulWidget {
-  final EventModel event;
-  const _ApplyButton({required this.event});
+class _AppliedBadge extends StatelessWidget {
+  final double? height;
 
-  @override
-  ConsumerState<_ApplyButton> createState() => _ApplyButtonState();
-}
-
-class _ApplyButtonState extends ConsumerState<_ApplyButton> {
-  bool _loading = false;
-  bool _applied = false;
+  const _AppliedBadge({this.height});
 
   @override
   Widget build(BuildContext context) {
-    if (_applied) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.green.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
-        ),
-        alignment: Alignment.center,
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.check_circle_outline,
-                color: Colors.green, size: 16),
-            SizedBox(width: 6),
-            Text('Lamaran Dikirim',
-                style: TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13)),
-          ],
-        ),
-      );
+    return Container(
+      width: double.infinity,
+      height: height,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.green.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.35)),
+      ),
+      alignment: Alignment.center,
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.check_circle_outline, color: Colors.green, size: 16),
+          SizedBox(width: 6),
+          Text('Sudah dilamar',
+              style: TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ApplyButton extends ConsumerWidget {
+  final EventModel event;
+  final bool isApplied;
+
+  const _ApplyButton({
+    required this.event,
+    required this.isApplied,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (isApplied) {
+      return const _AppliedBadge();
     }
 
     return GestureDetector(
-      onTap: _loading ? null : () => _showApplyModal(context, ref, widget.event),
+      onTap: () => _showApplyModal(context, ref, event),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1447,45 +1532,19 @@ class _ApplyButtonState extends ConsumerState<_ApplyButton> {
           borderRadius: BorderRadius.circular(20),
         ),
         alignment: Alignment.center,
-        child: _loading
-            ? const SizedBox(
-                height: 16,
-                width: 16,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white))
-            : const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.send_outlined, size: 16, color: Colors.white),
-                  SizedBox(width: 6),
-                  Text('Melamar Sekarang',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13)),
-                ],
-              ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.send_outlined, size: 16, color: Colors.white),
+            SizedBox(width: 6),
+            Text('Melamar Sekarang',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13)),
+          ],
+        ),
       ),
     );
-  }
-
-  Future<void> _apply() async {
-    setState(() => _loading = true);
-    try {
-      await ref.read(applicationRepositoryProvider).applyEvent(
-            eventId: widget.event.id,
-            proposedPrice: widget.event.budget,
-          );
-      if (mounted) setState(() => _applied = true);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Gagal melamar: $e'),
-          backgroundColor: Colors.redAccent,
-        ));
-      }
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
   }
 }

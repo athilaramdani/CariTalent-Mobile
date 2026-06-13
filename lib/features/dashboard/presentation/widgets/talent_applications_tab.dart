@@ -3,8 +3,37 @@ import 'package:caritalent_mobile/core/widgets/app_header.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/application_model.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_map_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+String? _applicationStatusValue(String label) {
+  switch (label) {
+    case 'Menunggu':
+      return 'pending';
+    case 'Diterima':
+      return 'accepted';
+    case 'Ditolak':
+      return 'rejected';
+    default:
+      return null;
+  }
+}
+
+String _applicationStatusLabel(String status) {
+  switch (status.trim().toLowerCase()) {
+    case 'pending':
+      return 'Menunggu';
+    case 'accepted':
+      return 'Diterima';
+    case 'rejected':
+      return 'Ditolak';
+    default:
+      return status.isEmpty
+          ? '-'
+          : '${status[0].toUpperCase()}${status.substring(1)}';
+  }
+}
 
 class TalentApplicationsTab extends ConsumerStatefulWidget {
   const TalentApplicationsTab({super.key});
@@ -32,12 +61,10 @@ class _TalentApplicationsTabState extends ConsumerState<TalentApplicationsTab> {
           final rejected =
               applications.where((a) => a.status == 'rejected').length;
 
-          final filtered =
-              _selectedFilter == 'Semua'
-                  ? applications
-                  : applications
-                      .where((a) => a.status == _selectedFilter.toLowerCase())
-                      .toList();
+          final selectedStatus = _applicationStatusValue(_selectedFilter);
+          final filtered = selectedStatus == null
+              ? applications
+              : applications.where((a) => a.status == selectedStatus).toList();
 
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -64,23 +91,23 @@ class _TalentApplicationsTabState extends ConsumerState<TalentApplicationsTab> {
                 children: [
                   _buildStatCard(
                     context,
-                    '${applications.length}',
-                    'TOTAL',
-                    null,
-                  ),
-                  const SizedBox(width: 12),
-                  _buildStatCard(
-                    context,
                     '$pending',
-                    'PENDING',
+                    'Menunggu',
                     Colors.orangeAccent,
                   ),
                   const SizedBox(width: 12),
                   _buildStatCard(
                     context,
                     '$accepted',
-                    'ACCEPTED',
+                    'Diterima',
                     Colors.greenAccent,
+                  ),
+                  const SizedBox(width: 12),
+                  _buildStatCard(
+                    context,
+                    '$rejected',
+                    'Ditolak',
+                    Colors.redAccent,
                   ),
                 ],
               ),
@@ -96,9 +123,9 @@ class _TalentApplicationsTabState extends ConsumerState<TalentApplicationsTab> {
                       'Semua',
                       '${applications.length}',
                     ),
-                    _buildFilterChip(context, 'Pending', '$pending'),
-                    _buildFilterChip(context, 'Accepted', '$accepted'),
-                    _buildFilterChip(context, 'Rejected', '$rejected'),
+                    _buildFilterChip(context, 'Menunggu', '$pending'),
+                    _buildFilterChip(context, 'Diterima', '$accepted'),
+                    _buildFilterChip(context, 'Ditolak', '$rejected'),
                   ],
                 ),
               ),
@@ -343,7 +370,7 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                   border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  '${app.status[0].toUpperCase()}${app.status.substring(1)}',
+                  _applicationStatusLabel(app.status),
                   style: TextStyle(
                     color: statusColor,
                     fontSize: 10,
@@ -371,6 +398,13 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                ),
+                const SizedBox(width: 8),
+                EventMapButton(
+                  eventName: app.event!.title,
+                  displayAddress: '${app.event!.venueName}, ${app.event!.city}',
+                  latitude: app.event!.latitude,
+                  longitude: app.event!.longitude,
                 ),
               ],
             ),

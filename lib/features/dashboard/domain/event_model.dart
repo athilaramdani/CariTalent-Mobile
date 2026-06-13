@@ -49,6 +49,12 @@ class EventModel {
       );
     }
     final map = json;
+    final organizer = map['organizer'] is Map<String, dynamic>
+        ? map['organizer'] as Map<String, dynamic>
+        : null;
+    final organizerUser = organizer?['user'] is Map<String, dynamic>
+        ? organizer!['user'] as Map<String, dynamic>
+        : null;
 
     // Genre bisa berupa List<String> atau List<Map> (dengan field 'name')
     List<String> parseGenres(dynamic raw) {
@@ -64,7 +70,10 @@ class EventModel {
 
     return EventModel(
       id: (map['id'] as num?)?.toInt() ?? 0,
-      organizerId: (map['organizer_id'] as num?)?.toInt() ?? 0,
+      organizerId: _readInt(map['organizer_id']) ??
+          _readInt(organizer?['id']) ??
+          _readInt(organizer?['user_id']) ??
+          0,
       title: map['title']?.toString() ?? '',
       description: map['description']?.toString() ?? '',
       budget: double.tryParse(map['budget']?.toString() ?? '0') ?? 0,
@@ -73,7 +82,12 @@ class EventModel {
       city: map['city']?.toString() ?? '',
       status: map['status']?.toString() ?? '',
       genres: parseGenres(map['genres'] ?? map['genre_needed']),
-      organizerName: map['organizer_name']?.toString() ?? map['organizer']?['name']?.toString(),
+      organizerName: map['organizer_name']?.toString() ??
+          map['eo_name']?.toString() ??
+          map['organization_name']?.toString() ??
+          organizer?['name']?.toString() ??
+          organizer?['stage_name']?.toString() ??
+          organizerUser?['name']?.toString(),
       totalApplicants: (map['total_applicants'] as num?)?.toInt() ?? 0,
       latitude: map['latitude'] != null
           ? double.tryParse(map['latitude'].toString())
@@ -120,4 +134,17 @@ class EventModel {
     final value = status.toLowerCase();
     return value == 'open' || value == 'dibuka';
   }
+
+  String get organizerLabel {
+    final name = organizerName?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    if (organizerId > 0) return 'Organizer #$organizerId';
+    return 'Organizer';
+  }
+}
+
+int? _readInt(Object? value) {
+  if (value == null) return null;
+  if (value is num) return value.toInt();
+  return int.tryParse(value.toString());
 }
