@@ -79,7 +79,7 @@ class EventModel {
       case 'ditutup':
         return 'Ditutup';
       case 'draft':
-        return 'Draft';
+        return 'Konsep';
       case 'completed':
       case 'selesai':
         return 'Selesai';

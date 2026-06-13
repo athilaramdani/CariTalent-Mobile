@@ -10,6 +10,7 @@ import 'package:caritalent_mobile/features/auth/application/auth_controller.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
@@ -61,12 +62,19 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   children: [
                     GradientText(
                       'Buat akun CariTalent',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      style: GoogleFonts.syne(
+                        textStyle: Theme.of(context).textTheme.headlineSmall,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text('Pilih role mobile kamu: Talent atau EO.'),
+                    Text(
+                      'Pilih role mobile Anda: Talent atau EO.',
+                      style: GoogleFonts.dmSans(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -75,16 +83,22 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 child: Column(
                   children: [
                     SegmentedButton<String>(
-                      segments: const [
+                      segments: [
                         ButtonSegment(
                           value: UserRoles.talent,
-                          icon: Icon(Icons.mic_external_on),
-                          label: Text('Talent'),
+                          icon: const Icon(Icons.mic_external_on),
+                          label: Text(
+                            'Talent',
+                            style: GoogleFonts.dmSans(fontWeight: FontWeight.bold),
+                          ),
                         ),
                         ButtonSegment(
                           value: UserRoles.eo,
-                          icon: Icon(Icons.event),
-                          label: Text('EO'),
+                          icon: const Icon(Icons.event),
+                          label: Text(
+                            'EO',
+                            style: GoogleFonts.dmSans(fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ],
                       selected: {_role},
@@ -117,20 +131,20 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     const SizedBox(height: 12),
                     AppTextField(
                       controller: _passwordController,
-                      label: 'Password',
+                      label: 'Kata Sandi',
                       obscureText: true,
                     ),
                     const SizedBox(height: 12),
                     AppTextField(
                       controller: _confirmPasswordController,
-                      label: 'Konfirmasi password',
+                      label: 'Konfirmasi Kata Sandi',
                       obscureText: true,
                     ),
                     if (auth.errorMessage != null) ...[
                       const SizedBox(height: 14),
                       Text(
                         auth.errorMessage!,
-                        style: TextStyle(
+                        style: GoogleFonts.dmSans(
                           color: Theme.of(context).colorScheme.error,
                         ),
                       ),
@@ -148,7 +162,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       children: [
                         Text(
                           'Sudah punya akun? ',
-                          style: Theme.of(context).textTheme.bodyMedium,
+                          style: GoogleFonts.dmSans(
+                            textStyle: Theme.of(context).textTheme.bodyMedium,
+                          ),
                         ),
                         TextButton(
                           onPressed: () => context.go(LoginPage.routePath),
@@ -158,9 +174,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             foregroundColor: Theme.of(context).colorScheme.primary,
                           ),
-                          child: const Text(
+                          child: Text(
                             'Masuk',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: GoogleFonts.dmSans(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],

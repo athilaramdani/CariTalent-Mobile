@@ -682,8 +682,7 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
           style: const TextStyle(
               fontSize: 10,
               color: Colors.white70,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Poppins'),
+              fontWeight: FontWeight.w600),
           children: [
             if (hasAsterisk)
               const TextSpan(

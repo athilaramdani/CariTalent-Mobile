@@ -32,9 +32,9 @@ class _EoInvitationsTabState extends ConsumerState<EoInvitationsTab> {
               ? invitations
               : invitations.where((i) {
                   switch (_selectedFilter) {
-                    case 'Pending':
+                    case 'Menunggu':
                       return i.status == 'pending';
-                    case 'Accepted':
+                    case 'Diterima':
                       return i.status == 'accepted';
                     default:
                       return true;
@@ -45,7 +45,7 @@ class _EoInvitationsTabState extends ConsumerState<EoInvitationsTab> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
               GradientText(
-                'Invitations Terkirim',
+                'Undangan Terkirim',
                 style: textTheme.headlineMedium
                         ?.copyWith(fontWeight: FontWeight.w900) ??
                     const TextStyle(),
@@ -64,10 +64,10 @@ class _EoInvitationsTabState extends ConsumerState<EoInvitationsTab> {
                       context, '${invitations.length}', 'TOTAL', AppTheme.highlight),
                   const SizedBox(width: 12),
                   _buildMetricCard(
-                      context, '$accepted', 'ACCEPTED', Colors.greenAccent),
+                      context, '$accepted', 'DITERIMA', Colors.greenAccent),
                   const SizedBox(width: 12),
                   _buildMetricCard(
-                      context, '$pending', 'PENDING', Colors.orangeAccent),
+                      context, '$pending', 'MENUNGGU', Colors.orangeAccent),
                 ],
               ),
               const SizedBox(height: 24),
@@ -78,8 +78,8 @@ class _EoInvitationsTabState extends ConsumerState<EoInvitationsTab> {
                 child: Row(
                   children: [
                     _buildFilterChip(context, 'Semua', '${invitations.length}'),
-                    _buildFilterChip(context, 'Pending', '$pending'),
-                    _buildFilterChip(context, 'Accepted', '$accepted'),
+                    _buildFilterChip(context, 'Menunggu', '$pending'),
+                    _buildFilterChip(context, 'Diterima', '$accepted'),
                   ],
                 ),
               ),
@@ -94,7 +94,7 @@ class _EoInvitationsTabState extends ConsumerState<EoInvitationsTab> {
                         const Icon(Icons.mail_outline,
                             size: 52, color: Colors.white24),
                         const SizedBox(height: 16),
-                        Text('Tidak ada invitation',
+                        Text('Tidak ada undangan',
                             style: textTheme.bodyMedium
                                 ?.copyWith(color: Colors.white38)),
                       ],
@@ -118,7 +118,7 @@ class _EoInvitationsTabState extends ConsumerState<EoInvitationsTab> {
             children: [
               const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
               const SizedBox(height: 16),
-              Text('Gagal memuat invitations: $e',
+              Text('Gagal memuat undangan: $e',
                   style: const TextStyle(color: Colors.white54),
                   textAlign: TextAlign.center),
               const SizedBox(height: 16),
@@ -210,6 +210,19 @@ class _EoInvitationsTabState extends ConsumerState<EoInvitationsTab> {
     );
   }
 
+  String _invStatusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Menunggu';
+      case 'accepted':
+        return 'Diterima';
+      case 'rejected':
+        return 'Ditolak';
+      default:
+        return status;
+    }
+  }
+
   Widget _buildInvitationCard({
     required BuildContext context,
     required InvitationModel inv,
@@ -269,7 +282,7 @@ class _EoInvitationsTabState extends ConsumerState<EoInvitationsTab> {
                       color: statusBorder.withValues(alpha: 0.5)),
                 ),
                 child: Text(
-                  inv.status[0].toUpperCase() + inv.status.substring(1),
+                  _invStatusLabel(inv.status),
                   style: TextStyle(
                       color: statusColor,
                       fontSize: 10,

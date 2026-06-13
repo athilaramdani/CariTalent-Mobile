@@ -107,6 +107,23 @@ class BookingModel {
   String get sourceLabel =>
       source == 'invitation' ? 'Dari invitation' : 'Apply langsung';
 
-  String get statusCapitalized =>
-      status.isNotEmpty ? '${status[0].toUpperCase()}${status.substring(1)}' : '';
+  String get statusLabel {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Menunggu';
+      case 'accepted':
+        return 'Diterima';
+      case 'confirmed':
+        return 'Dikonfirmasi';
+      case 'completed':
+        return 'Selesai';
+      case 'cancelled':
+      case 'canceled':
+        return 'Dibatalkan';
+      default:
+        return status;
+    }
+  }
+
+  String get statusCapitalized => statusLabel;
 }

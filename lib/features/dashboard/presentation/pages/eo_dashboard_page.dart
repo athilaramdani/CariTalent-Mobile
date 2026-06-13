@@ -43,44 +43,49 @@ class EoDashboardPage extends ConsumerWidget {
                     Positioned(
                       top: 10,
                       right: 10,
-                      child: Consumer(
-                        builder: (ctx, r, _) {
-                          final count = r.watch(unreadNotificationCountProvider);
-                          if (count == 0) return const SizedBox.shrink();
-                          return Container(
-                            width: 16,
-                            height: 16,
-                            decoration: const BoxDecoration(
-                              color: Colors.redAccent,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                count > 9 ? '9+' : '$count',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.bold),
+                      child: IgnorePointer(
+                        child: Consumer(
+                          builder: (ctx, r, _) {
+                            final count = r.watch(unreadNotificationCountProvider);
+                            if (count == 0) return const SizedBox.shrink();
+                            return Container(
+                              width: 16,
+                              height: 16,
+                              decoration: const BoxDecoration(
+                                color: Colors.redAccent,
+                                shape: BoxShape.circle,
                               ),
-                            ),
-                          );
-                        },
+                              child: Center(
+                                child: Text(
+                                  count > 9 ? '9+' : '$count',
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ],
                 ),
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [Color(0xFFB500FF), Color(0xFFE94057)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                GestureDetector(
+                  onTap: () => ref.read(eoNavIndexProvider.notifier).state = 4,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFB500FF), Color(0xFFE94057)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                     ),
+                    child: const Icon(Icons.person_outline, color: Colors.white, size: 18),
                   ),
-                  child: const Icon(Icons.person_outline, color: Colors.white, size: 18),
                 ),
                 const SizedBox(width: 20),
               ],
@@ -96,11 +101,11 @@ class EoDashboardPage extends ConsumerWidget {
         selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
         unselectedLabelStyle: const TextStyle(fontSize: 10),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), activeIcon: Icon(Icons.calendar_today), label: 'Events'),
-          BottomNavigationBarItem(icon: Icon(Icons.book_online_outlined), activeIcon: Icon(Icons.book_online), label: 'Bookings'),
-          BottomNavigationBarItem(icon: Icon(Icons.mail_outline), activeIcon: Icon(Icons.mail), label: 'Invitations'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Beranda'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), activeIcon: Icon(Icons.calendar_today), label: 'Event'),
+          BottomNavigationBarItem(icon: Icon(Icons.book_online_outlined), activeIcon: Icon(Icons.book_online), label: 'Booking'),
+          BottomNavigationBarItem(icon: Icon(Icons.mail_outline), activeIcon: Icon(Icons.mail), label: 'Undangan'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profil'),
         ],
       ),
       child: IndexedStack(
