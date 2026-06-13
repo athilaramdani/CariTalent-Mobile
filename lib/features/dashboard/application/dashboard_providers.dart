@@ -210,9 +210,7 @@ final notificationsProvider =
 
 /// Jumlah notifikasi yang belum dibaca
 final unreadNotificationCountProvider = Provider.autoDispose<int>((ref) {
-  return ref.watch(notificationsProvider).when(
-        data: (list) => list.where((n) => !n.isRead).length,
-        loading: () => 0,
-        error: (_, __) => 0,
-      );
+  final list = ref.watch(notificationsProvider).valueOrNull;
+  if (list == null) return 0;
+  return list.where((n) => !n.isRead).length;
 });

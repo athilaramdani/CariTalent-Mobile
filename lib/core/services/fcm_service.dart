@@ -1,10 +1,11 @@
 import 'dart:convert';
-import 'package:caritalent_mobile/core/network/api_client.dart';
+import 'dart:io';
+import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // ─── Background message handler (HARUS top-level function) ───────────────────
 @pragma('vm:entry-point')
@@ -26,14 +27,17 @@ final FlutterLocalNotificationsPlugin _localNotifications =
 
 // ─── FCM Service Provider ─────────────────────────────────────────────────────
 final fcmServiceProvider = Provider<FcmService>((ref) {
-  final api = ref.watch(apiClientProvider);
-  return FcmService(api, ref);
+  return FcmService(ref);
 });
 
 class FcmService {
-  FcmService(this._api, this._ref);
-  final ApiClient _api;
+  FcmService(this._ref);
   final Ref _ref;
+
+  // Base URL backend — harus sama dengan ApiClient._defaultBaseUrl()
+  static const _baseUrl = 'http://192.168.18.136:8000/api/v1';
+  static const _tokenKey = 'auth_token';
+  final _secureStorage = const FlutterSecureStorage();
 
   /// Inisialisasi FCM — panggil sekali saat app startup setelah login
   Future<void> initialize() async {
@@ -87,17 +91,39 @@ class FcmService {
     }
   }
 
-  /// Kirim token ke backend Laravel
-  Future<void> _sendTokenToBackend(String token) async {
+  /// Kirim token ke backend Laravel — menggunakan raw HTTP agar bisa dipakai
+  /// di background isolate tanpa bergantung pada Riverpod/ApiClient
+  Future<void> _sendTokenToBackend(String fcmToken) async {
     try {
-      await _api.put<void>(
-        '/users/fcm-token',
-        data: {'fcm_token': token},
-        parser: (_) {},
+      // Baca Bearer token langsung dari secure storage
+      final bearerToken = await _secureStorage.read(key: _tokenKey);
+
+      if (bearerToken == null || bearerToken.isEmpty) {
+        debugPrint('[FCM] ⚠️ Bearer token tidak ditemukan, skip kirim token');
+        return;
+      }
+
+      debugPrint('[FCM] Mengirim token ke backend...');
+      final client = HttpClient();
+      final request = await client.putUrl(
+        Uri.parse('$_baseUrl/users/fcm-token'),
       );
-      debugPrint('[FCM] Token berhasil dikirim ke backend');
+      request.headers.set('Accept', 'application/json');
+      request.headers.set('Content-Type', 'application/json');
+      request.headers.set('Authorization', 'Bearer $bearerToken');
+      request.write(jsonEncode({'fcm_token': fcmToken}));
+
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode == 200) {
+        debugPrint('[FCM] ✅ Token berhasil dikirim ke backend');
+      } else {
+        debugPrint('[FCM] ❌ Backend error ${response.statusCode}: $responseBody');
+      }
+      client.close();
     } catch (e) {
-      debugPrint('[FCM] Gagal mengirim token ke backend: $e');
+      debugPrint('[FCM] ❌ Gagal mengirim token ke backend: $e');
     }
   }
 
@@ -123,7 +149,7 @@ class FcmService {
         ),
         payload: json.encode(message.data),
       );
-      
+
       // Invalidate the provider so UI re-fetches the latest notification count
       _ref.invalidate(notificationsProvider);
     }

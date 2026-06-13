@@ -37,6 +37,14 @@ class ApiClient {
         },
       ),
     );
+
+    // Debug: log all HTTP traffic to find FCM token 404
+    _dio.interceptors.add(LogInterceptor(
+      requestBody: true,
+      responseBody: true,
+      requestHeader: false,
+      logPrint: (o) => debugPrint('[DIO] $o'),
+    ));
   }
 
   final Dio _dio;
