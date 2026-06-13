@@ -1,4 +1,5 @@
 import 'package:caritalent_mobile/app/theme/app_theme.dart';
+import 'package:caritalent_mobile/core/widgets/app_header.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
@@ -31,21 +32,26 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
               .where((b) => b.status == 'completed')
               .fold<double>(0, (sum, b) => sum + b.agreedPrice);
 
-          final filtered = _selectedFilter == 'Semua'
-              ? bookings
-              : bookings
-                  .where((b) => b.status == _selectedFilter.toLowerCase())
-                  .toList();
+          final filtered =
+              _selectedFilter == 'Semua'
+                  ? bookings
+                  : bookings
+                      .where((b) => b.status == _selectedFilter.toLowerCase())
+                      .toList();
 
           final formattedEarnings = _formatCurrency(totalEarnings);
 
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
+              const AppHeader(),
+              const SizedBox(height: 32),
               GradientText(
                 'My Bookings',
-                style: textTheme.headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.w900) ??
+                style:
+                    textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ) ??
                     const TextStyle(),
               ),
               const SizedBox(height: 8),
@@ -58,14 +64,21 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
               // Stats
               Row(
                 children: [
-                  _buildStatCard(
-                      context, '${bookings.length}', 'TOTAL', null),
+                  _buildStatCard(context, '${bookings.length}', 'TOTAL', null),
                   const SizedBox(width: 12),
                   _buildStatCard(
-                      context, '$confirmed', 'CONFIRMED', AppTheme.highlight),
+                    context,
+                    '$confirmed',
+                    'CONFIRMED',
+                    AppTheme.highlight,
+                  ),
                   const SizedBox(width: 12),
                   _buildStatCard(
-                      context, '$completed', 'SELESAI', Colors.greenAccent),
+                    context,
+                    '$completed',
+                    'SELESAI',
+                    Colors.greenAccent,
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -84,27 +97,35 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
                     ),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                        color: Colors.green.withValues(alpha: 0.2)),
+                      color: Colors.green.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.account_balance_wallet_outlined,
-                          color: Colors.greenAccent, size: 28),
+                      const Icon(
+                        Icons.account_balance_wallet_outlined,
+                        color: Colors.greenAccent,
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Total Penghasilan',
-                              style: TextStyle(
-                                  color: Colors.greenAccent,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600)),
+                          const Text(
+                            'Total Penghasilan',
+                            style: TextStyle(
+                              color: Colors.greenAccent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           Text(
                             formattedEarnings,
                             style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900),
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         ],
                       ),
@@ -132,12 +153,18 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
                     padding: const EdgeInsets.all(40),
                     child: Column(
                       children: [
-                        const Icon(Icons.event_busy_outlined,
-                            size: 52, color: Colors.white24),
+                        const Icon(
+                          Icons.event_busy_outlined,
+                          size: 52,
+                          color: Colors.white24,
+                        ),
                         const SizedBox(height: 16),
-                        Text('Tidak ada booking',
-                            style: textTheme.bodyMedium
-                                ?.copyWith(color: Colors.white38)),
+                        Text(
+                          'Tidak ada booking',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: Colors.white38,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -146,9 +173,10 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
                 for (final booking in filtered) ...[
                   _BookingCard(
                     booking: booking,
-                    onCancel: booking.status == 'confirmed'
-                        ? () => _cancelBooking(booking.id)
-                        : null,
+                    onCancel:
+                        booking.status == 'confirmed'
+                            ? () => _cancelBooking(booking.id)
+                            : null,
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -158,22 +186,29 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
-              const SizedBox(height: 16),
-              Text('Gagal memuat bookings: $e',
-                  style: const TextStyle(color: Colors.white54)),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(myBookingsProvider),
-                child: const Text('Coba Lagi'),
+        error:
+            (e, _) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.redAccent,
+                    size: 48,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Gagal memuat bookings: $e',
+                    style: const TextStyle(color: Colors.white54),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => ref.invalidate(myBookingsProvider),
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
       ),
     );
   }
@@ -184,25 +219,31 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
       ref.invalidate(myBookingsProvider);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Gagal membatalkan booking: $e'),
-          backgroundColor: Colors.redAccent,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal membatalkan booking: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
       }
     }
   }
 
   String _formatCurrency(double amount) {
     final n = amount.toInt();
-    final s = n
-        .toString()
-        .replaceAllMapped(
-            RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+    final s = n.toString().replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
     return 'Rp $s';
   }
 
   Widget _buildStatCard(
-      BuildContext context, String value, String label, Color? valueColor) {
+    BuildContext context,
+    String value,
+    String label,
+    Color? valueColor,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 24),
@@ -213,18 +254,24 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w400,
-                    color: valueColor ?? Colors.white)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w400,
+                color: valueColor ?? Colors.white,
+              ),
+            ),
             const SizedBox(height: 10),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.white54,
-                    letterSpacing: 1.5,
-                    fontWeight: FontWeight.bold)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.white54,
+                letterSpacing: 1.5,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
@@ -240,23 +287,27 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: isActive
-              ? const LinearGradient(
-                  colors: [Color(0xFFB500FF), Color(0xFFE94057)],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                )
-              : null,
+          gradient:
+              isActive
+                  ? const LinearGradient(
+                    colors: [Color(0xFFB500FF), Color(0xFFE94057)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  )
+                  : null,
           color: isActive ? null : Colors.transparent,
           border: isActive ? null : Border.all(color: Colors.white24),
         ),
         child: Row(
           children: [
-            Text(label,
-                style: TextStyle(
-                    color: isActive ? Colors.white : Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold)),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? Colors.white : Colors.white70,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -264,11 +315,14 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
                 color: Colors.black.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
-              child: Text(count,
-                  style: TextStyle(
-                      color: isActive ? Colors.white : Colors.white54,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold)),
+              child: Text(
+                count,
+                style: TextStyle(
+                  color: isActive ? Colors.white : Colors.white54,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -322,20 +376,30 @@ class _BookingCardState extends State<_BookingCard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFC48DF6).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.payments_outlined, size: 14, color: Color(0xFFC48DF6)),
+                    const Icon(
+                      Icons.payments_outlined,
+                      size: 14,
+                      color: Color(0xFFC48DF6),
+                    ),
                     const SizedBox(width: 6),
-                    Text(booking.agreedPriceFormatted,
-                        style: const TextStyle(
-                            color: Color(0xFFC48DF6),
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold)),
+                    Text(
+                      booking.agreedPriceFormatted,
+                      style: const TextStyle(
+                        color: Color(0xFFC48DF6),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -348,19 +412,30 @@ class _BookingCardState extends State<_BookingCard> {
           const SizedBox(height: 16),
 
           // Title
-          Text(booking.eventTitle,
-              style: textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold, color: Colors.white),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis),
+          Text(
+            booking.eventTitle,
+            style: textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: 12),
 
           // Schedule & Location
-          _buildInfoRow(Icons.calendar_today_outlined, 'JADWAL ACARA', booking.eventDate),
+          _buildInfoRow(
+            Icons.calendar_today_outlined,
+            'JADWAL ACARA',
+            booking.eventDate,
+          ),
           const SizedBox(height: 10),
-          _buildInfoRow(Icons.location_on_outlined, 'LOKASI VENUE', 
-              '${booking.eventVenue} • ${booking.eventCity}'),
-          
+          _buildInfoRow(
+            Icons.location_on_outlined,
+            'LOKASI VENUE',
+            '${booking.eventVenue} • ${booking.eventCity}',
+          ),
+
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(height: 1, color: Colors.white10),
@@ -373,11 +448,22 @@ class _BookingCardState extends State<_BookingCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('SUMBER',
-                        style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'SUMBER',
+                      style: TextStyle(
+                        color: Colors.white38,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text(booking.sourceLabel, 
-                        style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text(
+                      booking.sourceLabel,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -385,11 +471,22 @@ class _BookingCardState extends State<_BookingCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('DIBUAT',
-                        style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'DIBUAT',
+                      style: TextStyle(
+                        color: Colors.white38,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text(booking.dateFormatted, 
-                        style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text(
+                      booking.dateFormatted,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -404,32 +501,56 @@ class _BookingCardState extends State<_BookingCard> {
               if (widget.onCancel != null && s == 'confirmed')
                 Expanded(
                   child: GestureDetector(
-                    onTap: _cancelling ? null : () {
-                      setState(() => _cancelling = true);
-                      widget.onCancel!();
-                      if (mounted) setState(() => _cancelling = false);
-                    },
+                    onTap:
+                        _cancelling
+                            ? null
+                            : () {
+                              setState(() => _cancelling = true);
+                              widget.onCancel!();
+                              if (mounted) setState(() => _cancelling = false);
+                            },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                         color: Colors.redAccent.withValues(alpha: 0.1),
+                        color: Colors.redAccent.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       alignment: Alignment.center,
-                      child: const Text('Batal', style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Batal',
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              if (widget.onCancel != null && s == 'confirmed') const SizedBox(width: 12),
+              if (widget.onCancel != null && s == 'confirmed')
+                const SizedBox(width: 12),
               Expanded(
                 child: TextButton.icon(
                   onPressed: () => _showDetail(context, booking),
-                  icon: const Icon(Icons.visibility_outlined, size: 16, color: Colors.white70),
-                  label: const Text('Detail', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
+                  icon: const Icon(
+                    Icons.visibility_outlined,
+                    size: 16,
+                    color: Colors.white70,
+                  ),
+                  label: const Text(
+                    'Detail',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
                   style: TextButton.styleFrom(
                     backgroundColor: Colors.white.withValues(alpha: 0.03),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -456,8 +577,22 @@ class _BookingCardState extends State<_BookingCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.bold)),
-              Text(value, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white38,
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
         ),
@@ -466,14 +601,20 @@ class _BookingCardState extends State<_BookingCard> {
   }
 
   void _showDetail(BuildContext context, BookingModel booking) {
-    final statusColor = booking.status.toLowerCase() == 'confirmed' ? AppTheme.highlight : Colors.green;
-    
+    final statusColor =
+        booking.status.toLowerCase() == 'confirmed'
+            ? AppTheme.highlight
+            : Colors.green;
+
     showDialog(
       context: context,
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 500),
             decoration: BoxDecoration(
@@ -493,27 +634,40 @@ class _BookingCardState extends State<_BookingCard> {
                       const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('DETAIL BOOKING EVENT',
-                              style: TextStyle(
-                                  color: Color(0xFFC48DF6),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.0)),
+                          Text(
+                            'DETAIL BOOKING EVENT',
+                            style: TextStyle(
+                              color: Color(0xFFC48DF6),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
                           SizedBox(height: 8),
                         ],
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close_rounded, color: Colors.white54, size: 20),
-                      )
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white54,
+                          size: 20,
+                        ),
+                      ),
                     ],
                   ),
                 ),
 
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(booking.eventTitle,
-                      style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    booking.eventTitle,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24),
 
@@ -529,32 +683,56 @@ class _BookingCardState extends State<_BookingCard> {
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.04),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.05),
+                            ),
                           ),
                           child: Row(
                             children: [
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFC48DF6).withValues(alpha: 0.1),
+                                  color: const Color(
+                                    0xFFC48DF6,
+                                  ).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Icon(Icons.business_rounded, color: Color(0xFFC48DF6), size: 24),
+                                child: const Icon(
+                                  Icons.business_rounded,
+                                  color: Color(0xFFC48DF6),
+                                  size: 24,
+                                ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('PENYELENGGARA (EO)',
-                                        style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                                    const Text(
+                                      'PENYELENGGARA (EO)',
+                                      style: TextStyle(
+                                        color: Colors.white38,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                     const SizedBox(height: 4),
-                                    Text(booking.organizerName ?? 'Organizer #${booking.organizerId}',
-                                        style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                                    Text(
+                                      booking.organizerName ??
+                                          'Organizer #${booking.organizerId}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
-                              _StatusLabel(label: booking.statusCapitalized, color: statusColor),
+                              _StatusLabel(
+                                label: booking.statusCapitalized,
+                                color: statusColor,
+                              ),
                             ],
                           ),
                         ),
@@ -583,8 +761,15 @@ class _BookingCardState extends State<_BookingCard> {
 
                         const SizedBox(height: 24),
 
-                        const Text('DESKRIPSI ACARA',
-                            style: TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                        const Text(
+                          'DESKRIPSI ACARA',
+                          style: TextStyle(
+                            color: Colors.white38,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                         const SizedBox(height: 12),
                         Container(
                           width: double.infinity,
@@ -595,14 +780,25 @@ class _BookingCardState extends State<_BookingCard> {
                           ),
                           child: Text(
                             booking.eventDescription,
-                            style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              height: 1.5,
+                            ),
                           ),
                         ),
 
                         const SizedBox(height: 24),
 
-                        const Text('LOKASI & VENUE',
-                            style: TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                        const Text(
+                          'LOKASI & VENUE',
+                          style: TextStyle(
+                            color: Colors.white38,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                         const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.all(16),
@@ -612,12 +808,20 @@ class _BookingCardState extends State<_BookingCard> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.location_on_rounded, color: Color(0xFFC48DF6), size: 20),
+                              const Icon(
+                                Icons.location_on_rounded,
+                                color: Color(0xFFC48DF6),
+                                size: 20,
+                              ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   '${booking.eventVenue}, ${booking.eventCity}',
-                                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ],
@@ -632,7 +836,11 @@ class _BookingCardState extends State<_BookingCard> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                    ),
                   ),
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(),
@@ -640,9 +848,14 @@ class _BookingCardState extends State<_BookingCard> {
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.black,
                       minimumSize: const Size(double.infinity, 54),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Tutup',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -668,8 +881,15 @@ class _StatusLabel extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
-      child: Text(label,
-          style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 }
@@ -693,9 +913,23 @@ class _InfoBox extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white38,
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text(value, style: TextStyle(color: valueColor ?? Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: TextStyle(
+              color: valueColor ?? Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
