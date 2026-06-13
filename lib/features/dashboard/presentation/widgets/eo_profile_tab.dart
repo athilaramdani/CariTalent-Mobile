@@ -5,6 +5,7 @@ import 'package:caritalent_mobile/features/dashboard/application/dashboard_provi
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_change_password_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_edit_profile_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/profile_logout_button.dart';
+import 'package:caritalent_mobile/features/public/presentation/pages/public_home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
