@@ -37,15 +37,15 @@ class _EoChangePasswordPageState extends ConsumerState<EoChangePasswordPage> {
     final confirm = _confirmCtrl.text.trim();
 
     if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) {
-      _showSnack('Semua field harus diisi', isError: true);
+      _showSnack('Semua kolom harus diisi', isError: true);
       return;
     }
     if (newPass.length < 6) {
-      _showSnack('Password baru minimal 6 karakter', isError: true);
+      _showSnack('Kata sandi baru minimal 6 karakter', isError: true);
       return;
     }
     if (newPass != confirm) {
-      _showSnack('Konfirmasi password tidak cocok', isError: true);
+      _showSnack('Konfirmasi kata sandi tidak cocok', isError: true);
       return;
     }
 
@@ -58,7 +58,7 @@ class _EoChangePasswordPageState extends ConsumerState<EoChangePasswordPage> {
       });
       if (mounted) {
         context.pop();
-        _showSnack('Password berhasil diubah ✓');
+        _showSnack('Kata sandi berhasil diubah ✓');
       }
     } catch (e) {
       if (mounted) _showSnack('Gagal: $e', isError: true);
@@ -85,7 +85,7 @@ class _EoChangePasswordPageState extends ConsumerState<EoChangePasswordPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Ubah Password',
+        title: const Text('Ubah Kata Sandi',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
         centerTitle: true,
       ),
@@ -96,24 +96,24 @@ class _EoChangePasswordPageState extends ConsumerState<EoChangePasswordPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Buat Password Baru',
+                'Buat Kata Sandi Baru',
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
               ),
               const SizedBox(height: 8),
               const Text(
-                'Pastikan password kamu panjang dan memiliki kombinasi yang kuat menggunakan simbol demi keamanan.',
+                'Pastikan kata sandi kamu panjang dan memiliki kombinasi yang kuat menggunakan simbol demi keamanan.',
                 style: TextStyle(color: Colors.white54, height: 1.5),
               ),
               const SizedBox(height: 40),
-              _buildLabel('Password Saat Ini'),
+              _buildLabel('Kata Sandi Saat Ini'),
               _buildPasswordField(
                 controller: _currentCtrl,
-                hint: 'Masukkan password lama',
+                hint: 'Masukkan kata sandi lama',
                 obscure: _obscureCurrent,
                 toggle: () => setState(() => _obscureCurrent = !_obscureCurrent),
               ),
               const SizedBox(height: 24),
-              _buildLabel('Password Baru'),
+              _buildLabel('Kata Sandi Baru'),
               _buildPasswordField(
                 controller: _newCtrl,
                 hint: 'Minimal 6 karakter',
@@ -121,10 +121,10 @@ class _EoChangePasswordPageState extends ConsumerState<EoChangePasswordPage> {
                 toggle: () => setState(() => _obscureNew = !_obscureNew),
               ),
               const SizedBox(height: 24),
-              _buildLabel('Konfirmasi Password Baru'),
+              _buildLabel('Konfirmasi Kata Sandi Baru'),
               _buildPasswordField(
                 controller: _confirmCtrl,
-                hint: 'Ulangi password baru',
+                hint: 'Ulangi kata sandi baru',
                 obscure: _obscureConfirm,
                 toggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
               ),
@@ -152,7 +152,7 @@ class _EoChangePasswordPageState extends ConsumerState<EoChangePasswordPage> {
                         ? const SizedBox(
                             height: 20, width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Simpan Password Baru',
+                        : const Text('Simpan Kata Sandi Baru',
                             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
                 ),

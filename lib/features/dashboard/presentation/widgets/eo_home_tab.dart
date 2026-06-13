@@ -28,7 +28,7 @@ class EoHomeTab extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
           Text(
-            'Event Organizer Dashboard',
+            'Selamat Datang kembali,',
             style: textTheme.bodySmall
                 ?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.5),
           ),
@@ -36,7 +36,7 @@ class EoHomeTab extends ConsumerWidget {
           GradientText(
             name,
             style: textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.bold,
                   fontSize: 32,
                 ) ??
                 const TextStyle(),
@@ -114,7 +114,7 @@ class EoHomeTab extends ConsumerWidget {
                           Expanded(
                               child: _buildStatCard(
                                   context,
-                                  'Total Events',
+                                  'Total Event',
                                   '$totalEvents',
                                   'Semua event yang dibuat',
                                   Icons.calendar_today_outlined)),
@@ -122,7 +122,7 @@ class EoHomeTab extends ConsumerWidget {
                           Expanded(
                               child: _buildStatCard(
                                   context,
-                                  'Active Events',
+                                  'Event Aktif',
                                   '$activeEvents',
                                   'Event sedang dibuka',
                                   Icons.event_available_outlined)),
@@ -135,7 +135,7 @@ class EoHomeTab extends ConsumerWidget {
                           Expanded(
                               child: _buildStatCard(
                                   context,
-                                  'Total Bookings',
+                                  'Total Booking',
                                   '$totalBookings',
                                   'Semua booking aktif',
                                   Icons.handshake_outlined)),
@@ -143,7 +143,7 @@ class EoHomeTab extends ConsumerWidget {
                           Expanded(
                               child: _buildStatCard(
                                   context,
-                                  'Completed',
+                                  'Selesai',
                                   '$completed',
                                   'Booking selesai',
                                   Icons.verified_outlined)),
@@ -162,7 +162,7 @@ class EoHomeTab extends ConsumerWidget {
           const SizedBox(height: 32),
 
           // Recent Events
-          _buildSectionTitle(context, 'My Events', 'Ringkasan event terbaru',
+          _buildSectionTitle(context, 'Event Saya', 'Ringkasan event terbaru',
               () => ref.read(eoNavIndexProvider.notifier).state = 1),
           const SizedBox(height: 16),
           eventsAsync.when(
@@ -189,7 +189,7 @@ class EoHomeTab extends ConsumerWidget {
 
           // Recent Bookings
           _buildSectionTitle(
-              context, 'Bookings', 'Ringkasan booking terkini', null),
+              context, 'Booking Saya', 'Ringkasan booking terkini', null),
           const SizedBox(height: 16),
           bookingsAsync.when(
             data: (bookings) {

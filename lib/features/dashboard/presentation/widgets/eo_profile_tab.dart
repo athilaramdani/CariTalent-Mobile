@@ -37,12 +37,12 @@ class EoProfileTab extends ConsumerWidget {
 // Removed redundant local header
 
           const Text(
-            'Account Settings',
+            'Pengaturan Akun',
             style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           GradientText(
-            'Profile Settings',
+            'Pengaturan Profil',
             style: textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w900,
             ) ?? const TextStyle(),
@@ -127,12 +127,12 @@ class EoProfileTab extends ConsumerWidget {
               children: [
                 const Text('Keamanan Akun', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
-                const Text('Ubah password untuk menjaga\nkeamanan akun kamu', style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+                const Text('Ubah kata sandi untuk menjaga\nkeamanan akun kamu', style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
                 ),
-                const Text('PASSWORD SAAT INI', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 2.0, fontWeight: FontWeight.w700)),
+                const Text('KATA SANDI SAAT INI', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 2.0, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 Row(
                   children: List.generate(8, (index) => Container(
@@ -164,7 +164,7 @@ class EoProfileTab extends ConsumerWidget {
                       children: const [
                         Icon(Icons.sync, color: Colors.white, size: 18),
                         SizedBox(width: 8),
-                        Text('Ubah Password', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                        Text('Ubah Kata Sandi', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -196,13 +196,13 @@ class EoProfileTab extends ConsumerWidget {
                   children: [
                     _buildStatSquare(context, Icons.business_center_outlined, 'ROLE', 'Event Organizer'),
                     const SizedBox(width: 12),
-                    _buildStatSquare(context, Icons.event_outlined, 'TOTAL EVENTS', totalEvents),
+                    _buildStatSquare(context, Icons.event_outlined, 'TOTAL EVENT', totalEvents),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _buildStatSquare(context, Icons.book_online_outlined, 'TOTAL BOOKINGS', totalBookings),
+                    _buildStatSquare(context, Icons.book_online_outlined, 'TOTAL BOOKING', totalBookings),
                     const SizedBox(width: 12),
                     _buildStatSquare(context, Icons.verified_user_outlined, 'MEMBER SEJAK', '2026'),
                   ],
@@ -212,7 +212,7 @@ class EoProfileTab extends ConsumerWidget {
           }),
           const SizedBox(height: 32),
           
-          const Text('Additional Settings', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+          const Text('Pengaturan Tambahan', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           
           GestureDetector(
@@ -228,7 +228,7 @@ class EoProfileTab extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.redAccent.withValues(alpha: 0.15)),
               ),
-              child: const Text('Logout', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 14)),
+              child: const Text('Keluar', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 14)),
             ),
           ),
           const SizedBox(height: 48),

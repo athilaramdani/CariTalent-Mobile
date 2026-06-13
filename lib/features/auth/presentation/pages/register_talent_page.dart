@@ -7,6 +7,7 @@ import 'package:caritalent_mobile/features/auth/presentation/pages/register_eo_p
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class RegisterTalentPage extends ConsumerStatefulWidget {
   const RegisterTalentPage({super.key});
@@ -46,11 +47,33 @@ class _RegisterTalentPageState extends ConsumerState<RegisterTalentPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF0F0E1A),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Top back navigation
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                    onPressed: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go('/onboarding/4');
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
               // Top Header Card
               Container(
                 padding: const EdgeInsets.all(18),
@@ -72,13 +95,13 @@ class _RegisterTalentPageState extends ConsumerState<RegisterTalentPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     RichText(
-                      text: const TextSpan(
-                        style: TextStyle(
+                      text: TextSpan(
+                        style: GoogleFonts.syne(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
                         ),
-                        children: [
+                        children: const [
                           TextSpan(text: 'Buat akun '),
                           TextSpan(
                             text: 'CariTalent',
@@ -88,9 +111,9 @@ class _RegisterTalentPageState extends ConsumerState<RegisterTalentPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Pilih role mobile kamu: Talent atau EO.',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                      style: GoogleFonts.dmSans(color: Colors.white70, fontSize: 13),
                     ),
                   ],
                 ),
@@ -119,14 +142,14 @@ class _RegisterTalentPageState extends ConsumerState<RegisterTalentPage> {
                             borderRadius: BorderRadius.circular(26),
                           ),
                           alignment: Alignment.center,
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.check, size: 14, color: Colors.white),
-                              SizedBox(width: 4),
+                              const Icon(Icons.check, size: 14, color: Colors.white),
+                              const SizedBox(width: 4),
                               Text(
                                 'Talent',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                style: GoogleFonts.dmSans(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                               ),
                             ],
                           ),
@@ -139,14 +162,14 @@ class _RegisterTalentPageState extends ConsumerState<RegisterTalentPage> {
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             color: Colors.transparent,
                             alignment: Alignment.center,
-                            child: const Row(
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.event, size: 14, color: Colors.white54),
-                                SizedBox(width: 4),
+                                const Icon(Icons.event, size: 14, color: Colors.white54),
+                                const SizedBox(width: 4),
                                 Text(
                                   'EO',
-                                  style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13),
+                                  style: GoogleFonts.dmSans(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                               ],
                             ),
@@ -184,7 +207,7 @@ class _RegisterTalentPageState extends ConsumerState<RegisterTalentPage> {
               const SizedBox(height: 14),
               _buildInput(
                 controller: _passwordController,
-                hint: 'Password',
+                hint: 'Kata Sandi',
                 obscureText: _obscurePassword,
                 isPassword: true,
                 onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -192,7 +215,7 @@ class _RegisterTalentPageState extends ConsumerState<RegisterTalentPage> {
               const SizedBox(height: 14),
               _buildInput(
                 controller: _confirmPasswordController,
-                hint: 'Konfirmasi Password',
+                hint: 'Konfirmasi Kata Sandi',
                 obscureText: _obscureConfirmPassword,
                 isPassword: true,
                 onToggle: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
@@ -202,7 +225,7 @@ class _RegisterTalentPageState extends ConsumerState<RegisterTalentPage> {
                 const SizedBox(height: 16),
                 Text(
                   auth.errorMessage!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 13),
+                  style: GoogleFonts.dmSans(color: Theme.of(context).colorScheme.error, fontSize: 13),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -229,14 +252,14 @@ class _RegisterTalentPageState extends ConsumerState<RegisterTalentPage> {
                           dimension: 20,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : const Row(
+                      : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
+                            const Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 18),
+                            const SizedBox(width: 8),
                             Text(
                               'Daftar',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                              style: GoogleFonts.dmSans(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                             ),
                           ],
                         ),
@@ -248,22 +271,24 @@ class _RegisterTalentPageState extends ConsumerState<RegisterTalentPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Sudah punya akun? ', style: TextStyle(color: Colors.white54, fontSize: 14)),
+                  Text('Sudah punya akun? ', style: GoogleFonts.dmSans(color: Colors.white54, fontSize: 14)),
                   GestureDetector(
                     onTap: () => context.go(LoginPage.routePath),
-                    child: const Text(
+                    child: Text(
                       'Masuk',
-                      style: TextStyle(color: Color(0xFFF472B6), fontWeight: FontWeight.bold, fontSize: 14),
+                      style: GoogleFonts.dmSans(color: const Color(0xFFF472B6), fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
             ],
           ),
         ),
       ),
-    );
+    ],
+  ),
+),
+);
   }
 
   Widget _buildInput({
@@ -278,10 +303,10 @@ class _RegisterTalentPageState extends ConsumerState<RegisterTalentPage> {
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
-      style: const TextStyle(color: Colors.white, fontSize: 14),
+      style: GoogleFonts.dmSans(color: Colors.white, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
+        hintStyle: GoogleFonts.dmSans(color: Colors.white38, fontSize: 14),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.04),
@@ -313,14 +338,14 @@ class _RegisterTalentPageState extends ConsumerState<RegisterTalentPage> {
 
     if (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Harap lengkapi semua field.')),
+        SnackBar(content: Text('Harap lengkapi semua kolom.', style: GoogleFonts.dmSans())),
       );
       return;
     }
 
     if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Konfirmasi password tidak cocok.')),
+        SnackBar(content: Text('Konfirmasi Kata Sandi tidak cocok.', style: GoogleFonts.dmSans())),
       );
       return;
     }

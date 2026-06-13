@@ -112,19 +112,19 @@ class EventModel {
     switch (status.toLowerCase()) {
       case 'open':
       case 'dibuka':
-        return 'Open';
+        return 'Dibuka';
       case 'closed':
       case 'ditutup':
-        return 'Closed';
+        return 'Ditutup';
       case 'draft':
-        return 'Draft';
+        return 'Konsep';
       case 'completed':
       case 'selesai':
-        return 'Completed';
+        return 'Selesai';
       case 'cancelled':
       case 'canceled':
       case 'dibatalkan':
-        return 'Cancelled';
+        return 'Dibatalkan';
       default:
         return status;
     }

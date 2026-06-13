@@ -73,13 +73,13 @@ class _EoEventsTabState extends ConsumerState<EoEventsTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Event Organizer Dashboard',
+                          'Selamat Datang kembali,',
                           style: textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.bold, letterSpacing: 1.0),
                         ),
                         const SizedBox(height: 4),
                         GradientText(
-                          'My Events',
+                          'Event Saya',
                           style: textTheme.headlineMedium?.copyWith(
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -0.5,
