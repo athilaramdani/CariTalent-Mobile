@@ -45,6 +45,18 @@ class BookingModel {
       : null;
   String get eventDescription => (event?['description'] as String?) ?? '';
   String get eventCity => (event?['city'] as String?) ?? '';
+  String get eventAddress => (event?['address'] as String?) ?? (event?['full_address'] as String?) ?? (event?['venue_address'] as String?) ?? '';
+  List<String> get eventGenres {
+    final raw = event?['genres'];
+    if (raw is List) {
+      return raw.map((e) {
+        if (e is Map && e.containsKey('name')) return e['name'].toString();
+        return e.toString();
+      }).toList();
+    }
+    return [];
+  }
+
   String? get organizerName => (event?['organizer_name'] as String?) ?? (event?['organizer']?['name'] as String?);
   int? get organizerId => (event?['organizer_id'] as num?)?.toInt();
 
