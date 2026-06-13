@@ -2,6 +2,7 @@ import 'package:caritalent_mobile/features/dashboard/application/dashboard_provi
 import 'package:caritalent_mobile/features/dashboard/domain/review_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TalentReviewsPage extends ConsumerWidget {
   const TalentReviewsPage({super.key});
@@ -46,7 +47,7 @@ class TalentReviewsPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Your Performance',
+                 Text('Performa Anda',
                     style:
                         textTheme.bodySmall?.copyWith(color: Colors.white54)),
                 const SizedBox(height: 4),
@@ -55,19 +56,21 @@ class TalentReviewsPage extends ConsumerWidget {
                     colors: [Color(0xFFB500FF), Color(0xFFDE33A2)],
                   ).createShader(bounds),
                   child: Text(
-                    'Talent Reviews',
-                    style: textTheme.displaySmall?.copyWith(
-                      color: Colors.white,
-                      fontSize: 32,
-                      height: 1.1,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
+                    'Ulasan Talent',
+                    style: GoogleFonts.syne(
+                      textStyle: textTheme.displaySmall?.copyWith(
+                        color: Colors.white,
+                        fontSize: 32,
+                        height: 1.1,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'See what event organizers say about you',
+                  'Lihat apa yang dikatakan event organizer tentang Anda',
                   style:
                       textTheme.bodySmall?.copyWith(color: Colors.white54),
                 ),
@@ -90,10 +93,12 @@ class TalentReviewsPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
 
-                Text(
-                  'Recent Reviews',
-                  style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold, color: Colors.white),
+                 Text(
+                  'Ulasan Terbaru',
+                  style: GoogleFonts.syne(
+                    textStyle: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -176,7 +181,7 @@ class TalentReviewsPage extends ConsumerWidget {
               const Icon(Icons.workspace_premium,
                   color: Colors.amber, size: 18),
               const SizedBox(width: 8),
-              Text('Overall Rating',
+               Text('Rating Keseluruhan',
                   style: textTheme.bodyMedium
                       ?.copyWith(color: Colors.white)),
             ],
@@ -221,7 +226,7 @@ class TalentReviewsPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text('Based on $total review${total == 1 ? '' : 's'}',
+           Text('Berdasarkan $total ulasan',
               style:
                   textTheme.bodySmall?.copyWith(color: Colors.white54)),
           const SizedBox(height: 24),
@@ -242,7 +247,7 @@ class TalentReviewsPage extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text('Total Reviews',
+                   Text('Total Ulasan',
                       style: textTheme.bodySmall
                           ?.copyWith(color: Colors.white54)),
                 ],
@@ -256,7 +261,7 @@ class TalentReviewsPage extends ConsumerWidget {
                         color: const Color(0xFFC48DF6)),
                   ),
                   const SizedBox(height: 4),
-                  Text('Positive',
+                   Text('Positif',
                       style: textTheme.bodySmall
                           ?.copyWith(color: Colors.white54)),
                 ],
@@ -284,9 +289,11 @@ class TalentReviewsPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Rating Breakdown',
-              style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold, color: Colors.white)),
+           Text('Rincian Rating',
+              style: GoogleFonts.syne(
+                textStyle: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold, color: Colors.white),
+              )),
           const SizedBox(height: 16),
           for (int star = 5; star >= 1; star--)
             _buildProgressBar(

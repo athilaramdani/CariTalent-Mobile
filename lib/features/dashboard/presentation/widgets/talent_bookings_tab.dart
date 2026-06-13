@@ -7,6 +7,7 @@ import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_location_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TalentBookingsTab extends ConsumerStatefulWidget {
   const TalentBookingsTab({super.key});
@@ -48,12 +49,12 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
               const AppHeader(),
               const SizedBox(height: 32),
               GradientText(
-                'My Bookings',
-                style:
-                    textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ) ??
-                    const TextStyle(),
+                'Pemesanan',
+                style: GoogleFonts.syne(
+                  textStyle: textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               Text(

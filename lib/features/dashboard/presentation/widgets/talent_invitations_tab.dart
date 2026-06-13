@@ -6,6 +6,7 @@ import 'package:caritalent_mobile/features/dashboard/domain/invitation_model.dar
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_map_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 String? _invitationStatusValue(String label) {
   switch (label) {
@@ -72,12 +73,12 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
               const AppHeader(),
               const SizedBox(height: 32),
               GradientText(
-                'My Invitations',
-                style:
-                    textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ) ??
-                    const TextStyle(),
+                'Undangan Terkirim',
+                style: GoogleFonts.syne(
+                  textStyle: textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               Text(

@@ -10,6 +10,7 @@ import 'package:caritalent_mobile/features/dashboard/presentation/widgets/profil
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TalentProfilePage extends ConsumerWidget {
   const TalentProfilePage({super.key});
@@ -31,10 +32,13 @@ class TalentProfilePage extends ConsumerWidget {
               color: Colors.white, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           'Profil Talent',
-          style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+          style: GoogleFonts.syne(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
         ),
         centerTitle: true,
       ),
@@ -156,9 +160,9 @@ class TalentProfilePage extends ConsumerWidget {
                 const SizedBox(height: 14),
                 Text(
                   displayName,
-                  style: const TextStyle(
+                  style: GoogleFonts.syne(
                     color: Colors.white,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w600,
                     fontSize: 20,
                   ),
                 ),
@@ -350,9 +354,9 @@ class TalentProfilePage extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Rating & Ulasan',
-                            style: TextStyle(
+                            style: GoogleFonts.syne(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14),
@@ -403,19 +407,19 @@ class TalentProfilePage extends ConsumerWidget {
                     const Icon(Icons.lock_outline,
                         color: Color(0xFFC48DF6), size: 18),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Keamanan Akun',
-                            style: TextStyle(
+                            style: GoogleFonts.syne(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14),
                           ),
-                          SizedBox(height: 2),
-                          Text(
+                          const SizedBox(height: 2),
+                          const Text(
                             'Ubah password untuk menjaga keamanan akun kamu',
                             style: TextStyle(
                                 color: Colors.white54, fontSize: 12),

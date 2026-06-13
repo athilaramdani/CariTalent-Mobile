@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:caritalent_mobile/core/widgets/app_header.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_reviews_page.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TalentProfileTab extends ConsumerWidget {
   const TalentProfileTab({super.key});
@@ -81,9 +82,11 @@ class TalentProfileTab extends ConsumerWidget {
                         const SizedBox(height: 16),
                         Text(
                           stageName,
-                          style: textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
+                          style: GoogleFonts.syne(
+                            textStyle: textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Row(
@@ -249,10 +252,12 @@ class TalentProfileTab extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Talent Reviews',
-                                  style: textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
+                                  'Ulasan Talent',
+                                  style: GoogleFonts.syne(
+                                    textStyle: textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white),
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
                                 Row(
@@ -368,8 +373,10 @@ class TalentProfileTab extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Text(
         title,
-        style: textTheme.titleMedium
-            ?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+        style: GoogleFonts.syne(
+          textStyle: textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
       ),
     );
   }
