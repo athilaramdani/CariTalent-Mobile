@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:caritalent_mobile/app/app.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -129,31 +130,64 @@ class FcmService {
 
   /// Tampilkan notifikasi lokal saat app sedang aktif (foreground)
   void _handleForegroundMessage(RemoteMessage message) {
-    final notification = message.notification;
-    final android = message.notification?.android;
+    debugPrint('[FCM] Foreground message received: ${message.data}');
+    
+    // SELALU invalidate provider supaya angka notif nambah walau popup gagal
+    _ref.invalidate(notificationsProvider);
 
-    if (notification != null && android != null) {
-      _localNotifications.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            _channel.id,
-            _channel.name,
-            channelDescription: _channel.description,
-            importance: Importance.high,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
+    final notification = message.notification;
+
+    if (notification != null) {
+      // Tampilkan Snackbar di dalam aplikasi
+      rootScaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                notification.title ?? 'Notifikasi Baru',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              if (notification.body != null)
+                Text(notification.body!),
+            ],
+          ),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          backgroundColor: const Color(0xFFB500FF), // Tema warna aplikasi
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'LIHAT',
+            textColor: Colors.white,
+            onPressed: () {
+              // Bisa ditambahkan aksi, misalnya pindah tab ke Notifikasi
+            },
           ),
         ),
-        payload: json.encode(message.data),
       );
 
-      // Invalidate the provider so UI re-fetches the latest notification count
-      _ref.invalidate(notificationsProvider);
+      try {
+        _localNotifications.show(
+          notification.hashCode,
+          notification.title,
+          notification.body,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              _channel.id,
+              _channel.name,
+              channelDescription: _channel.description,
+              importance: Importance.high,
+              priority: Priority.high,
+              icon: '@mipmap/ic_launcher',
+            ),
+          ),
+          payload: json.encode(message.data),
+        );
+      } catch (e) {
+        debugPrint('[FCM] Gagal menampilkan local notification: $e');
+      }
     }
-    debugPrint('[FCM] Foreground message: ${notification?.title}');
   }
 
   /// Handle ketika user menge-tap notifikasi
