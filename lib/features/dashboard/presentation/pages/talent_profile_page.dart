@@ -7,6 +7,7 @@ import 'package:caritalent_mobile/features/public/presentation/pages/public_home
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TalentProfilePage extends ConsumerWidget {
   const TalentProfilePage({super.key});
@@ -40,9 +41,11 @@ class TalentProfilePage extends ConsumerWidget {
         ),
         title: Text(
           'Profil Talent',
-          style: textTheme.titleMedium?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+          style: GoogleFonts.syne(
+            textStyle: textTheme.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         centerTitle: true,
@@ -248,9 +251,11 @@ class TalentProfilePage extends ConsumerWidget {
         const SizedBox(height: 16),
         Text(
           name,
-          style: textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
+          style: GoogleFonts.syne(
+            textStyle: textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -297,9 +302,11 @@ class TalentProfilePage extends ConsumerWidget {
         children: [
           Text(
             title,
-            style: textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+            style: GoogleFonts.syne(
+              textStyle: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -354,10 +361,12 @@ class TalentProfilePage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Talent Reviews',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    'Ulasan Talent',
+                    style: GoogleFonts.syne(
+                      textStyle: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),

@@ -4,6 +4,7 @@ import 'package:caritalent_mobile/features/dashboard/application/dashboard_provi
 import 'package:caritalent_mobile/features/dashboard/domain/invitation_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class EoInvitationsTab extends ConsumerStatefulWidget {
   const EoInvitationsTab({super.key});
@@ -46,9 +47,11 @@ class _EoInvitationsTabState extends ConsumerState<EoInvitationsTab> {
             children: [
               GradientText(
                 'Undangan Terkirim',
-                style: textTheme.headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.w900) ??
-                    const TextStyle(),
+                style: GoogleFonts.syne(
+                  textStyle: textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               Text(

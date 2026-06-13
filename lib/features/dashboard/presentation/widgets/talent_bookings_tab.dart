@@ -6,6 +6,7 @@ import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_map_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TalentBookingsTab extends ConsumerStatefulWidget {
   const TalentBookingsTab({super.key});
@@ -36,9 +37,16 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
           final filtered =
               _selectedFilter == 'Semua'
                   ? bookings
-                  : bookings
-                      .where((b) => b.status == _selectedFilter.toLowerCase())
-                      .toList();
+                  : bookings.where((b) {
+                      switch (_selectedFilter) {
+                        case 'Dikonfirmasi':
+                          return b.status == 'confirmed';
+                        case 'Selesai':
+                          return b.status == 'completed';
+                        default:
+                          return true;
+                      }
+                    }).toList();
 
           final formattedEarnings = _formatCurrency(totalEarnings);
 
@@ -48,12 +56,12 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
               const AppHeader(),
               const SizedBox(height: 32),
               GradientText(
-                'My Bookings',
-                style:
-                    textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ) ??
-                    const TextStyle(),
+                'Pemesanan',
+                style: GoogleFonts.syne(
+                  textStyle: textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -70,7 +78,7 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
                   _buildStatCard(
                     context,
                     '$confirmed',
-                    'CONFIRMED',
+                    'DIKONFIRMASI',
                     AppTheme.highlight,
                   ),
                   const SizedBox(width: 12),
@@ -141,8 +149,8 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
                 child: Row(
                   children: [
                     _buildFilterChip(context, 'Semua', '${bookings.length}'),
-                    _buildFilterChip(context, 'Confirmed', '$confirmed'),
-                    _buildFilterChip(context, 'Completed', '$completed'),
+                    _buildFilterChip(context, 'Dikonfirmasi', '$confirmed'),
+                    _buildFilterChip(context, 'Selesai', '$completed'),
                   ],
                 ),
               ),

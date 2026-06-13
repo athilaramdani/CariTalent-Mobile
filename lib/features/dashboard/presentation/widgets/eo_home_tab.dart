@@ -10,6 +10,7 @@ import 'package:caritalent_mobile/features/dashboard/presentation/widgets/view_l
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class EoHomeTab extends ConsumerWidget {
   const EoHomeTab({super.key});
@@ -35,11 +36,13 @@ class EoHomeTab extends ConsumerWidget {
           const SizedBox(height: 4),
           GradientText(
             name,
-            style: textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 32,
-                ) ??
-                const TextStyle(),
+            style: GoogleFonts.syne(
+              textStyle: textTheme.displaySmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                fontSize: 32,
+                letterSpacing: -0.5,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Text(

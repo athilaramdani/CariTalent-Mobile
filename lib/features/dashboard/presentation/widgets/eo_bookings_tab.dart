@@ -4,6 +4,7 @@ import 'package:caritalent_mobile/features/dashboard/application/dashboard_provi
 import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class EoBookingsTab extends ConsumerStatefulWidget {
   const EoBookingsTab({super.key});
@@ -93,9 +94,11 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
             children: [
               GradientText(
                 'Pemesanan',
-                style: textTheme.headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.w900) ??
-                    const TextStyle(),
+                style: GoogleFonts.syne(
+                  textStyle: textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               Text(

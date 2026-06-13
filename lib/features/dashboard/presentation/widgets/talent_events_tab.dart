@@ -7,6 +7,7 @@ import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // ─── Main Tab Widget ──────────────────────────────────────────────────────────
 
@@ -193,22 +194,23 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
                     children: [
                       const AppHeader(),
                       const SizedBox(height: 32),
-                      const Text('Find Opportunities',
+                       const Text('Temukan Peluang',
                           style: TextStyle(
                               color: Colors.white54,
                               fontSize: 13,
                               fontWeight: FontWeight.w500)),
                       const SizedBox(height: 4),
                       GradientText(
-                        'Browse Events',
-                        style: textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.5) ??
-                            const TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.w900),
+                        'Event Saya',
+                        style: GoogleFonts.syne(
+                          textStyle: textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      Text('Discover and apply to open events',
+                      Text('Temukan dan lamar event yang dibuka',
                           style: textTheme.bodySmall
                               ?.copyWith(color: Colors.white38)),
                       const SizedBox(height: 16),
@@ -239,13 +241,15 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
                       ),
                       const SizedBox(height: 32),
 
-                      Text('Open Events',
-                          style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white)),
+                      Text('Event Dibuka',
+                          style: GoogleFonts.syne(
+                            textStyle: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          )),
                       const SizedBox(height: 4),
                       Text(
-                          'Browse through available events and apply to those that match your skills',
+                          'Telusuri event yang tersedia dan lamar yang sesuai dengan keahlian Anda',
                           style: textTheme.bodySmall),
                       const SizedBox(height: 16),
                     ],

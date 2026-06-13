@@ -1,5 +1,3 @@
-import 'package:caritalent_mobile/app/theme/app_theme.dart';
-import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/auth/presentation/pages/login_page.dart';
 import 'package:caritalent_mobile/features/auth/presentation/pages/register_talent_page.dart';
 import 'package:caritalent_mobile/features/auth/presentation/pages/register_eo_page.dart';

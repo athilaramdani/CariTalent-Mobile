@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 const _statusFilters = [
   _EventStatusFilter(label: 'Semua'),
@@ -80,11 +81,12 @@ class _EoEventsTabState extends ConsumerState<EoEventsTab> {
                         const SizedBox(height: 4),
                         GradientText(
                           'Event Saya',
-                          style: textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.5,
-                              ) ??
-                              const TextStyle(),
+                          style: GoogleFonts.syne(
+                            textStyle: textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(

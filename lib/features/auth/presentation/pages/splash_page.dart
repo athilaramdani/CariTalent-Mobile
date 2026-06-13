@@ -24,7 +24,12 @@ class SplashPage extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const FlutterLogo(size: 72),
+            Image.asset(
+              'assets/images/logo.png',
+              width: 140,
+              height: 140,
+              fit: BoxFit.contain,
+            ),
             const SizedBox(height: 16),
             GradientText(
               'CariTalent',

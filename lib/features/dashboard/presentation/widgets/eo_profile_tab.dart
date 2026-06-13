@@ -8,6 +8,7 @@ import 'package:caritalent_mobile/features/public/presentation/pages/public_home
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class EoProfileTab extends ConsumerWidget {
   const EoProfileTab({super.key});
@@ -43,9 +44,11 @@ class EoProfileTab extends ConsumerWidget {
           const SizedBox(height: 4),
           GradientText(
             'Pengaturan Profil',
-            style: textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-            ) ?? const TextStyle(),
+            style: GoogleFonts.syne(
+              textStyle: textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           const Text(

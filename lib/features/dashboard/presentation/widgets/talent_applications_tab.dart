@@ -6,6 +6,7 @@ import 'package:caritalent_mobile/features/dashboard/domain/application_model.da
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_map_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 String? _applicationStatusValue(String label) {
   switch (label) {
@@ -72,12 +73,12 @@ class _TalentApplicationsTabState extends ConsumerState<TalentApplicationsTab> {
               const AppHeader(),
               const SizedBox(height: 32),
               GradientText(
-                'My Applications',
-                style:
-                    textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ) ??
-                    const TextStyle(),
+                'Lamaran Terbaru',
+                style: GoogleFonts.syne(
+                  textStyle: textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               Text(

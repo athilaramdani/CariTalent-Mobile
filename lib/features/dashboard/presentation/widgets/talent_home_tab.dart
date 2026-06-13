@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_reviews_page.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TalentHomeTab extends ConsumerWidget {
   const TalentHomeTab({super.key});
@@ -44,16 +45,18 @@ class TalentHomeTab extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Welcome back,',
+                  'Selamat Datang kembali,',
                   style: TextStyle(color: Colors.white70, fontSize: 13),
                 ),
                 const SizedBox(height: 4),
                 GradientText(
                   name,
-                  style: textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                  ) ?? const TextStyle(),
+                  style: GoogleFonts.syne(
+                    textStyle: textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 talentAsync.when(
@@ -86,7 +89,7 @@ class TalentHomeTab extends ConsumerWidget {
             const SizedBox(height: 32),
 
             // 5. Invitations Section
-            _buildSectionHeader(context, 'Invitations', 'Undangan eksklusif dari EO', textTheme, onSeeAll: () {
+            _buildSectionHeader(context, 'Undangan Terkirim', 'Undangan eksklusif dari EO', textTheme, onSeeAll: () {
               ref.read(talentNavIndexProvider.notifier).state = 3;
             }),
             const SizedBox(height: 12),
@@ -122,7 +125,7 @@ class TalentHomeTab extends ConsumerWidget {
             const SizedBox(height: 32),
 
             // 6. Upcoming Bookings Section
-            _buildSectionHeader(context, 'Upcoming Bookings', 'Booking terkonfirmasi', textTheme, onSeeAll: () {
+            _buildSectionHeader(context, 'Pemesanan', 'Booking terkonfirmasi', textTheme, onSeeAll: () {
               ref.read(talentNavIndexProvider.notifier).state = 4;
             }),
             const SizedBox(height: 12),
@@ -147,7 +150,7 @@ class TalentHomeTab extends ConsumerWidget {
             const SizedBox(height: 32),
 
             // 7. Recent Applications Section
-            _buildSectionHeader(context, 'Recent Applications', 'Lamaran event terbaru', textTheme, onSeeAll: () {
+            _buildSectionHeader(context, 'Lamaran Terbaru', 'Lamaran event terbaru', textTheme, onSeeAll: () {
               ref.read(talentNavIndexProvider.notifier).state = 2;
             }),
             const SizedBox(height: 12),
@@ -276,7 +279,7 @@ class TalentHomeTab extends ConsumerWidget {
         children: [
           Icon(Icons.circle, color: Color(0xFF2ECC71), size: 8),
           SizedBox(width: 6),
-          Text('Verified Talent', style: TextStyle(color: Color(0xFF2ECC71), fontSize: 10, fontWeight: FontWeight.bold)),
+          Text('Talent Terverifikasi', style: TextStyle(color: Color(0xFF2ECC71), fontSize: 10, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -315,17 +318,17 @@ class TalentHomeTab extends ConsumerWidget {
       mainAxisSpacing: 8,
       childAspectRatio: 1.6,
       children: [
-        _buildStatCard(context, 'TOTAL APPLICATIONS', appCount, 'Lamaran yang sudah dikirim',
+        _buildStatCard(context, 'TOTAL LAMARAN', appCount, 'Lamaran yang sudah dikirim',
             Icons.assignment_outlined, const Color(0xFFC48DF6)),
-        _buildStatCard(context, 'TOTAL INVITATIONS', invCount, 'Undangan dari organizer',
+        _buildStatCard(context, 'TOTAL UNDANGAN', invCount, 'Undangan dari organizer',
             Icons.mail_outline, const Color(0xFFC48DF6)),
-        _buildStatCard(context, 'TOTAL BOOKINGS', bookCount, 'Booking terkonfirmasi dan selesai',
+        _buildStatCard(context, 'TOTAL PEMESANAN', bookCount, 'Booking terkonfirmasi dan selesai',
             Icons.event_available_outlined, Colors.blue),
         GestureDetector(
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TalentReviewsPage())),
           child: _buildStatCard(
             context, 
-            'AVERAGE RATING', 
+            'RATA-RATA RATING', 
             rating, 
             'Berdasarkan perform terakhir',
             Icons.stars_rounded, 
@@ -401,7 +404,12 @@ class TalentHomeTab extends ConsumerWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: GoogleFonts.syne(
+                textStyle: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
             const SizedBox(height: 4),
             Text(subtitle, style: textTheme.bodySmall),
           ],
@@ -562,7 +570,7 @@ class TalentHomeTab extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Agreed Price',
+                'Harga Deal',
                 style: TextStyle(color: Colors.white54, fontSize: 13),
               ),
               Text(
@@ -764,23 +772,23 @@ class TalentHomeTab extends ConsumerWidget {
     final lower = value.toLowerCase();
     switch (lower) {
       case 'pending':
-        return 'Pending';
+        return 'Menunggu';
       case 'accepted':
       case 'diterima':
-        return 'Accepted';
+        return 'Diterima';
       case 'rejected':
       case 'ditolak':
-        return 'Rejected';
+        return 'Ditolak';
       case 'confirmed':
       case 'dikonfirmasi':
-        return 'Confirmed';
+        return 'Dikonfirmasi';
       case 'completed':
       case 'selesai':
-        return 'Completed';
+        return 'Selesai';
       case 'cancelled':
       case 'canceled':
       case 'dibatalkan':
-        return 'Cancelled';
+        return 'Dibatalkan';
       default:
         return '${value[0].toUpperCase()}${value.substring(1)}';
     }
