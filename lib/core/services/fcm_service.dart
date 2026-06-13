@@ -129,31 +129,35 @@ class FcmService {
 
   /// Tampilkan notifikasi lokal saat app sedang aktif (foreground)
   void _handleForegroundMessage(RemoteMessage message) {
+    debugPrint('[FCM] Foreground message received: ${message.data}');
+    
+    // SELALU invalidate provider supaya angka notif nambah walau popup gagal
+    _ref.invalidate(notificationsProvider);
+
     final notification = message.notification;
-    final android = message.notification?.android;
 
-    if (notification != null && android != null) {
-      _localNotifications.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            _channel.id,
-            _channel.name,
-            channelDescription: _channel.description,
-            importance: Importance.high,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
+    if (notification != null) {
+      try {
+        _localNotifications.show(
+          notification.hashCode,
+          notification.title,
+          notification.body,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              _channel.id,
+              _channel.name,
+              channelDescription: _channel.description,
+              importance: Importance.high,
+              priority: Priority.high,
+              icon: '@mipmap/ic_launcher',
+            ),
           ),
-        ),
-        payload: json.encode(message.data),
-      );
-
-      // Invalidate the provider so UI re-fetches the latest notification count
-      _ref.invalidate(notificationsProvider);
+          payload: json.encode(message.data),
+        );
+      } catch (e) {
+        debugPrint('[FCM] Gagal menampilkan local notification: $e');
+      }
     }
-    debugPrint('[FCM] Foreground message: ${notification?.title}');
   }
 
   /// Handle ketika user menge-tap notifikasi
