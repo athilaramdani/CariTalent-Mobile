@@ -1,10 +1,11 @@
-import 'package:caritalent_mobile/core/network/api_exception.dart';
 import 'package:caritalent_mobile/core/services/fcm_service.dart';
 import 'package:caritalent_mobile/features/auth/data/auth_repository.dart';
 import 'package:caritalent_mobile/features/auth/domain/app_user.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:caritalent_mobile/core/network/api_client.dart';
+import 'package:caritalent_mobile/core/network/api_exception.dart';
 import 'package:caritalent_mobile/core/storage/secure_storage_service.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
@@ -71,8 +72,15 @@ class AuthController extends StateNotifier<AuthState> {
         isBootstrapping: false,
         clearError: true,
       );
-      // Initialize FCM for returning users
-      await _fcm.initialize();
+      // Only initialize FCM if user is actually logged in
+      if (user != null) {
+        try {
+          await _fcm.initialize();
+        } catch (e) {
+          // FCM error should not break auth state
+          debugPrint('[Bootstrap] FCM init error: $e');
+        }
+      }
     } catch (_) {
       state = state.copyWith(clearUser: true, isBootstrapping: false);
     }
@@ -80,23 +88,8 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> login(String email, String password) async {
     await _run(() async {
-      // Dummy Login Implementation
-      if (email == 'eo@dummy.com') {
-        state = state.copyWith(
-          user: const AppUser(id: 1, name: 'Bill Stephen', email: 'eo@dummy.com', role: 'eo', phone: '081234560002'),
-          isLoading: false,
-          clearError: true,
-        );
-        return;
-      }
-      if (email == 'talent@dummy.com') {
-        state = state.copyWith(
-          user: const AppUser(id: 2, name: 'Rizky Maulana', email: 'talent@dummy.com', role: 'talent', phone: '081234560001'),
-          isLoading: false,
-          clearError: true,
-        );
-        return;
-      }
+      // Dummy login has been removed because it breaks FCM push notifications.
+      // You must use a real account to test notifications.
       
       final session = await _repository.login(email: email, password: password);
       state = state.copyWith(
@@ -133,6 +126,12 @@ class AuthController extends StateNotifier<AuthState> {
         isLoading: false,
         clearError: true,
       );
+      // Register FCM after register (same as login)
+      try {
+        await _fcm.initialize();
+      } catch (e) {
+        debugPrint('[Register] FCM init error: $e');
+      }
     });
   }
 
