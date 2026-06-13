@@ -92,18 +92,25 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
                 children: [
                   _buildStatCard(
                     context,
+                    '${invitations.length}',
+                    'Semua',
+                    null,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildStatCard(
+                    context,
                     '$pending',
                     'Menunggu',
                     Colors.orangeAccent,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   _buildStatCard(
                     context,
                     '$accepted',
                     'Diterima',
                     Colors.greenAccent,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   _buildStatCard(
                     context,
                     '$rejected',

@@ -4,6 +4,7 @@ import 'package:caritalent_mobile/core/widgets/app_header.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/event_model.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_map_button.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_location_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -135,6 +136,7 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
                 eventDate: '10 Mei 2026',
                 venueName: 'Kafe Braga Permai',
                 city: 'Bandung',
+                address: 'Jl. Braga No. 58, Sumur Bandung',
                 status: 'open',
                 genres: ['Pop Punk'],
                 totalApplicants: 12,
@@ -150,6 +152,7 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
                 eventDate: '20 July 2024',
                 venueName: 'Central Park',
                 city: 'Bandung',
+                address: 'Central Park Area, Dago',
                 status: 'open',
                 genres: ['Pop'],
                 totalApplicants: 45,
@@ -319,10 +322,6 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
     );
   }
 }
-
-// ─── Status Badge ─────────────────────────────────────────────────────────────
-
-// ─── Filter Section ───────────────────────────────────────────────────────────
 
 class _EventStatusInfoChip extends StatelessWidget {
   final String label;
@@ -778,6 +777,7 @@ class _EventCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(event.title,
+
                     style: textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold, color: Colors.white)),
               ),
@@ -789,13 +789,13 @@ class _EventCard extends ConsumerWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+                      color: event.statusColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       event.statusLabel,
-                      style: const TextStyle(
-                          color: Color(0xFF4CAF50),
+                      style: TextStyle(
+                          color: event.statusColor,
                           fontSize: 10,
                           fontWeight: FontWeight.bold),
                     ),
@@ -1005,7 +1005,10 @@ class _EventCard extends ConsumerWidget {
                                   ],
                                 ),
                               ),
-                              _StatusLabel(label: 'Buka', color: Colors.green),
+                              _StatusLabel(
+                                label: event.statusLabel,
+                                color: event.statusColor as Color,
+                              ),
                             ],
                           ),
                         ),
@@ -1066,29 +1069,56 @@ class _EventCard extends ConsumerWidget {
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 0.5)),
                         const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.03),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.location_on_rounded,
-                                  color: Color(0xFFC48DF6), size: 20),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  '${event.venueName}, ${event.city}',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                            ],
-                          ),
+                        EventLocationPanel(
+                          venueName: event.venueName,
+                          displayAddress: event.city,
+                          latitude: event.latitude,
+                          longitude: event.longitude,
                         ),
+
+                        const SizedBox(height: 24),
+
+                        const Text('GENRE YANG DIBUTUHKAN',
+                            style: TextStyle(
+                                color: Colors.white38,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5)),
+                        const SizedBox(height: 12),
+                        if (event.genres.isEmpty)
+                          const Text(
+                            'Genre belum ditentukan',
+                            style: TextStyle(
+                                color: Colors.white38, fontSize: 12),
+                          )
+                        else
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: event.genres.map((genre) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF7C3AED)
+                                      .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: const Color(0xFF9D7BFF)
+                                        .withValues(alpha: 0.35),
+                                  ),
+                                ),
+                                child: Text(
+                                  genre,
+                                  style: const TextStyle(
+                                    color: Color(0xFFC4B5FD),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
                       ],
                     ),
                   ),
@@ -1466,8 +1496,8 @@ class _StatusLabel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Text(label,
           style: TextStyle(
@@ -1522,6 +1552,42 @@ class _ApplyButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (isApplied) {
       return const _AppliedBadge();
+    }
+
+    if (event.isClosed) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+        ),
+        alignment: Alignment.center,
+        child: const Text('Event Ditutup',
+            style: TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+                fontSize: 13)),
+      );
+    }
+
+    if (event.isCompleted) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        alignment: Alignment.center,
+        child: const Text('Event Selesai',
+            style: TextStyle(
+                color: Colors.white54,
+                fontWeight: FontWeight.bold,
+                fontSize: 13)),
+      );
     }
 
     return GestureDetector(

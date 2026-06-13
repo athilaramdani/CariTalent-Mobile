@@ -1,4 +1,5 @@
 import 'package:caritalent_mobile/core/network/api_exception.dart';
+import 'package:caritalent_mobile/core/services/fcm_service.dart';
 import 'package:caritalent_mobile/features/auth/data/auth_repository.dart';
 import 'package:caritalent_mobile/features/auth/domain/app_user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +16,10 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
   (ref) {
-    return AuthController(ref.watch(authRepositoryProvider));
+    return AuthController(
+      ref.watch(authRepositoryProvider),
+      ref.watch(fcmServiceProvider),
+    );
   },
 );
 
@@ -52,11 +56,12 @@ class AuthState {
 }
 
 class AuthController extends StateNotifier<AuthState> {
-  AuthController(this._repository) : super(const AuthState()) {
+  AuthController(this._repository, this._fcm) : super(const AuthState()) {
     bootstrap();
   }
 
   final AuthRepository _repository;
+  final FcmService _fcm;
 
   Future<void> bootstrap() async {
     try {
@@ -97,6 +102,8 @@ class AuthController extends StateNotifier<AuthState> {
         isLoading: false,
         clearError: true,
       );
+      // Daftarkan FCM token ke backend setelah login berhasil
+      await _fcm.initialize();
     });
   }
 
@@ -129,8 +136,11 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     state = state.copyWith(isLoading: true, clearError: true);
-    await _repository.logout();
-    state = state.copyWith(clearUser: true, isLoading: false);
+    try {
+      await _repository.logout();
+    } finally {
+      state = state.copyWith(clearUser: true, isLoading: false);
+    }
   }
 
   /// Re-fetches current user data from the server (e.g. after profile update)

@@ -92,18 +92,25 @@ class _TalentApplicationsTabState extends ConsumerState<TalentApplicationsTab> {
                 children: [
                   _buildStatCard(
                     context,
+                    '${applications.length}',
+                    'Semua',
+                    null,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildStatCard(
+                    context,
                     '$pending',
                     'Menunggu',
                     Colors.orangeAccent,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   _buildStatCard(
                     context,
                     '$accepted',
                     'Diterima',
                     Colors.greenAccent,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   _buildStatCard(
                     context,
                     '$rejected',
@@ -382,7 +389,20 @@ class _ApplicationCardState extends State<_ApplicationCard> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
+          Text(
+            app.status == 'accepted'
+                ? 'Lamaran diterima organizer'
+                : app.status == 'rejected'
+                    ? 'Lamaran ditolak organizer'
+                    : 'Lamaran sedang ditinjau organizer',
+            style: TextStyle(
+              color: statusColor.withValues(alpha: 0.8),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 12),
           if (app.event != null) ...[
             Row(
               children: [

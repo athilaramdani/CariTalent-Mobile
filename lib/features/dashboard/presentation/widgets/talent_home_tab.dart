@@ -182,69 +182,85 @@ class TalentHomeTab extends ConsumerWidget {
     return Column(
       children: [
         _buildQuickActionButton(
-          icon: Icons.manage_accounts_outlined,
-          label: 'Edit Profil',
-          onTap: () => context.push(TalentProfilePage.routePath),
-        ),
-        const SizedBox(height: 12),
-        _buildQuickActionButton(
-          icon: Icons.mark_email_unread_outlined,
-          label: 'Lihat Undangan',
-          onTap: () => ref.read(talentNavIndexProvider.notifier).state = 3,
-        ),
-        const SizedBox(height: 12),
-        _buildQuickActionButton(
+          context,
           icon: Icons.search_rounded,
           label: 'Cari Event',
           isPrimary: true,
           onTap: () => ref.read(talentNavIndexProvider.notifier).state = 1,
         ),
+        const SizedBox(height: 10),
+        _buildQuickActionButton(
+          context,
+          icon: Icons.manage_accounts_outlined,
+          label: 'Edit Profil',
+          onTap: () => context.push(TalentProfilePage.routePath),
+        ),
+        const SizedBox(height: 10),
+        _buildQuickActionButton(
+          context,
+          icon: Icons.mark_email_unread_outlined,
+          label: 'Lihat Undangan',
+          onTap: () => ref.read(talentNavIndexProvider.notifier).state = 3,
+        ),
       ],
     );
   }
 
-  Widget _buildQuickActionButton({
+  Widget _buildQuickActionButton(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
     bool isPrimary = false,
   }) {
-    return InkWell(
+    final textTheme = Theme.of(context).textTheme;
+
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
       child: Container(
         width: double.infinity,
-        height: 62,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
           gradient: isPrimary
               ? const LinearGradient(
-                  colors: [Color(0xFFB96BFF), Color(0xFFE94073)],
+                  colors: [AppTheme.highlight, AppTheme.accent],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 )
               : null,
-          color: isPrimary ? null : AppTheme.uiDark,
-          borderRadius: BorderRadius.circular(16),
-          border: isPrimary
-              ? null
-              : Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          color: isPrimary ? null : AppTheme.panel,
+          borderRadius: BorderRadius.circular(12),
+          border: isPrimary ? null : Border.all(color: AppTheme.border),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              color: isPrimary ? Colors.white : const Color(0xFFC48DF6),
-              size: 22,
+              color: isPrimary ? Colors.white : AppTheme.highlight,
+              size: 20,
             ),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                color: isPrimary ? Colors.white : const Color(0xFFC48DF6),
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-              ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: isPrimary
+                  ? Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : GradientText(
+                      label,
+                      style: textTheme.labelLarge?.copyWith(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ) ??
+                          const TextStyle(),
+                    ),
             ),
           ],
         ),
