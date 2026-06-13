@@ -11,6 +11,7 @@ import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_edit_
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/eo_recommendations_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_dashboard_page.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_profile_page.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/pages/notifications_page.dart';
 import 'package:caritalent_mobile/features/public/presentation/pages/public_home_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -90,6 +91,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: EoChangePasswordPage.routePath,
         builder: (context, state) => const EoChangePasswordPage(),
+      ),
+      GoRoute(
+        path: NotificationsPage.routePath,
+        builder: (context, state) => const NotificationsPage(),
       ),
     ],
   );
