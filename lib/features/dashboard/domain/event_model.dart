@@ -41,7 +41,7 @@ class EventModel {
       organizerId: _readInt(json['organizer_id'] ?? json['e_o_id']) ?? 0,
       title: json['title'] ?? json['event_name'] ?? 'Untitled Event',
       description: json['description'] ?? '',
-      budget: (json['budget'] ?? 0).toDouble(),
+      budget: _readDouble(json['budget'] ?? json['price'] ?? 0) ?? 0.0,
       eventDate: json['event_date'] ?? json['date'] ?? '',
       venueName: json['venue_name'] ?? json['venue'] ?? '',
       city: json['city'] ?? json['location'] ?? '',
@@ -55,8 +55,8 @@ class EventModel {
           : [],
       totalApplicants: json['total_applicants'] ?? 0,
       organizerName: json['organizer_name'] ?? json['e_o_name'],
-      latitude: json['latitude'] is num ? (json['latitude'] as num).toDouble() : null,
-      longitude: json['longitude'] is num ? (json['longitude'] as num).toDouble() : null,
+      latitude: _readDouble(json['latitude']),
+      longitude: _readDouble(json['longitude']),
     );
   }
 
@@ -142,4 +142,10 @@ int? _readInt(Object? value) {
   if (value == null) return null;
   if (value is num) return value.toInt();
   return int.tryParse(value.toString());
+}
+
+double? _readDouble(Object? value) {
+  if (value == null) return null;
+  if (value is num) return value * 1.0;
+  return double.tryParse(value.toString());
 }

@@ -71,6 +71,8 @@ class AuthController extends StateNotifier<AuthState> {
         isBootstrapping: false,
         clearError: true,
       );
+      // Initialize FCM for returning users
+      await _fcm.initialize();
     } catch (_) {
       state = state.copyWith(clearUser: true, isBootstrapping: false);
     }
