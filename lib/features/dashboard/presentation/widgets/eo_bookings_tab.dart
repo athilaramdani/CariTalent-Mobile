@@ -79,9 +79,9 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
               ? bookings
               : bookings.where((b) {
                   switch (_selectedFilter) {
-                    case 'Confirmed':
+                    case 'Dikonfirmasi':
                       return b.status == 'confirmed';
-                    case 'Completed':
+                    case 'Selesai':
                       return b.status == 'completed';
                     default:
                       return true;
@@ -92,7 +92,7 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
               GradientText(
-                'My Bookings',
+                'Pemesanan',
                 style: textTheme.headlineMedium
                         ?.copyWith(fontWeight: FontWeight.w900) ??
                     const TextStyle(),
@@ -104,7 +104,7 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
               ),
               const SizedBox(height: 8),
               Text(
-                '${bookings.length} booking · $confirmed confirmed · $completed completed',
+                '${bookings.length} booking · $confirmed dikonfirmasi · $completed selesai',
                 style: textTheme.bodyMedium
                     ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
               ),
@@ -116,8 +116,8 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
                 child: Row(
                   children: [
                     _buildFilterChip(context, 'Semua', '${bookings.length}'),
-                    _buildFilterChip(context, 'Confirmed', '$confirmed'),
-                    _buildFilterChip(context, 'Completed', '$completed'),
+                    _buildFilterChip(context, 'Dikonfirmasi', '$confirmed'),
+                    _buildFilterChip(context, 'Selesai', '$completed'),
                   ],
                 ),
               ),

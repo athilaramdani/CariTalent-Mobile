@@ -1,9 +1,9 @@
 import 'package:caritalent_mobile/app/router/app_router.dart';
-import 'package:caritalent_mobile/app/theme/app_theme.dart';
 import 'package:caritalent_mobile/features/auth/application/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -70,7 +70,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-                        onPressed: () => context.go('/home'),
+                        onPressed: () => context.go('/onboarding/4'),
                       ),
                       const Spacer(),
                     ],
@@ -97,22 +97,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 RichText(
-                                  text: const TextSpan(
-                                    style: TextStyle(
+                                  text: TextSpan(
+                                    style: GoogleFonts.syne(
                                       fontSize: 24,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
-                                    children: [
+                                    children: const [
                                       TextSpan(text: 'Selamat datang lagi '),
                                       TextSpan(text: '👋'),
                                     ],
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                const Text(
+                                Text(
                                   'Masuk sebagai Talent atau Event Organizer.',
-                                  style: TextStyle(
+                                  style: GoogleFonts.dmSans(
                                     color: Colors.white54,
                                     fontSize: 14,
                                     height: 1.4,
@@ -134,15 +134,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           const SizedBox(height: 16),
                           _buildPasswordField(
                             controller: _passwordController,
-                            label: 'Password',
-                            hint: 'Masukkan password Anda',
+                            label: 'Kata Sandi',
+                            hint: 'Masukkan kata sandi Anda',
                           ),
                           
                           if (auth.errorMessage != null) ...[
                             const SizedBox(height: 16),
                             Text(
                               auth.errorMessage!,
-                              style: TextStyle(
+                              style: GoogleFonts.dmSans(
                                 color: Theme.of(context).colorScheme.error,
                                 fontSize: 13,
                               ),
@@ -184,14 +184,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Row(
+                                  : Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Icon(Icons.login_rounded, color: Colors.white),
-                                        SizedBox(width: 8),
+                                        const Icon(Icons.login_rounded, color: Colors.white),
+                                        const SizedBox(width: 8),
                                         Text(
                                           'Masuk',
-                                          style: TextStyle(
+                                          style: GoogleFonts.dmSans(
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 16,
@@ -207,16 +207,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
+                              Text(
                                 'Belum punya akun? ',
-                                style: TextStyle(color: Colors.white54, fontSize: 14),
+                                style: GoogleFonts.dmSans(color: Colors.white54, fontSize: 14),
                               ),
                               GestureDetector(
                                 onTap: () => context.go('/onboarding/4'),
-                                child: const Text(
+                                child: Text(
                                   'Daftar',
-                                  style: TextStyle(
-                                    color: Color(0xFFF472B6),
+                                  style: GoogleFonts.dmSans(
+                                    color: const Color(0xFFF472B6),
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
@@ -249,7 +249,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: GoogleFonts.dmSans(
             color: Colors.white70,
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -259,11 +259,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
-          style: const TextStyle(color: Colors.white),
+          style: GoogleFonts.dmSans(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: Colors.white38, size: 20),
             hintText: hint,
-            hintStyle: const TextStyle(color: Colors.white30, fontSize: 14),
+            hintStyle: GoogleFonts.dmSans(color: Colors.white30, fontSize: 14),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.04),
@@ -293,7 +293,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: GoogleFonts.dmSans(
             color: Colors.white70,
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -303,7 +303,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         TextField(
           controller: controller,
           obscureText: _obscurePassword,
-          style: const TextStyle(color: Colors.white),
+          style: GoogleFonts.dmSans(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.lock_outline_rounded, color: Colors.white38, size: 20),
             suffixIcon: IconButton(
@@ -315,7 +315,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
             ),
             hintText: hint,
-            hintStyle: const TextStyle(color: Colors.white30, fontSize: 14),
+            hintStyle: GoogleFonts.dmSans(color: Colors.white30, fontSize: 14),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.04),

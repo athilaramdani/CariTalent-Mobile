@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static const highlight = Color(0xFFB57AFF);
@@ -15,11 +16,60 @@ class AppTheme {
       brightness: Brightness.dark,
     );
 
+    final baseTextTheme = GoogleFonts.dmSansTextTheme(
+      const TextTheme(
+        displayLarge: TextStyle(color: Colors.white),
+        displayMedium: TextStyle(color: Colors.white),
+        displaySmall: TextStyle(
+          color: Colors.white,
+          fontSize: 42,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -1,
+          height: 1.2,
+        ),
+        headlineLarge: TextStyle(color: Colors.white),
+        headlineMedium: TextStyle(color: Colors.white),
+        headlineSmall: TextStyle(color: Colors.white),
+        titleLarge: TextStyle(color: Colors.white),
+        titleMedium: TextStyle(color: Colors.white),
+        bodyLarge: TextStyle(
+          color: Color(0xD9FFFFFF),
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          height: 1.5,
+        ),
+        bodyMedium: TextStyle(
+          color: Color(0xB3FFFFFF),
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        bodySmall: TextStyle(color: Color(0xA6FFFFFF)),
+        labelLarge: TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+
+    // Apply Syne to headings/display text and titles
+    final customTextTheme = baseTextTheme.copyWith(
+      displayLarge: GoogleFonts.syne(textStyle: baseTextTheme.displayLarge),
+      displayMedium: GoogleFonts.syne(textStyle: baseTextTheme.displayMedium),
+      displaySmall: GoogleFonts.syne(textStyle: baseTextTheme.displaySmall),
+      headlineLarge: GoogleFonts.syne(textStyle: baseTextTheme.headlineLarge),
+      headlineMedium: GoogleFonts.syne(textStyle: baseTextTheme.headlineMedium),
+      headlineSmall: GoogleFonts.syne(textStyle: baseTextTheme.headlineSmall),
+      titleLarge: GoogleFonts.syne(textStyle: baseTextTheme.titleLarge),
+      titleMedium: GoogleFonts.syne(textStyle: baseTextTheme.titleMedium),
+      titleSmall: GoogleFonts.syne(textStyle: baseTextTheme.titleSmall),
+    );
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: const Color(0xFF080714),
-      fontFamily: 'Poppins',
+      fontFamily: GoogleFonts.dmSans().fontFamily,
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         elevation: 0,
@@ -29,7 +79,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.08),
-        labelStyle: const TextStyle(color: Color(0xB3FFFFFF)),
+        labelStyle: GoogleFonts.dmSans(color: const Color(0xB3FFFFFF)),
+        hintStyle: GoogleFonts.dmSans(color: const Color(0x80FFFFFF)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: border),
@@ -71,35 +122,7 @@ class AppTheme {
           side: const BorderSide(color: border),
         ),
       ),
-      textTheme: const TextTheme(
-        displaySmall: TextStyle(
-          color: Colors.white,
-          fontSize: 42,
-          fontWeight: FontWeight.w900,
-          letterSpacing: -1,
-          height: 1.2,
-        ),
-        headlineSmall: TextStyle(color: Colors.white),
-        titleLarge: TextStyle(color: Colors.white),
-        titleMedium: TextStyle(color: Colors.white),
-        bodyLarge: TextStyle(
-          color: Color(0xD9FFFFFF),
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          height: 1.5,
-        ),
-        bodyMedium: TextStyle(
-          color: Color(0xB3FFFFFF),
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-        bodySmall: TextStyle(color: Color(0xA6FFFFFF)),
-        labelLarge: TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      textTheme: customTextTheme,
     );
   }
 }
