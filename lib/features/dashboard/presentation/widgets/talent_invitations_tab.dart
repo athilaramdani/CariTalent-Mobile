@@ -3,8 +3,37 @@ import 'package:caritalent_mobile/core/widgets/app_header.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/invitation_model.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_map_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+String? _invitationStatusValue(String label) {
+  switch (label) {
+    case 'Menunggu':
+      return 'pending';
+    case 'Diterima':
+      return 'accepted';
+    case 'Ditolak':
+      return 'rejected';
+    default:
+      return null;
+  }
+}
+
+String _invitationStatusLabel(String status) {
+  switch (status.trim().toLowerCase()) {
+    case 'pending':
+      return 'Menunggu';
+    case 'accepted':
+      return 'Diterima';
+    case 'rejected':
+      return 'Ditolak';
+    default:
+      return status.isEmpty
+          ? '-'
+          : '${status[0].toUpperCase()}${status.substring(1)}';
+  }
+}
 
 class TalentInvitationsTab extends ConsumerStatefulWidget {
   const TalentInvitationsTab({super.key});
@@ -29,13 +58,13 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
               invitations.where((i) => i.status == 'pending').length;
           final accepted =
               invitations.where((i) => i.status == 'accepted').length;
+          final rejected =
+              invitations.where((i) => i.status == 'rejected').length;
 
-          final filtered =
-              _selectedFilter == 'Semua'
-                  ? invitations
-                  : invitations
-                      .where((i) => i.status == _selectedFilter.toLowerCase())
-                      .toList();
+          final selectedStatus = _invitationStatusValue(_selectedFilter);
+          final filtered = selectedStatus == null
+              ? invitations
+              : invitations.where((i) => i.status == selectedStatus).toList();
 
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -62,23 +91,23 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
                 children: [
                   _buildStatCard(
                     context,
-                    '${invitations.length}',
-                    'TOTAL',
-                    null,
-                  ),
-                  const SizedBox(width: 12),
-                  _buildStatCard(
-                    context,
                     '$pending',
-                    'PENDING',
+                    'Menunggu',
                     Colors.orangeAccent,
                   ),
                   const SizedBox(width: 12),
                   _buildStatCard(
                     context,
                     '$accepted',
-                    'ACCEPTED',
+                    'Diterima',
                     Colors.greenAccent,
+                  ),
+                  const SizedBox(width: 12),
+                  _buildStatCard(
+                    context,
+                    '$rejected',
+                    'Ditolak',
+                    Colors.redAccent,
                   ),
                 ],
               ),
@@ -90,8 +119,9 @@ class _TalentInvitationsTabState extends ConsumerState<TalentInvitationsTab> {
                 child: Row(
                   children: [
                     _buildFilterChip(context, 'Semua', '${invitations.length}'),
-                    _buildFilterChip(context, 'Pending', '$pending'),
-                    _buildFilterChip(context, 'Accepted', '$accepted'),
+                    _buildFilterChip(context, 'Menunggu', '$pending'),
+                    _buildFilterChip(context, 'Diterima', '$accepted'),
+                    _buildFilterChip(context, 'Ditolak', '$rejected'),
                   ],
                 ),
               ),
@@ -345,7 +375,7 @@ class _InvitationCardState extends State<_InvitationCard> {
                   border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  '${inv.status[0].toUpperCase()}${inv.status.substring(1)}',
+                  _invitationStatusLabel(inv.status),
                   style: TextStyle(
                     color: statusColor,
                     fontSize: 10,
@@ -386,6 +416,13 @@ class _InvitationCardState extends State<_InvitationCard> {
                   ),
                 ),
               ],
+              const SizedBox(width: 8),
+              EventMapButton(
+                eventName: inv.eventTitle,
+                displayAddress: inv.eventAddress,
+                latitude: inv.eventLat,
+                longitude: inv.eventLng,
+              ),
             ],
           ),
           Padding(

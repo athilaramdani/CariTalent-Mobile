@@ -63,6 +63,16 @@ class InvitationModel {
   double? get eventBudget => event?['budget'] != null
       ? double.tryParse(event!['budget'].toString())
       : null;
+  double? get eventLat => event?['latitude'] != null
+      ? double.tryParse(event!['latitude'].toString())
+      : null;
+  double? get eventLng => event?['longitude'] != null
+      ? double.tryParse(event!['longitude'].toString())
+      : null;
+  String get eventAddress {
+    final parts = [eventVenue, eventCity].where((part) => part.isNotEmpty);
+    return parts.join(', ');
+  }
 
   String get offeredPriceFormatted {
     final price = offeredPrice ?? proposedPrice;

@@ -6,9 +6,11 @@ import 'package:caritalent_mobile/features/dashboard/application/dashboard_provi
 import 'package:caritalent_mobile/features/dashboard/domain/invitation_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/application_model.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:caritalent_mobile/features/dashboard/presentation/pages/talent_reviews_page.dart';
+import 'package:go_router/go_router.dart';
 
 class TalentHomeTab extends ConsumerWidget {
   const TalentHomeTab({super.key});
@@ -70,7 +72,11 @@ class TalentHomeTab extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            // 3. Stats Grid from real data
+            // 3. Quick actions
+            _buildQuickActions(context, ref),
+            const SizedBox(height: 24),
+
+            // 4. Stats Grid from real data
             _buildStatsGridLive(context, textTheme, ref,
               applicationsAsync: applicationsAsync,
               invitationsAsync: invitationsAsync,
@@ -79,15 +85,15 @@ class TalentHomeTab extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
 
-            // 4. Invitations Section
+            // 5. Invitations Section
             _buildSectionHeader(context, 'Invitations', 'Undangan eksklusif dari EO', textTheme, onSeeAll: () {
               ref.read(talentNavIndexProvider.notifier).state = 3;
             }),
             const SizedBox(height: 12),
             invitationsAsync.when(
               data: (invitations) {
-                final pending = invitations.where((i) => i.status == 'pending').toList();
-                if (pending.isEmpty) {
+                final recent = _sortInvitationsForHome(invitations);
+                if (recent.isEmpty) {
                   return Container(
                     padding: const EdgeInsets.symmetric(vertical: 32),
                     decoration: BoxDecoration(
@@ -104,25 +110,27 @@ class TalentHomeTab extends ConsumerWidget {
                   );
                 }
                 return Column(
-                  children: pending.take(2).map((inv) => Padding(
+                  children: recent.take(2).map((inv) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _buildInvitationCard(context, inv, textTheme, ref),
                   )).toList(),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (e, _) => _buildEmptyCard('Gagal memuat undangan: $e'),
             ),
             const SizedBox(height: 32),
 
-            // 5. Upcoming Bookings Section
+            // 6. Upcoming Bookings Section
             _buildSectionHeader(context, 'Upcoming Bookings', 'Booking terkonfirmasi', textTheme, onSeeAll: () {
               ref.read(talentNavIndexProvider.notifier).state = 4;
             }),
             const SizedBox(height: 12),
             bookingsAsync.when(
               data: (bookings) {
-                final upcoming = bookings.where((b) => b.status == 'confirmed').toList();
+                final upcoming = _sortBookingsForHome(bookings)
+                    .where((b) => _isDashboardBookingStatus(b.status))
+                    .toList();
                 if (upcoming.isEmpty) {
                   return _buildEmptyCard('Tidak ada upcoming bookings');
                 }
@@ -134,32 +142,107 @@ class TalentHomeTab extends ConsumerWidget {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (e, _) => _buildEmptyCard('Gagal memuat bookings: $e'),
             ),
             const SizedBox(height: 32),
 
-            // 6. Recent Applications Section
+            // 7. Recent Applications Section
             _buildSectionHeader(context, 'Recent Applications', 'Lamaran event terbaru', textTheme, onSeeAll: () {
               ref.read(talentNavIndexProvider.notifier).state = 2;
             }),
             const SizedBox(height: 12),
             applicationsAsync.when(
               data: (applications) {
-                if (applications.isEmpty) {
+                final recent = _sortApplicationsForHome(applications);
+                if (recent.isEmpty) {
                   return _buildEmptyCard('Belum ada lamaran');
                 }
                 return Column(
-                  children: applications.take(3).map((app) => Padding(
+                  children: recent.take(3).map((app) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _buildRecentAppCardLive(context, app, textTheme),
                   )).toList(),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (e, _) => _buildEmptyCard('Gagal memuat lamaran: $e'),
             ),
             const SizedBox(height: 32),
 
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context, WidgetRef ref) {
+    return Column(
+      children: [
+        _buildQuickActionButton(
+          icon: Icons.manage_accounts_outlined,
+          label: 'Edit Profil',
+          onTap: () => context.push(TalentProfilePage.routePath),
+        ),
+        const SizedBox(height: 12),
+        _buildQuickActionButton(
+          icon: Icons.mark_email_unread_outlined,
+          label: 'Lihat Undangan',
+          onTap: () => ref.read(talentNavIndexProvider.notifier).state = 3,
+        ),
+        const SizedBox(height: 12),
+        _buildQuickActionButton(
+          icon: Icons.search_rounded,
+          label: 'Cari Event',
+          isPrimary: true,
+          onTap: () => ref.read(talentNavIndexProvider.notifier).state = 1,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isPrimary = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        height: 62,
+        decoration: BoxDecoration(
+          gradient: isPrimary
+              ? const LinearGradient(
+                  colors: [Color(0xFFB96BFF), Color(0xFFE94073)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                )
+              : null,
+          color: isPrimary ? null : AppTheme.uiDark,
+          borderRadius: BorderRadius.circular(16),
+          border: isPrimary
+              ? null
+              : Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: isPrimary ? Colors.white : const Color(0xFFC48DF6),
+              size: 22,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: isPrimary ? Colors.white : const Color(0xFFC48DF6),
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ],
         ),
       ),
@@ -351,13 +434,21 @@ class TalentHomeTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildInvitationCard(BuildContext context, InvitationModel inv, TextTheme textTheme, WidgetRef ref) {
+  Widget _buildInvitationCard(
+    BuildContext context,
+    InvitationModel inv,
+    TextTheme textTheme,
+    WidgetRef ref,
+  ) {
+    final statusColor = _statusColor(inv.status);
+    final statusLabel = _statusLabel(inv.status);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.uiDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.3)),
+        border: Border.all(color: statusColor.withValues(alpha: 0.18)),
       ),
       child: Row(
         children: [
@@ -365,25 +456,46 @@ class TalentHomeTab extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(inv.eventTitle,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  inv.eventTitle,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 4),
-                Text('${inv.eventDateFormatted} • ${inv.offeredPriceFormatted}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                Text(
+                  _joinNonEmpty([
+                    inv.eventDateFormatted,
+                    inv.eventVenue,
+                    inv.offeredPriceFormatted,
+                  ]),
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                ),
               ],
             ),
           ),
           const SizedBox(width: 12),
-          GestureDetector(
+          InkWell(
             onTap: () => ref.read(talentNavIndexProvider.notifier).state = 3,
+            borderRadius: BorderRadius.circular(8),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFB500FF), Color(0xFFDE33A2)]),
+                color: statusColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text('Lihat', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+              child: Text(
+                statusLabel,
+                style: TextStyle(
+                  color: statusColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         ],
@@ -391,7 +503,13 @@ class TalentHomeTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildBookingCardLive(BuildContext context, BookingModel booking, TextTheme textTheme) {
+  Widget _buildBookingCardLive(
+    BuildContext context,
+    BookingModel booking,
+    TextTheme textTheme,
+  ) {
+    final statusColor = _statusColor(booking.status);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -406,32 +524,55 @@ class TalentHomeTab extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(booking.eventTitle,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                child: Text(
+                  booking.eventTitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
+                  color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(booking.statusCapitalized,
-                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+                child: Text(
+                  _statusLabel(booking.status),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(booking.eventDateVenueFormatted,
-            style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          Text(
+            booking.eventDateVenueFormatted,
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
           const SizedBox(height: 16),
           Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Agreed Price', style: TextStyle(color: Colors.white54, fontSize: 13)),
-              Text(booking.agreedPriceFormatted,
-                style: const TextStyle(color: Color(0xFF2ECC71), fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text(
+                'Agreed Price',
+                style: TextStyle(color: Colors.white54, fontSize: 13),
+              ),
+              Text(
+                booking.agreedPriceFormatted,
+                style: const TextStyle(
+                  color: Color(0xFF2ECC71),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
         ],
@@ -439,15 +580,21 @@ class TalentHomeTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildRecentAppCardLive(BuildContext context, ApplicationModel app, TextTheme textTheme) {
-    Color statusColor;
-    if (app.status == 'accepted') {
-      statusColor = Colors.green;
-    } else if (app.status == 'rejected') {
-      statusColor = Colors.red;
-    } else {
-      statusColor = const Color(0xFFB500FF);
-    }
+  Widget _buildRecentAppCardLive(
+    BuildContext context,
+    ApplicationModel app,
+    TextTheme textTheme,
+  ) {
+    final statusColor = _statusColor(app.status);
+    final event = app.event;
+    final details = event == null
+        ? _joinNonEmpty([app.dateFormatted, app.priceFormatted])
+        : _joinNonEmpty([
+            _formatDate(event.eventDate),
+            event.venueName,
+            app.priceFormatted,
+          ]);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -464,12 +611,19 @@ class TalentHomeTab extends ConsumerWidget {
               children: [
                 Text(
                   app.event?.title ?? 'Event',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text('${app.dateFormatted} • ${app.status}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                Text(
+                  details,
+                  style: const TextStyle(color: Colors.white54, fontSize: 13),
+                ),
               ],
             ),
           ),
@@ -481,12 +635,154 @@ class TalentHomeTab extends ConsumerWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              '${app.status[0].toUpperCase()}${app.status.substring(1)}',
-              style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 11),
+              _statusLabel(app.status),
+              style: TextStyle(
+                color: statusColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  List<InvitationModel> _sortInvitationsForHome(
+    List<InvitationModel> invitations,
+  ) {
+    final visible = invitations
+        .where((inv) => !_isHiddenInvitationStatus(inv.status))
+        .toList();
+    visible.sort((a, b) {
+      final byCreated = _compareDateDesc(a.createdAt, b.createdAt);
+      if (byCreated != 0) return byCreated;
+      return _compareDateDesc(a.eventDate, b.eventDate);
+    });
+    return visible;
+  }
+
+  List<BookingModel> _sortBookingsForHome(List<BookingModel> bookings) {
+    final copy = [...bookings];
+    copy.sort((a, b) {
+      final statusOrder = _bookingStatusPriority(a.status)
+          .compareTo(_bookingStatusPriority(b.status));
+      if (statusOrder != 0) return statusOrder;
+      final byEventDate = _compareDateDesc(a.eventDate, b.eventDate);
+      if (byEventDate != 0) return byEventDate;
+      return _compareDateDesc(a.createdAt, b.createdAt);
+    });
+    return copy;
+  }
+
+  List<ApplicationModel> _sortApplicationsForHome(
+      List<ApplicationModel> applications) {
+    final copy = [...applications];
+    copy.sort((a, b) {
+      final byCreated = _compareDateDesc(a.createdAt, b.createdAt);
+      if (byCreated != 0) return byCreated;
+      return _compareDateDesc(
+        a.event?.eventDate ?? '',
+        b.event?.eventDate ?? '',
+      );
+    });
+    return copy;
+  }
+
+  bool _isDashboardBookingStatus(String status) {
+    final value = status.trim().toLowerCase();
+    return value == 'confirmed' ||
+        value == 'completed' ||
+        value == 'dikonfirmasi' ||
+        value == 'selesai';
+  }
+
+  bool _isHiddenInvitationStatus(String status) {
+    final value = status.trim().toLowerCase();
+    return value == 'rejected' || value == 'ditolak' || value == 'cancelled';
+  }
+
+  int _bookingStatusPriority(String status) {
+    final value = status.trim().toLowerCase();
+    if (value == 'confirmed' || value == 'dikonfirmasi') return 0;
+    if (value == 'completed' || value == 'selesai') return 1;
+    return 2;
+  }
+
+  int _compareDateDesc(String left, String right) {
+    final a = _parseDate(left);
+    final b = _parseDate(right);
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+    return b.compareTo(a);
+  }
+
+  DateTime? _parseDate(String raw) {
+    if (raw.trim().isEmpty) return null;
+    return DateTime.tryParse(raw);
+  }
+
+  String _formatDate(String raw) {
+    final dt = _parseDate(raw);
+    if (dt == null) return raw;
+    const months = [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+    ];
+    return '${dt.day} ${months[dt.month]} ${dt.year}';
+  }
+
+  String _joinNonEmpty(List<String> values) {
+    final filtered = values
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty && value != '-')
+        .toList();
+    return filtered.join(' - ');
+  }
+
+  Color _statusColor(String status) {
+    final value = status.trim().toLowerCase();
+    if (value == 'accepted' ||
+        value == 'confirmed' ||
+        value == 'diterima' ||
+        value == 'dikonfirmasi') {
+      return Colors.green;
+    }
+    if (value == 'completed' || value == 'selesai') {
+      return const Color(0xFFB500FF);
+    }
+    if (value == 'rejected' || value == 'cancelled' || value == 'ditolak') {
+      return Colors.redAccent;
+    }
+    return Colors.orangeAccent;
+  }
+
+  String _statusLabel(String status) {
+    final value = status.trim();
+    if (value.isEmpty) return '-';
+    final lower = value.toLowerCase();
+    switch (lower) {
+      case 'pending':
+        return 'Pending';
+      case 'accepted':
+      case 'diterima':
+        return 'Accepted';
+      case 'rejected':
+      case 'ditolak':
+        return 'Rejected';
+      case 'confirmed':
+      case 'dikonfirmasi':
+        return 'Confirmed';
+      case 'completed':
+      case 'selesai':
+        return 'Completed';
+      case 'cancelled':
+      case 'canceled':
+      case 'dibatalkan':
+        return 'Cancelled';
+      default:
+        return '${value[0].toUpperCase()}${value.substring(1)}';
+    }
   }
 }

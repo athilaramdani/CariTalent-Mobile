@@ -3,6 +3,7 @@ import 'package:caritalent_mobile/features/dashboard/domain/event_model.dart';
 
 class ApplicationModel {
   final int id;
+  final int? eventId;
   final String source; // 'apply' | 'invitation'
   final String? message;
   final double? proposedPrice;
@@ -13,6 +14,7 @@ class ApplicationModel {
 
   const ApplicationModel({
     required this.id,
+    this.eventId,
     required this.source,
     this.message,
     this.proposedPrice,
@@ -32,6 +34,8 @@ class ApplicationModel {
 
     return ApplicationModel(
       id: (map['id'] as num?)?.toInt() ?? 0,
+      eventId: _readInt(map['event_id']) ??
+          _readInt((map['event'] as Map<String, dynamic>?)?['id']),
       source: source,
       message: (map['message'] ??
               map['description'] ??
@@ -97,4 +101,10 @@ double? _readDouble(Object? value) {
   if (value == null) return null;
   if (value is num) return value.toDouble();
   return double.tryParse(value.toString());
+}
+
+int? _readInt(Object? value) {
+  if (value == null) return null;
+  if (value is num) return value.toInt();
+  return int.tryParse(value.toString());
 }

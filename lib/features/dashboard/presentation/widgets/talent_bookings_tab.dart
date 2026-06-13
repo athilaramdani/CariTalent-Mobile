@@ -3,6 +3,7 @@ import 'package:caritalent_mobile/core/widgets/app_header.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/event_map_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -434,6 +435,15 @@ class _BookingCardState extends State<_BookingCard> {
             Icons.location_on_outlined,
             'LOKASI VENUE',
             '${booking.eventVenue} • ${booking.eventCity}',
+          ),
+
+          const SizedBox(height: 8),
+          EventMapButton(
+            eventName: booking.eventTitle,
+            displayAddress: '${booking.eventVenue}, ${booking.eventCity}',
+            latitude: booking.eventLat,
+            longitude: booking.eventLng,
+            expanded: true,
           ),
 
           const Padding(
