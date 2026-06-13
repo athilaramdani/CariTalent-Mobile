@@ -99,7 +99,7 @@ class ApplicationModel {
 
 double? _readDouble(Object? value) {
   if (value == null) return null;
-  if (value is num) return value.toDouble();
+  if (value is num) return value * 1.0;
   return double.tryParse(value.toString());
 }
 

@@ -94,6 +94,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: EoChangePasswordPage.routePath,
         builder: (context, state) => const EoChangePasswordPage(),
       ),
+      GoRoute(
+        path: NotificationsPage.routePath,
+        builder: (context, state) => const NotificationsPage(),
+      ),
     ],
   );
 });

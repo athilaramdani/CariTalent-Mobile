@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 
 // ─── Background message handler (HARUS top-level function) ───────────────────
 @pragma('vm:entry-point')
@@ -26,12 +27,13 @@ final FlutterLocalNotificationsPlugin _localNotifications =
 // ─── FCM Service Provider ─────────────────────────────────────────────────────
 final fcmServiceProvider = Provider<FcmService>((ref) {
   final api = ref.watch(apiClientProvider);
-  return FcmService(api);
+  return FcmService(api, ref);
 });
 
 class FcmService {
-  FcmService(this._api);
+  FcmService(this._api, this._ref);
   final ApiClient _api;
+  final Ref _ref;
 
   /// Inisialisasi FCM — panggil sekali saat app startup setelah login
   Future<void> initialize() async {
@@ -88,8 +90,8 @@ class FcmService {
   /// Kirim token ke backend Laravel
   Future<void> _sendTokenToBackend(String token) async {
     try {
-      await _api.post<void>(
-        '/user/fcm-token',
+      await _api.put<void>(
+        '/users/fcm-token',
         data: {'fcm_token': token},
         parser: (_) {},
       );
@@ -121,6 +123,9 @@ class FcmService {
         ),
         payload: json.encode(message.data),
       );
+      
+      // Invalidate the provider so UI re-fetches the latest notification count
+      _ref.invalidate(notificationsProvider);
     }
     debugPrint('[FCM] Foreground message: ${notification?.title}');
   }
