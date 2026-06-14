@@ -51,12 +51,7 @@ class ApiClient {
   final SecureStorageService _storage;
 
   String _defaultBaseUrl() {
-    // Jika di Web, gunakan localhost agar lebih stabil
-    if (kIsWeb) {
-      return 'http://127.0.0.1:8000/api/v1';
-    }
-    // Jika di HP Fisik/Emulator, gunakan IP lokal laptop
-    return 'http://10.154.41.15:8000/api/v1';
+    return 'https://afternoon-testimonials-saskatchewan-nightlife.trycloudflare.com/api/v1';
   }
 
   Future<T> get<T>(
