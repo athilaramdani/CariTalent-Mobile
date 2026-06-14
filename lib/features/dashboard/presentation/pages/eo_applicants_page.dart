@@ -94,106 +94,118 @@ class _EoApplicantsPageState extends ConsumerState<EoApplicantsPage> {
                       }).toList();
 
                 return Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const GradientText(
-                                  'Pelamar Event',
-                                  style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w900),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Event #${widget.eventId} · $total pelamar',
-                                  style: TextStyle(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.7),
-                                      fontSize: 13),
-                                ),
-                              ],
-                            ),
-                            GestureDetector(
-                              onTap: () => context.pushReplacement(
-                                  '${EoRecommendationsPage.routePath}/${widget.eventId}'),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Color(0xFF00BFFF),
-                                ),
-                                child: const Icon(Icons.auto_awesome,
-                                    color: Color(0xFF082F49), size: 24),
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(eventApplicationsProvider(widget.eventId));
+                      ref.invalidate(myBookingsProvider);
+                      await Future.wait([
+                        ref.read(eventApplicationsProvider(widget.eventId).future),
+                        ref.read(myBookingsProvider.future),
+                      ]);
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const GradientText(
+                                    'Pelamar Event',
+                                    style: TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w900),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Event #${widget.eventId} · $total pelamar',
+                                    style: TextStyle(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.7),
+                                        fontSize: 13),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                              GestureDetector(
+                                onTap: () => context.pushReplacement(
+                                    '${EoRecommendationsPage.routePath}/${widget.eventId}'),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Color(0xFF00BFFF),
+                                  ),
+                                  child: const Icon(Icons.auto_awesome,
+                                      color: Color(0xFF082F49), size: 24),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // Filter Chips
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          children: [
-                            _buildFilterChip('Semua', '$total'),
-                            _buildFilterChip('Pending', '$pending'),
-                            _buildFilterChip('Accepted', '$accepted'),
-                            _buildFilterChip('Rejected', '$rejected'),
-                          ],
+                        // Filter Chips
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            children: [
+                              _buildFilterChip('Semua', '$total'),
+                              _buildFilterChip('Pending', '$pending'),
+                              _buildFilterChip('Accepted', '$accepted'),
+                              _buildFilterChip('Rejected', '$rejected'),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      // List
-                      Expanded(
-                        child: filtered.isEmpty
-                            ? Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(40),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.inbox_outlined,
-                                          size: 52, color: Colors.white24),
+                        // List
+                        Expanded(
+                          child: filtered.isEmpty
+                              ? SingleChildScrollView(
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(40),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.inbox_outlined,
+                                            size: 52, color: Colors.white24),
+                                        const SizedBox(height: 16),
+                                        Text('Tidak ada pelamar',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                    color: Colors.white38)),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : ListView.separated(
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20),
+                                  itemCount: filtered.length,
+                                  separatorBuilder: (_, __) =>
                                       const SizedBox(height: 16),
-                                      Text('Tidak ada pelamar',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.copyWith(
-                                                  color: Colors.white38)),
-                                    ],
+                                  itemBuilder: (_, i) => _ApplicantCard(
+                                    application: filtered[i],
+                                    onAccept: () => _handleAccept(filtered[i]),
+                                    onReject: () => _updateStatus(
+                                        filtered[i].id, 'rejected'),
                                   ),
                                 ),
-                              )
-                            : ListView.separated(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20),
-                                itemCount: filtered.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(height: 16),
-                                itemBuilder: (_, i) => _ApplicantCard(
-                                  application: filtered[i],
-                                  onAccept: () => _handleAccept(filtered[i]),
-                                  onReject: () => _updateStatus(
-                                      filtered[i].id, 'rejected'),
-                                ),
-                              ),
-                      ),
-                      const SizedBox(height: 48),
-                    ],
+                        ),
+                        const SizedBox(height: 48),
+                      ],
+                    ),
                   ),
                 );
               },

@@ -51,7 +51,6 @@ class ApiClient {
   final SecureStorageService _storage;
 
   String _defaultBaseUrl() {
-    // Menggunakan IP lokal PC agar bisa diakses langsung dari HP Fisik
     return 'https://afternoon-testimonials-saskatchewan-nightlife.trycloudflare.com/api/v1';
   }
 

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:caritalent_mobile/app/app.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,47 +37,58 @@ class FcmService {
   final Ref _ref;
 
   // Base URL backend — harus sama dengan ApiClient._defaultBaseUrl()
-  static const _baseUrl = 'https://afternoon-testimonials-saskatchewan-nightlife.trycloudflare.com/api/v1';
+  static String get _baseUrl {
+    return 'https://afternoon-testimonials-saskatchewan-nightlife.trycloudflare.com/api/v1';
+  }
   static const _tokenKey = 'auth_token';
   final _secureStorage = const FlutterSecureStorage();
 
   /// Inisialisasi FCM — panggil sekali saat app startup setelah login
   Future<void> initialize() async {
-    // 1. Register background handler
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    try {
+      // 1. Register background handler
+      // Only do this on Mobile (Android/iOS) — throws on Web without safe setup
+      if (!kIsWeb) {
+        FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      }
 
-    // 2. Setup local notifications plugin
-    await _localNotifications.initialize(
-      const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      ),
-    );
+      // 2. Setup local notifications plugin
+      await _localNotifications.initialize(
+        const InitializationSettings(
+          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        ),
+      );
 
-    // 3. Buat channel notifikasi Android (wajib untuk Android 8+)
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_channel);
+      // 3. Buat channel notifikasi Android (wajib untuk Android 8+)
+      if (!kIsWeb && Platform.isAndroid) {
+        await _localNotifications
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            ?.createNotificationChannel(_channel);
+      }
 
-    // 4. Minta izin notifikasi ke user (iOS & Android 13+)
-    final settings = await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-    debugPrint('[FCM] Permission status: ${settings.authorizationStatus}');
+      // 4. Minta izin notifikasi ke user (iOS & Android 13+)
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      debugPrint('[FCM] Permission status: ${settings.authorizationStatus}');
 
-    // 5. Kirim FCM token ke backend untuk disimpan
-    await _registerToken();
+      // 5. Kirim FCM token ke backend untuk disimpan
+      await _registerToken();
 
-    // 6. Handle refresh token (misal setelah reinstall)
-    FirebaseMessaging.instance.onTokenRefresh.listen(_sendTokenToBackend);
+      // 6. Handle refresh token (misal setelah reinstall)
+      FirebaseMessaging.instance.onTokenRefresh.listen(_sendTokenToBackend);
 
-    // 7. Handle notifikasi saat app foreground
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+      // 7. Handle notifikasi saat app foreground
+      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
-    // 8. Handle tap notif saat app background (tapi belum terminated)
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+      // 8. Handle tap notif saat app background (tapi belum terminated)
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+    } catch (e) {
+      debugPrint('[FCM] Initialization failed: $e');
+    }
   }
 
   /// Ambil FCM token dan kirim ke backend

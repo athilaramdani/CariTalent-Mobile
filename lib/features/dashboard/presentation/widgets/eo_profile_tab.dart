@@ -33,8 +33,18 @@ class EoProfileTab extends ConsumerWidget {
     }
 
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(myEventsProvider);
+          ref.invalidate(myBookingsProvider);
+          await Future.wait([
+            ref.read(myEventsProvider.future),
+            ref.read(myBookingsProvider.future),
+          ]);
+        },
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
 // Removed redundant local header
 
@@ -216,30 +226,15 @@ class EoProfileTab extends ConsumerWidget {
           }),
           const SizedBox(height: 32),
           
-          const Text('Additional Settings', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          
-          GestureDetector(
-            onTap: () {
-              ref.read(authControllerProvider.notifier).logout();
-              context.go(PublicHomePage.routePath);
-            },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.redAccent.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.15)),
-              ),
-              child: const Text('Logout', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 14)),
-            ),
+          const ProfileLogoutButton(
+            dashboardName: 'EO Dashboard',
           ),
           const SizedBox(height: 48),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStatSquare(BuildContext context, IconData icon, String label, String value) {
     return Expanded(

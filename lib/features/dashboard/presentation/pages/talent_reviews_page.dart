@@ -42,93 +42,100 @@ class TalentReviewsPage extends ConsumerWidget {
               ? '${((positiveCount / total) * 100).toStringAsFixed(0)}%'
               : '0%';
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                 Text('Performa Anda',
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(myReviewsProvider);
+              await ref.read(myReviewsProvider.future);
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Text('Performa Anda',
+                      style:
+                          textTheme.bodySmall?.copyWith(color: Colors.white54)),
+                  const SizedBox(height: 4),
+                  ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Color(0xFFB500FF), Color(0xFFDE33A2)],
+                    ).createShader(bounds),
+                    child: Text(
+                      'Ulasan Talent',
+                      style: GoogleFonts.syne(
+                        textStyle: textTheme.displaySmall?.copyWith(
+                          color: Colors.white,
+                          fontSize: 32,
+                          height: 1.1,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Lihat apa yang dikatakan event organizer tentang Anda',
                     style:
-                        textTheme.bodySmall?.copyWith(color: Colors.white54)),
-                const SizedBox(height: 4),
-                ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Color(0xFFB500FF), Color(0xFFDE33A2)],
-                  ).createShader(bounds),
-                  child: Text(
-                    'Ulasan Talent',
+                        textTheme.bodySmall?.copyWith(color: Colors.white54),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Overall Rating Card
+                  _buildOverallRatingCard(
+                    textTheme: textTheme,
+                    avg: avg,
+                    total: total,
+                    positivePercent: positivePercent,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Rating Breakdown Card
+                  _buildRatingBreakdownCard(
+                    textTheme: textTheme,
+                    breakdown: breakdown,
+                    total: total,
+                  ),
+                  const SizedBox(height: 24),
+
+                   Text(
+                    'Ulasan Terbaru',
                     style: GoogleFonts.syne(
-                      textStyle: textTheme.displaySmall?.copyWith(
-                        color: Colors.white,
-                        fontSize: 32,
-                        height: 1.1,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
-                      ),
+                      textStyle: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Lihat apa yang dikatakan event organizer tentang Anda',
-                  style:
-                      textTheme.bodySmall?.copyWith(color: Colors.white54),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
-                // Overall Rating Card
-                _buildOverallRatingCard(
-                  textTheme: textTheme,
-                  avg: avg,
-                  total: total,
-                  positivePercent: positivePercent,
-                ),
-                const SizedBox(height: 16),
-
-                // Rating Breakdown Card
-                _buildRatingBreakdownCard(
-                  textTheme: textTheme,
-                  breakdown: breakdown,
-                  total: total,
-                ),
-                const SizedBox(height: 24),
-
-                 Text(
-                  'Ulasan Terbaru',
-                  style: GoogleFonts.syne(
-                    textStyle: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                if (reviews.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(40),
-                      child: Column(
-                        children: [
-                          const Icon(Icons.star_outline,
-                              size: 52, color: Colors.white24),
-                          const SizedBox(height: 16),
-                          Text('Belum ada ulasan',
-                              style: textTheme.bodyMedium
-                                  ?.copyWith(color: Colors.white38)),
-                        ],
+                  if (reviews.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(40),
+                        child: Column(
+                          children: [
+                            const Icon(Icons.star_outline,
+                                size: 52, color: Colors.white24),
+                            const SizedBox(height: 16),
+                            Text('Belum ada ulasan',
+                                style: textTheme.bodyMedium
+                                    ?.copyWith(color: Colors.white38)),
+                          ],
+                        ),
                       ),
-                    ),
-                  )
-                else
-                  for (final review in reviews) ...[
-                    _buildReviewCard(
-                        context: context,
-                        review: review,
-                        textTheme: textTheme),
-                    const SizedBox(height: 16),
-                  ],
+                    )
+                  else
+                    for (final review in reviews) ...[
+                      _buildReviewCard(
+                          context: context,
+                          review: review,
+                          textTheme: textTheme),
+                      const SizedBox(height: 16),
+                    ],
 
-                const SizedBox(height: 40),
-              ],
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           );
         },

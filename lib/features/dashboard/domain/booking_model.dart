@@ -61,6 +61,7 @@ class BookingModel {
   int? get organizerId => (event?['organizer_id'] as num?)?.toInt();
 
   String get talentName => (talent?['stage_name'] as String?) ?? '';
+  int get talentId => (talent?['id'] as num?)?.toInt() ?? 0;
 
   String get agreedPriceFormatted {
     final n = agreedPrice.toInt();

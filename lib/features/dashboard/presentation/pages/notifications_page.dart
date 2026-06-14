@@ -160,54 +160,61 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
                   final unread =
                       notifications.where((n) => !n.isRead).length;
 
-                  return Column(
-                    children: [
-                      if (unread > 0)
-                        Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 20),
-                          child: Container(
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(notificationsProvider);
+                      await ref.read(notificationsProvider.future);
+                    },
+                    child: Column(
+                      children: [
+                        if (unread > 0)
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color:
+                                    AppTheme.highlight.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                    color: AppTheme.highlight
+                                        .withValues(alpha: 0.2)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.notifications_active,
+                                      color: AppTheme.highlight, size: 16),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '$unread notifikasi belum dibaca',
+                                    style: const TextStyle(
+                                        color: AppTheme.highlight,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              color:
-                                  AppTheme.highlight.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: AppTheme.highlight
-                                      .withValues(alpha: 0.2)),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.notifications_active,
-                                    color: AppTheme.highlight, size: 16),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '$unread notifikasi belum dibaca',
-                                  style: const TextStyle(
-                                      color: AppTheme.highlight,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ],
+                                horizontal: 20, vertical: 4),
+                            itemCount: notifications.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 10),
+                            itemBuilder: (_, i) => _NotificationCard(
+                              notification: notifications[i],
+                              onRead: () => _markAsRead(notifications[i].id),
                             ),
                           ),
                         ),
-                      const SizedBox(height: 12),
-                      Expanded(
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 4),
-                          itemCount: notifications.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (_, i) => _NotificationCard(
-                            notification: notifications[i],
-                            onRead: () => _markAsRead(notifications[i].id),
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   );
                 },
                 loading: () =>

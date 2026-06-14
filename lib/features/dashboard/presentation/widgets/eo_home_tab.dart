@@ -25,9 +25,19 @@ class EoHomeTab extends ConsumerWidget {
     final bookingsAsync = ref.watch(myBookingsProvider);
 
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        children: [
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(myEventsProvider);
+          ref.invalidate(myBookingsProvider);
+          await Future.wait([
+            ref.read(myEventsProvider.future),
+            ref.read(myBookingsProvider.future),
+          ]);
+        },
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          children: [
           Text(
             'Selamat Datang kembali,',
             style: textTheme.bodySmall
@@ -217,8 +227,9 @@ class EoHomeTab extends ConsumerWidget {
           const SizedBox(height: 48),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStatsLoading(BuildContext context) {
     return const SizedBox(

@@ -185,9 +185,21 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
             orElse: () => <int>{},
           );
 
-          return CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(publicEventsProvider);
+              ref.invalidate(myApplicationsProvider);
+              
+              await Future.wait([
+                ref.read(publicEventsProvider.future),
+                ref.read(myApplicationsProvider.future),
+              ]);
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              slivers: [
               SliverToBoxAdapter(
                 child: Padding(
                   padding:
@@ -299,8 +311,9 @@ class _TalentEventsTabState extends ConsumerState<TalentEventsTab> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 40)),
             ],
-          );
-        },
+          ),
+        );
+      },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Column(

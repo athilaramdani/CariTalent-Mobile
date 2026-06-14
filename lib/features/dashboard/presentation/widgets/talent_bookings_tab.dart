@@ -43,9 +43,15 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
                       )
                       .toList();
 
-          return ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            children: [
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(myBookingsProvider);
+              await ref.read(myBookingsProvider.future);
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              children: [
               const AppHeader(),
               const SizedBox(height: 32),
               GradientText(
@@ -143,8 +149,9 @@ class _TalentBookingsTabState extends ConsumerState<TalentBookingsTab> {
 
               const SizedBox(height: 48),
             ],
-          );
-        },
+          ),
+        );
+      },
         loading: () => const Center(child: CircularProgressIndicator()),
         error:
             (e, _) => Center(
