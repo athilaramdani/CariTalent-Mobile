@@ -52,7 +52,7 @@ class ApiClient {
 
   String _defaultBaseUrl() {
     // Menggunakan IP lokal PC agar bisa diakses langsung dari HP Fisik
-    return 'http://192.168.18.136:8000/api/v1';
+    return 'https://afternoon-testimonials-saskatchewan-nightlife.trycloudflare.com/api/v1';
   }
 
   Future<T> get<T>(
