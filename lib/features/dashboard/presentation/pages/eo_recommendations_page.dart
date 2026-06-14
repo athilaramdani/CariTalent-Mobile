@@ -61,113 +61,125 @@ class _EoRecommendationsPageState
             recAsync.when(
               data: (data) {
                 return Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const GradientText(
-                                    'Rekomendasi Talent',
-                                    style: TextStyle(
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w900),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    data.eventTitle.isNotEmpty
-                                        ? data.eventTitle
-                                        : 'Event #${widget.eventId}',
-                                    style: TextStyle(
-                                        color:
-                                            Colors.white.withValues(alpha: 0.7),
-                                        fontSize: 13),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Top ${data.recommendations.length} talent terbaik berdasarkan match genre, budget, dan lokasi',
-                                    style: TextStyle(
-                                        color:
-                                            Colors.white.withValues(alpha: 0.7),
-                                        fontSize: 13,
-                                        height: 1.4),
-                                    maxLines: 2,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            GestureDetector(
-                              onTap: () => context.pushReplacement(
-                                  '${EoApplicantsPage.routePath}/${widget.eventId}'),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Color(0xFF00BFFF),
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(recommendationsProvider(widget.eventId));
+                      ref.invalidate(sentInvitationsProvider);
+                      await Future.wait([
+                        ref.read(recommendationsProvider(widget.eventId).future),
+                        ref.read(sentInvitationsProvider.future),
+                      ]);
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const GradientText(
+                                      'Rekomendasi Talent',
+                                      style: TextStyle(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.w900),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      data.eventTitle.isNotEmpty
+                                          ? data.eventTitle
+                                          : 'Event #${widget.eventId}',
+                                      style: TextStyle(
+                                          color:
+                                              Colors.white.withValues(alpha: 0.7),
+                                          fontSize: 13),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Top ${data.recommendations.length} talent terbaik berdasarkan match genre, budget, dan lokasi',
+                                      style: TextStyle(
+                                          color:
+                                              Colors.white.withValues(alpha: 0.7),
+                                          fontSize: 13,
+                                          height: 1.4),
+                                      maxLines: 2,
+                                    ),
+                                  ],
                                 ),
-                                child: const Icon(Icons.person_search_outlined,
-                                    color: Color(0xFF082F49), size: 24),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 16),
+                              GestureDetector(
+                                onTap: () => context.pushReplacement(
+                                    '${EoApplicantsPage.routePath}/${widget.eventId}'),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Color(0xFF00BFFF),
+                                  ),
+                                  child: const Icon(Icons.person_search_outlined,
+                                      color: Color(0xFF082F49), size: 24),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      data.recommendations.isEmpty
-                          ? const Expanded(
-                              child: Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(40),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.auto_awesome,
-                                          size: 52, color: Colors.white24),
-                                      SizedBox(height: 16),
-                                      Text(
-                                          'Belum ada rekomendasi untuk event ini',
-                                          style: TextStyle(
-                                              color: Colors.white38),
-                                          textAlign: TextAlign.center),
-                                    ],
+                        data.recommendations.isEmpty
+                            ? const Expanded(
+                                child: SingleChildScrollView(
+                                  physics: AlwaysScrollableScrollPhysics(),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(40),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.auto_awesome,
+                                            size: 52, color: Colors.white24),
+                                        SizedBox(height: 16),
+                                        Text(
+                                            'Belum ada rekomendasi untuk event ini',
+                                            style: TextStyle(
+                                                color: Colors.white38),
+                                            textAlign: TextAlign.center),
+                                      ],
+                                    ),
                                   ),
                                 ),
+                              )
+                            : Expanded(
+                                child: ListView.separated(
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20),
+                                  itemCount: data.recommendations.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 16),
+                                  itemBuilder: (_, i) {
+                                    final rec = data.recommendations[i];
+                                    final isInvited = _isInvited(
+                                      rec,
+                                      sentInvitations,
+                                      data,
+                                    );
+                                    return _RecommendationCard(
+                                      rec: rec,
+                                      isInvited: isInvited,
+                                      onInvite: () =>
+                                          _sendInvitation(rec, widget.eventId),
+                                    );
+                                  },
+                                ),
                               ),
-                            )
-                          : Expanded(
-                              child: ListView.separated(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20),
-                                itemCount: data.recommendations.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(height: 16),
-                                itemBuilder: (_, i) {
-                                  final rec = data.recommendations[i];
-                                  final isInvited = _isInvited(
-                                    rec,
-                                    sentInvitations,
-                                    data,
-                                  );
-                                  return _RecommendationCard(
-                                    rec: rec,
-                                    isInvited: isInvited,
-                                    onInvite: () =>
-                                        _sendInvitation(rec, widget.eventId),
-                                  );
-                                },
-                              ),
-                            ),
-                      const SizedBox(height: 48),
-                    ],
+                        const SizedBox(height: 48),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -958,15 +970,17 @@ class _TalentRecommendationDetailModalState
                             Row(
                               children: [
                                 const Icon(Icons.link,
-                                    size: 16, color: Color(0xFF60A5FA)),
+                                    color: Color(0xFFD8B4FE), size: 16),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     portfolio,
                                     style: const TextStyle(
-                                        color: Color(0xFF60A5FA),
-                                        fontSize: 13),
-                                    maxLines: 2,
+                                        color: Color(0xFFD8B4FE),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline),
+                                    maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -979,97 +993,97 @@ class _TalentRecommendationDetailModalState
                     ],
 
                     // Bio
-                    if (bio != null && bio.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.08)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'DESKRIPSI / BIO',
-                              style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 10,
-                                  letterSpacing: 1.5,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              bio,
-                              style: const TextStyle(
-                                  color: Colors.white70, fontSize: 13, height: 1.5),
-                            ),
-                          ],
-                        ),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.08)),
                       ),
-                      const SizedBox(height: 12),
-                    ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'BIODATA / DESKRIPSI',
+                            style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 10,
+                                letterSpacing: 1.5,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            bio?.isNotEmpty == true ? bio! : '-',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 14, height: 1.6),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
 
-                    // Action button in modal
-                    GestureDetector(
-                      onTap: widget.isInvited
+              // Fixed Action Button at bottom
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: GestureDetector(
+                  onTap: widget.isInvited
+                      ? null
+                      : () {
+                          Navigator.pop(context);
+                          widget.onInvite();
+                        },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      gradient: widget.isInvited
                           ? null
-                          : () {
-                              widget.onInvite();
-                            },
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          gradient: widget.isInvited
-                              ? null
-                              : const LinearGradient(
-                                  colors: [Color(0xFFB57AFF), Color(0xFFE94057)],
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
-                                ),
+                          : const LinearGradient(
+                              colors: [Color(0xFFB57AFF), Color(0xFFE94057)],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                      color: widget.isInvited
+                          ? const Color(0xFF22C55E).withValues(alpha: 0.15)
+                          : null,
+                      borderRadius: BorderRadius.circular(14),
+                      border: widget.isInvited
+                          ? Border.all(
+                              color: const Color(0xFF22C55E)
+                                  .withValues(alpha: 0.5),
+                              width: 1.5)
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          widget.isInvited
+                              ? Icons.check_circle
+                              : Icons.send_outlined,
                           color: widget.isInvited
-                              ? const Color(0xFF22C55E).withValues(alpha: 0.15)
-                              : null,
-                          borderRadius: BorderRadius.circular(12),
-                          border: widget.isInvited
-                              ? Border.all(
-                                  color: const Color(0xFF22C55E).withValues(alpha: 0.5),
-                                  width: 1.5)
-                              : null,
+                              ? const Color(0xFF22C55E)
+                              : Colors.white,
+                          size: 20,
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              widget.isInvited
-                                  ? Icons.check_circle
-                                  : Icons.send_outlined,
+                        const SizedBox(width: 8),
+                        Text(
+                          widget.isInvited ? 'SUDAH DIUNDANG' : 'UNDANG SEKARANG',
+                          style: TextStyle(
                               color: widget.isInvited
                                   ? const Color(0xFF22C55E)
                                   : Colors.white,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              widget.isInvited
-                                  ? 'Sudah diundang'
-                                  : 'Undang Talent',
-                              style: TextStyle(
-                                  color: widget.isInvited
-                                      ? const Color(0xFF22C55E)
-                                      : Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ],
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0),
                         ),
-                      ),
+                      ],
                     ),
-
-                    const SizedBox(height: 32),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -1078,154 +1092,7 @@ class _TalentRecommendationDetailModalState
       },
     );
   }
-
 }
-
-// ─── Invite Talent Dialog ─────────────────────────────────────────────────────
-
-class _InviteTalentDialog extends StatefulWidget {
-  final String talentName;
-
-  const _InviteTalentDialog({required this.talentName});
-
-  @override
-  State<_InviteTalentDialog> createState() => _InviteTalentDialogState();
-}
-
-class _InviteTalentDialogState extends State<_InviteTalentDialog> {
-  final _controller = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1E1A2E),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      contentPadding: const EdgeInsets.all(24),
-      content: SizedBox(
-        width: screenWidth * 0.85,
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Undang Talent',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFFD8B4FE),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Tentukan harga penawaran (offering price) untuk ${widget.talentName}.',
-                style: const TextStyle(color: Colors.white54, fontSize: 13),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Harga Penawaran (Rp) *',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _controller,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Contoh: 2000000',
-                  hintStyle: const TextStyle(color: Colors.white24),
-                  filled: true,
-                  fillColor: Colors.black26,
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFB57AFF)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFB57AFF)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide:
-                        const BorderSide(color: Color(0xFFD8B4FE), width: 2),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Harga penawaran wajib diisi';
-                  }
-                  if (double.tryParse(value) == null) {
-                    return 'Masukkan angka yang valid';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Batal',
-                        style: TextStyle(color: Colors.white54)),
-                  ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () {
-                      if (_formKey.currentState!.validate()) {
-                        Navigator.pop(
-                            context, double.parse(_controller.text));
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFB57AFF),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.send, size: 16, color: Colors.white),
-                          SizedBox(width: 8),
-                          Text(
-                            'Kirim Undangan',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Info Card helper ──────────────────────────────────────────────────────────
 
 class _InfoCard extends StatelessWidget {
   final String label;
@@ -1237,46 +1104,42 @@ class _InfoCard extends StatelessWidget {
     required this.label,
     required this.value,
     required this.icon,
-    this.iconColor = Colors.white54,
+    this.iconColor = Colors.white70,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-                color: Colors.white54,
-                fontSize: 9,
-                letterSpacing: 1.5,
-                fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
           Row(
             children: [
-              Icon(icon, size: 14, color: iconColor),
+              Icon(icon, color: iconColor, size: 14),
               const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  value,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              Text(
+                label,
+                style: const TextStyle(
+                    color: Colors.white38,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0),
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+                color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -1284,3 +1147,66 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
+class _InviteTalentDialog extends StatefulWidget {
+  final String talentName;
+  const _InviteTalentDialog({required this.talentName});
+
+  @override
+  State<_InviteTalentDialog> createState() => _InviteTalentDialogState();
+}
+
+class _InviteTalentDialogState extends State<_InviteTalentDialog> {
+  final _priceController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF1E1B4B),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text('Undang ${widget.talentName}',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Masukkan tawaran harga (deal awal) untuk talent ini.',
+              style: TextStyle(color: Colors.white70, fontSize: 13)),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _priceController,
+            keyboardType: TextInputType.number,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              labelText: 'Harga (Rp)',
+              labelStyle: const TextStyle(color: Colors.white70),
+              prefixText: 'Rp ',
+              prefixStyle: const TextStyle(color: Colors.white),
+              enabledBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Colors.white24),
+                  borderRadius: BorderRadius.circular(12)),
+              focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Color(0xFFD8B4FE)),
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal', style: TextStyle(color: Colors.white54))),
+        ElevatedButton(
+          onPressed: () {
+            final p = double.tryParse(_priceController.text);
+            Navigator.pop(context, p);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFD8B4FE),
+            foregroundColor: const Color(0xFF1E1B4B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          child: const Text('Kirim Undangan', style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+      ],
+    );
+  }
+}

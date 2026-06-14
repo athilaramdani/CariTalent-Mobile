@@ -42,9 +42,15 @@ class _EoInvitationsTabState extends ConsumerState<EoInvitationsTab> {
                   }
                 }).toList();
 
-          return ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            children: [
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(sentInvitationsProvider);
+              await ref.read(sentInvitationsProvider.future);
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              children: [
               GradientText(
                 'Undangan Terkirim',
                 style: GoogleFonts.syne(
@@ -112,8 +118,9 @@ class _EoInvitationsTabState extends ConsumerState<EoInvitationsTab> {
 
               const SizedBox(height: 48),
             ],
-          );
-        },
+          ),
+        );
+      },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Column(

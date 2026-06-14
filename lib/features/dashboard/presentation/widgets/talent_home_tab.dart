@@ -31,10 +31,28 @@ class TalentHomeTab extends ConsumerWidget {
     final name = user?.name ?? 'Talent';
 
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(myTalentProvider);
+          ref.invalidate(myInvitationsProvider);
+          ref.invalidate(myBookingsProvider);
+          ref.invalidate(myApplicationsProvider);
+          ref.invalidate(myReviewsProvider);
+          
+          // Wait for all data to actually be fetched before hiding indicator
+          await Future.wait([
+            ref.read(myTalentProvider.future),
+            ref.read(myInvitationsProvider.future),
+            ref.read(myBookingsProvider.future),
+            ref.read(myApplicationsProvider.future),
+            ref.read(myReviewsProvider.future),
+          ]);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // 1. Top Navbar
             const AppHeader(),
@@ -175,8 +193,9 @@ class TalentHomeTab extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildQuickActions(BuildContext context, WidgetRef ref) {
     return Column(
