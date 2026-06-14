@@ -99,8 +99,14 @@ class TalentProfilePage extends ConsumerWidget {
     final initials =
         displayName.isNotEmpty ? displayName[0].toUpperCase() : 'T';
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(myTalentProvider);
+        await ref.read(myTalentProvider.future);
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
           const SizedBox(height: 16),
@@ -489,8 +495,9 @@ class TalentProfilePage extends ConsumerWidget {
           const SizedBox(height: 60),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildInfoCard({required List<Widget> children}) {
     return Container(

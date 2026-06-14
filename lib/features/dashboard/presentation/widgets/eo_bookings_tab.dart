@@ -2,6 +2,7 @@ import 'package:caritalent_mobile/app/theme/app_theme.dart';
 import 'package:caritalent_mobile/core/widgets/gradient_text.dart';
 import 'package:caritalent_mobile/features/dashboard/application/dashboard_providers.dart';
 import 'package:caritalent_mobile/features/dashboard/domain/booking_model.dart';
+import 'package:caritalent_mobile/features/dashboard/presentation/widgets/review_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,14 +18,28 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
   String _selectedFilter = 'Semua';
   bool _isProcessing = false;
   
-  Future<void> _completeBooking(int id) async {
+  Future<void> _completeBooking(BookingModel booking) async {
+    final result = await ReviewModal.show(context, talentName: booking.talentName);
+    if (result == null) return;
+    
     setState(() => _isProcessing = true);
     try {
-      await ref.read(bookingRepositoryProvider).completeBooking(id);
+      // 1. Mark booking as completed
+      await ref.read(bookingRepositoryProvider).completeBooking(booking.id);
+      
+      // 2. Submit review
+      await ref.read(reviewRepositoryProvider).createReview(
+        bookingId: booking.id,
+        talentId: booking.talentId,
+        rating: result['rating'] as int,
+        comment: result['comment'] as String?,
+      );
+
       ref.invalidate(myBookingsProvider);
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Booking berhasil ditandai selesai!'),
+          content: Text('Booking selesai & Review terkirim! 🎉'),
           backgroundColor: Colors.green,
         ));
       }
@@ -89,9 +104,15 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
                   }
                 }).toList();
 
-          return ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            children: [
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(myBookingsProvider);
+              await ref.read(myBookingsProvider.future);
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              children: [
               GradientText(
                 'Pemesanan',
                 style: GoogleFonts.syne(
@@ -150,8 +171,9 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
 
               const SizedBox(height: 48),
             ],
-          );
-        },
+          ),
+        );
+      },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Column(
@@ -393,7 +415,7 @@ class _EoBookingsTabState extends ConsumerState<EoBookingsTab> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _isProcessing ? null : () => _completeBooking(booking.id),
+                    onPressed: _isProcessing ? null : () => _completeBooking(booking),
                     icon: const Icon(Icons.check_circle_outline, size: 18),
                     label: const Text('Tandai Selesai'),
                     style: ElevatedButton.styleFrom(

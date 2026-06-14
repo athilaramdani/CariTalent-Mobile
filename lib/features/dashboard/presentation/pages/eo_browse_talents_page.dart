@@ -190,33 +190,40 @@ class _EoBrowseTalentsPageState extends ConsumerState<EoBrowseTalentsPage> {
                     );
                   }
 
-                  return Column(
-                    children: [
-                      Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          children: [
-                            Text('${talents.length} talent ditemukan',
-                                style: textTheme.bodySmall?.copyWith(
-                                    color: Colors.white54,
-                                    fontWeight: FontWeight.bold)),
-                          ],
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(talentListProvider);
+                      await ref.read(talentListProvider.future);
+                    },
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            children: [
+                              Text('${talents.length} talent ditemukan',
+                                  style: textTheme.bodySmall?.copyWith(
+                                      color: Colors.white54,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Expanded(
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 4),
-                          itemCount: talents.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 14),
-                          itemBuilder: (_, i) =>
-                              _TalentBrowseCard(talent: talents[i]),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 4),
+                            itemCount: talents.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 14),
+                            itemBuilder: (_, i) =>
+                                _TalentBrowseCard(talent: talents[i]),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   );
                 },
                 loading: () =>

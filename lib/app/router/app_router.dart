@@ -65,6 +65,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const TalentProfilePage(),
       ),
       GoRoute(
+        path: TalentEditProfilePage.routePath,
+        builder: (context, state) => const TalentEditProfilePage(),
+      ),
+      GoRoute(
+        path: TalentChangePasswordPage.routePath,
+        builder: (context, state) => const TalentChangePasswordPage(),
+      ),
+      GoRoute(
         path: EoDashboardPage.routePath,
         builder: (context, state) => const EoDashboardPage(),
       ),

@@ -20,6 +20,7 @@ class TalentEditProfilePage extends ConsumerStatefulWidget {
 class _TalentEditProfilePageState
     extends ConsumerState<TalentEditProfilePage> {
   late TextEditingController _nameCtrl;
+  late TextEditingController _emailCtrl;
   late TextEditingController _stageNameCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _cityCtrl;
@@ -36,6 +37,7 @@ class _TalentEditProfilePageState
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController();
+    _emailCtrl = TextEditingController();
     _stageNameCtrl = TextEditingController();
     _phoneCtrl = TextEditingController();
     _cityCtrl = TextEditingController();
@@ -47,6 +49,7 @@ class _TalentEditProfilePageState
     // Pre-fill from auth user (basic info)
     final user = ref.read(authControllerProvider).user;
     _nameCtrl.text = user?.name ?? '';
+    _emailCtrl.text = user?.email ?? '';
     _phoneCtrl.text = user?.phone ?? '';
 
     // Pre-fill talent profile fields from myTalentProvider
@@ -83,6 +86,7 @@ class _TalentEditProfilePageState
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _emailCtrl.dispose();
     _stageNameCtrl.dispose();
     _phoneCtrl.dispose();
     _cityCtrl.dispose();
@@ -233,7 +237,7 @@ class _TalentEditProfilePageState
               const SizedBox(height: 20),
 
               _buildLabel('Email'),
-              _buildTextField(hint: email, enabled: false),
+              _buildTextField(controller: _emailCtrl, hint: 'Email', enabled: false),
               const SizedBox(height: 20),
 
               _buildLabel('Nomor Telepon'),

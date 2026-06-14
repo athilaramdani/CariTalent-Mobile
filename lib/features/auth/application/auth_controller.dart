@@ -98,7 +98,11 @@ class AuthController extends StateNotifier<AuthState> {
         clearError: true,
       );
       // Daftarkan FCM token ke backend setelah login berhasil
-      await _fcm.initialize();
+      try {
+        await _fcm.initialize();
+      } catch (e) {
+        debugPrint('[Login] FCM init error: $e');
+      }
     });
   }
 

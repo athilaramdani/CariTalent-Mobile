@@ -62,9 +62,15 @@ class _EoEventsTabState extends ConsumerState<EoEventsTab> {
                       (e) => _normalizeEventStatus(e.status) == _selectedStatus)
                   .toList();
 
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(myEventsProvider);
+              await ref.read(myEventsProvider.future);
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(20),
+              children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,8 +198,9 @@ class _EoEventsTabState extends ConsumerState<EoEventsTab> {
 
               const SizedBox(height: 48),
             ],
-          );
-        },
+          ),
+        );
+      },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Padding(

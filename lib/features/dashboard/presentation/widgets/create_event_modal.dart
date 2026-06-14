@@ -41,6 +41,7 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
   // Dropdown states
   final Set<String> _selectedGenres = {};
   LatLng? _selectedLocation;
+  String? _selectedStatus;
   final _mapController = MapController();
   bool _isLoading = false;
   bool _isResolvingAddress = false;
@@ -83,6 +84,7 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
     if (e != null && e.latitude != null && e.longitude != null) {
       _selectedLocation = LatLng(e.latitude!, e.longitude!);
     }
+    _selectedStatus = e?.status;
   }
 
   @override
@@ -277,7 +279,8 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
         'event_date': _formatDateForApi(_dateCtrl.text),
         'venue_name': _venueCtrl.text.trim(),
         'city': _cityCtrl.text.trim(),
-        if (widget.event == null) 'status': 'dibuka',
+        if (_selectedStatus != null) 'status': _selectedStatus,
+        if (widget.event == null && _selectedStatus == null) 'status': 'dibuka',
         'genre_ids': genreIds,
         if (_selectedLocation != null) 'latitude': _selectedLocation!.latitude,
         if (_selectedLocation != null) 'longitude': _selectedLocation!.longitude,
@@ -477,6 +480,12 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                       },
                     ),
                     const SizedBox(height: 12),
+
+                    if (isEdit) ...[
+                      _buildLabel('Status Event'),
+                      _buildStatusDropdown(),
+                      const SizedBox(height: 12),
+                    ],
 
                     _buildLabel('Nama Venue *'),
                     _buildTextFormField(
@@ -690,6 +699,44 @@ class _CreateEventModalState extends ConsumerState<CreateEventModal> {
                 style: TextStyle(color: Color(0xFFFCA5A5)),
               )
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusDropdown() {
+    final List<Map<String, String>> statusOptions = [
+      {'label': 'Dibuka', 'value': 'dibuka'},
+      {'label': 'Ditutup', 'value': 'ditutup'},
+      {'label': 'Selesai', 'value': 'selesai'},
+      {'label': 'Dibatalkan', 'value': 'dibatalkan'},
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: AppTheme.uiDark,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: statusOptions.any((o) => o['value'] == _selectedStatus?.toLowerCase().trim())
+              ? _selectedStatus?.toLowerCase().trim()
+              : 'dibuka',
+          dropdownColor: AppTheme.neutralDark,
+          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
+          style: const TextStyle(color: Colors.white, fontSize: 13),
+          onChanged: (String? newValue) {
+            setState(() => _selectedStatus = newValue);
+          },
+          items: statusOptions.map((opt) {
+            return DropdownMenuItem<String>(
+              value: opt['value'],
+              child: Text(opt['label']!),
+            );
+          }).toList(),
         ),
       ),
     );
