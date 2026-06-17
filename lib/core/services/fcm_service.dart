@@ -38,7 +38,7 @@ class FcmService {
 
   // Base URL backend — harus sama dengan ApiClient._defaultBaseUrl()
   static String get _baseUrl {
-    return 'https://afternoon-testimonials-saskatchewan-nightlife.trycloudflare.com/api/v1';
+    return 'http://178.128.115.18/api/v1';
   }
   static const _tokenKey = 'auth_token';
   final _secureStorage = const FlutterSecureStorage();
