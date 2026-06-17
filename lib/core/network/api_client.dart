@@ -17,8 +17,8 @@ class ApiClient {
             'API_BASE_URL',
             defaultValue: '',
           ),
-          connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 30),
+          connectTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60),
           headers: {'Accept': 'application/json'},
         ),
       ) {
@@ -51,7 +51,7 @@ class ApiClient {
   final SecureStorageService _storage;
 
   String _defaultBaseUrl() {
-    return 'https://afternoon-testimonials-saskatchewan-nightlife.trycloudflare.com/api/v1';
+    return 'http://178.128.115.18/api/v1';
   }
 
   Future<T> get<T>(
