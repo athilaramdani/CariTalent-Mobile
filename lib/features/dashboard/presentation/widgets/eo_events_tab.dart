@@ -492,30 +492,34 @@ class _EventCardState extends ConsumerState<_EventCard> {
           Row(
             children: [
               Expanded(
-                flex: 4,
+                flex: 1,
                 child: GestureDetector(
                   onTap: () =>
                       context.push('${EoApplicantsPage.routePath}/${event.id}'),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFFC48DF6),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.person_search_outlined,
-                            size: 16, color: Color(0xFF3B0764)),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Pelamar (${event.totalApplicants})',
-                          style: textTheme.labelMedium?.copyWith(
-                            color: const Color(0xFF3B0764),
-                            fontWeight: FontWeight.bold,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.person_search_outlined,
+                              size: 14, color: Color(0xFF3B0764)),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Pelamar (${event.totalApplicants})',
+                            style: textTheme.labelMedium?.copyWith(
+                              color: const Color(0xFF3B0764),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -523,30 +527,34 @@ class _EventCardState extends ConsumerState<_EventCard> {
               if (canRequestRecommendations) ...[
                 const SizedBox(width: 8),
                 Expanded(
-                  flex: 5,
+                  flex: 1,
                   child: GestureDetector(
                     onTap: () => context.push(
                         '${EoRecommendationsPage.routePath}/${event.id}'),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                       decoration: BoxDecoration(
                         color: const Color(0xFF00BFFF),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.auto_awesome,
-                              size: 16, color: Color(0xFF001F3F)),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Rekomendasi',
-                            style: textTheme.labelMedium?.copyWith(
-                              color: const Color(0xFF001F3F),
-                              fontWeight: FontWeight.bold,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.auto_awesome,
+                                size: 14, color: Color(0xFF001F3F)),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Rekomendasi',
+                              style: textTheme.labelMedium?.copyWith(
+                                color: const Color(0xFF001F3F),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
