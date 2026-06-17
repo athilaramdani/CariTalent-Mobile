@@ -1540,7 +1540,7 @@ class _AcceptWithPriceDialogState extends State<_AcceptWithPriceDialog> {
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                          horizontal: 24, vertical: 12),
                       decoration: BoxDecoration(
                         color: const Color(0xFF22C55E),
                         borderRadius: BorderRadius.circular(8),
@@ -1552,7 +1552,7 @@ class _AcceptWithPriceDialogState extends State<_AcceptWithPriceDialog> {
                               size: 16, color: Colors.white),
                           SizedBox(width: 8),
                           Text(
-                            'Terima & Buat Booking',
+                            'Terima',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 14,

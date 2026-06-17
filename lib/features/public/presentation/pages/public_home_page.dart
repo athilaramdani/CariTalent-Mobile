@@ -562,13 +562,16 @@ class _PublicHomePageState extends State<PublicHomePage> {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            'Sesederhana itu',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.syne(
-              color: Colors.white,
-              fontSize: 30,
-              fontWeight: FontWeight.w900,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'Sesederhana itu',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.syne(
+                color: Colors.white,
+                fontSize: 30,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -800,13 +803,17 @@ class _PublicHomePageState extends State<PublicHomePage> {
               child: Icon(icon, color: isSelected ? iconColor : Colors.white70, size: 30),
             ),
             const SizedBox(height: 16),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.syne(
-                color: isSelected ? Colors.white : Colors.white70,
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                style: GoogleFonts.syne(
+                  color: isSelected ? Colors.white : Colors.white70,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
             const SizedBox(height: 6),
